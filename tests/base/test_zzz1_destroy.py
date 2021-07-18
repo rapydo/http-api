@@ -30,9 +30,14 @@ def test_destroy() -> None:
 
     create_app(mode=ServerModes.DESTROY)
 
-    try:
-        auth = Connector.get_authentication_instance()
-        user = auth.get_user(username=BaseAuthentication.default_user)
-        assert user is None
-    except ServiceUnavailable:
-        pass
+    # Can raise ServiceUnavailable or not?
+    auth = Connector.get_authentication_instance()
+    user = auth.get_user(username=BaseAuthentication.default_user)
+    assert user is None
+
+    # try:
+    #     auth = Connector.get_authentication_instance()
+    #     user = auth.get_user(username=BaseAuthentication.default_user)
+    #     assert user is None
+    # except ServiceUnavailable:
+    #     pass

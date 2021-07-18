@@ -1,9 +1,8 @@
 import json
 import re
-from typing import Any, Callable, Mapping, Optional, Union
+from typing import Any, Mapping, Optional, Union
 
 from marshmallow import ValidationError, types
-from marshmallow.base import SchemaABC
 from marshmallow.utils import missing as missing_
 from webargs import fields as webargs_fields
 

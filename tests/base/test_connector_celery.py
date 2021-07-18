@@ -22,11 +22,8 @@ def test_celery(app: Flask, faker: Faker) -> None:
 
     if not Connector.check_availability(CONNECTOR):
 
-        try:
+        with pytest.raises(ServiceUnavailable):
             obj = connector.get_instance()
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ServiceUnavailable:
-            pass
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
         return None
@@ -78,20 +75,16 @@ def test_celery(app: Flask, faker: Faker) -> None:
 
     BaseTests.delete_mock_email()
     # ignore is a special value included in tasks template
-    try:
+    with pytest.raises(Ignore):
         BaseTests.send_task(app, "test_task", "ignore")
-        pytest.fail("No expcetion raised")  # pragma: no cover
     # the errors decorator re-raise the Ignore exception, without any further action
-    except Ignore:
-        mail = BaseTests.read_mock_email()
-        # No email is raised with Ignore exceptions
-        assert mail is None
+    mail = BaseTests.read_mock_email()
+    # No email is raised with Ignore exceptions
+    assert mail is None
 
-    try:
+    with pytest.raises(AttributeError) as e:
         BaseTests.send_task(app, "does-not-exist")
-        pytest.fail("No exception raised")  # pragma: no cover
-    except AttributeError as e:
-        assert str(e) == "Task not found"
+    assert str(e.value) == "Task not found"
 
     if obj.variables.get("backend") == "RABBIT":
         log.warning(
@@ -110,49 +103,29 @@ def test_celery(app: Flask, faker: Faker) -> None:
 
     if CeleryExt.CELERYBEAT_SCHEDULER is None:
 
-        try:
+        with pytest.raises(AttributeError) as e:
+            # get_periodic_task with unknown CELERYBEAT_SCHEDULER
             obj.get_periodic_task("does_not_exist")
-            pytest.fail(
-                "get_periodic_task with unknown CELERYBEAT_SCHEDULER"
-            )  # pragma: no cover
-        except AttributeError as e:
-            assert str(e) == "Unsupported celery-beat scheduler: None"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert str(e.value) == "Unsupported celery-beat scheduler: None"
 
-        try:
+        with pytest.raises(AttributeError) as e:
+            # delete_periodic_task with unknown CELERYBEAT_SCHEDULER
             obj.delete_periodic_task("does_not_exist")
-            pytest.fail(
-                "delete_periodic_task with unknown CELERYBEAT_SCHEDULER"
-            )  # pragma: no cover
-        except AttributeError as e:
-            assert str(e) == "Unsupported celery-beat scheduler: None"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert str(e.value) == "Unsupported celery-beat scheduler: None"
 
-        try:
+        with pytest.raises(AttributeError) as e:
+            # create_periodic_task with unknown CELERYBEAT_SCHEDULER
             obj.create_periodic_task(
                 name="task1", task="task.does.not.exists", every="60"
             )
-            pytest.fail(
-                "create_periodic_task with unknown CELERYBEAT_SCHEDULER"
-            )  # pragma: no cover
-        except AttributeError as e:
-            assert str(e) == "Unsupported celery-beat scheduler: None"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert str(e.value) == "Unsupported celery-beat scheduler: None"
 
-        try:
+        with pytest.raises(AttributeError) as e:
+            # create_crontab_task with unknown CELERYBEAT_SCHEDULER
             obj.create_crontab_task(
                 name="task2", task="task.does.not.exists", minute="0", hour="1"
             )
-            pytest.fail(
-                "create_crontab_task with unknown CELERYBEAT_SCHEDULER"
-            )  # pragma: no cover
-        except AttributeError as e:
-            assert str(e) == "Unsupported celery-beat scheduler: None"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert str(e.value) == "Unsupported celery-beat scheduler: None"
 
     else:
         assert obj.get_periodic_task("does_not_exist") is None
@@ -227,15 +200,14 @@ def test_celery(app: Flask, faker: Faker) -> None:
             )
             assert obj.delete_periodic_task("task7")
 
-            try:
+            with pytest.raises(BadRequest) as badrequest:
                 obj.create_periodic_task(
                     name="task8",
                     task="task.does.not.exists",
                     every="60",
                     period="years",  # type: ignore
                 )
-            except BadRequest as e:
-                assert str(e) == "Invalid timedelta period: years"
+            assert str(badrequest.value) == "Invalid timedelta period: years"
 
             obj.create_periodic_task(
                 name="task9",
@@ -244,23 +216,21 @@ def test_celery(app: Flask, faker: Faker) -> None:
             )
             assert obj.delete_periodic_task("task9")
 
-            try:
+            with pytest.raises(AttributeError) as e:
                 obj.create_periodic_task(
                     name="task10",
                     task="task.does.not.exists",
                     every=["60"],  # type: ignore
                 )
-            except AttributeError as e:
-                assert str(e) == "Invalid input parameter every = ['60'] (type list)"
+            assert str(e.value) == "Invalid input parameter every = ['60'] (type list)"
 
-            try:
+            with pytest.raises(AttributeError) as e:
                 obj.create_periodic_task(
                     name="task11",
                     task="task.does.not.exists",
                     every="invalid",
                 )
-            except AttributeError as e:
-                assert str(e) == "Invalid input parameter every = invalid (type str)"
+            assert str(e.value) == "Invalid input parameter every = invalid (type str)"
 
         else:
             obj.create_periodic_task(

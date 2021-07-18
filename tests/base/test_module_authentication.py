@@ -40,11 +40,8 @@ def verify_token_is_not_valid(
     assert unpacked_token[2] is None
     assert unpacked_token[3] is None
 
-    try:
+    with pytest.raises(Exception):
         auth.verify_token(token, token_type=ttype, raiseErrors=True)
-        pytest.fail("No exception raised")  # pragma: no cover
-    except Exception:
-        pass
 
 
 class TestApp(BaseTests):
@@ -171,58 +168,42 @@ class TestApp(BaseTests):
         user = auth.get_user(username=BaseAuthentication.default_user)
         pwd = faker.password(min_pwd_len - 1)
 
-        try:
+        with pytest.raises(RestApiException) as e:
+            # None password
             auth.change_password(user, pwd, None, None)
-            pytest.fail("None password!")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 400
-            assert str(e) == "Missing new password"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert e.value.status_code == 400
+        assert str(e.value) == "Missing new password"
 
-        try:
+        with pytest.raises(RestApiException) as e:
+            # None password confirmation
             auth.change_password(user, pwd, pwd, None)
-            pytest.fail("None password!")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 400
-            assert str(e) == "Missing password confirmation"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert e.value.status_code == 400
+        assert str(e.value) == "Missing password confirmation"
 
-        try:
+        with pytest.raises(RestApiException) as e:
             # wrong confirmation
             auth.change_password(user, pwd, pwd, faker.password(strong=True))
-            pytest.fail("wrong password confirmation!?")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 409
-            assert str(e) == "Your password doesn't match the confirmation"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert e.value.status_code == 409
+        assert str(e.value) == "Your password doesn't match the confirmation"
 
-        try:
+        with pytest.raises(RestApiException) as e:
+            # Failed password strength checks
             auth.change_password(user, pwd, pwd, pwd)
-            pytest.fail("Password strength not verified")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 409
-            assert str(e) == "The new password cannot match the previous password"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert e.value.status_code == 409
+        assert str(e.value) == "The new password cannot match the previous password"
 
-        try:
+        with pytest.raises(RestApiException) as e:
             # the first password parameter is only checked for new password strenght
             # i.e. is verified password != newpassword
             # pwd validity will be checked once completed checks on new password
             # => a random current password is ok here
+            # Failed password strength checks
             auth.change_password(user, faker.password(), pwd, pwd)
-            pytest.fail("Password strength not verified")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 409
-            assert (
-                str(e)
-                == f"Password is too short, use at least {min_pwd_len} characters"
-            )
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert e.value.status_code == 409
+        assert (
+            str(e.value)
+            == f"Password is too short, use at least {min_pwd_len} characters"
+        )
 
         pwd1 = faker.password(strong=True)
         pwd2 = faker.password(strong=True)
@@ -231,32 +212,22 @@ class TestApp(BaseTests):
         assert len(hash_1) > 0
         assert hash_1 != auth.get_password_hash(pwd2)
 
-        try:
+        with pytest.raises(RestApiException) as e:
+            # Hashing empty password
             auth.get_password_hash("")
-            pytest.fail("Hashed a empty password!")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 401
-            assert str(e) == "Invalid password"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert e.value.status_code == 401
+        assert str(e.value) == "Invalid password"
 
-        try:
+        with pytest.raises(RestApiException) as e:
+            # Hashing a None password!
             auth.get_password_hash(None)
-            pytest.fail("Hashed a None password!")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 401
-            assert str(e) == "Invalid password"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert e.value.status_code == 401
+        assert str(e.value) == "Invalid password"
 
         assert auth.verify_password(pwd1, hash_1)
-        try:
+        with pytest.raises(TypeError):
+            # Hashing a None password
             auth.verify_password(None, hash_1)  # type: ignore
-            pytest.fail("Hashed a None password!")  # pragma: no cover
-        except TypeError:
-            pass
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
 
         assert not auth.verify_password(pwd1, None)  # type: ignore
 
@@ -270,14 +241,11 @@ class TestApp(BaseTests):
 
         auth = Connector.get_authentication_instance()
 
-        try:
+        with pytest.raises(RestApiException) as e:
+            # NULL totp
             auth.verify_totp(None, None)  # type: ignore
-            pytest.fail("NULL totp accepted!")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 401
-            assert str(e) == "Verification code is missing"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert e.value.status_code == 401
+        assert str(e.value) == "Verification code is missing"
 
         user = auth.get_user(username=auth.default_user)
         secret = auth.get_totp_secret(user)
@@ -294,23 +262,17 @@ class TestApp(BaseTests):
         assert auth.verify_totp(user, totp.at(now - t30s))
 
         # Verify second-previous and second-ntext totp(s)
-        try:
+        with pytest.raises(RestApiException) as e:
+            # Future totp
             auth.verify_totp(user, totp.at(now + t30s + t30s))
-            pytest.fail("Future totp accepted!")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 401
-            assert str(e) == "Verification code is not valid"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert e.value.status_code == 401
+        assert str(e.value) == "Verification code is not valid"
 
-        try:
+        with pytest.raises(RestApiException) as e:
+            # Past totp
             auth.verify_totp(user, totp.at(now - t30s - t30s))
-            pytest.fail("Past totp accepted!")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 401
-            assert str(e) == "Verification code is not valid"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert e.value.status_code == 401
+        assert str(e.value) == "Verification code is not valid"
 
         # Extend validity window
         auth.TOTP_VALIDITY_WINDOW = 2
@@ -320,23 +282,17 @@ class TestApp(BaseTests):
         assert auth.verify_totp(user, totp.at(now - t30s - t30s))
 
         # Verify second-second-previous and second-second-ntext totp(s)
-        try:
+        with pytest.raises(RestApiException) as e:
+            # Future totp
             auth.verify_totp(user, totp.at(now + t30s + t30s + t30s))
-            pytest.fail("Future totp accepted!")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 401
-            assert str(e) == "Verification code is not valid"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert e.value.status_code == 401
+        assert str(e.value) == "Verification code is not valid"
 
-        try:
+        with pytest.raises(RestApiException) as e:
+            # Past totp
             auth.verify_totp(user, totp.at(now - t30s - t30s - t30s))
-            pytest.fail("Past totp accepted!")  # pragma: no cover
-        except RestApiException as e:
-            assert e.status_code == 401
-            assert str(e) == "Verification code is not valid"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert e.value.status_code == 401
+        assert str(e.value) == "Verification code is not valid"
 
     def test_ip_management(self) -> None:
 
@@ -460,13 +416,10 @@ class TestApp(BaseTests):
 
         unpacked_token = auth.verify_token(None, raiseErrors=False)
         assert not unpacked_token[0]
-        try:
+
+        with pytest.raises(InvalidToken) as invalidtoken:
             auth.verify_token(None, raiseErrors=True)
-            pytest.fail("No exception raised!")  # pragma: no cover
-        except InvalidToken as e:
-            assert str(e) == "Missing token"
-        except Exception:  # pragma: no cover
-            pytest.fail("Unexpected exception raised")
+        assert str(invalidtoken.value) == "Missing token"
 
         # Test token validiy
         _, token = self.do_login(client, None, None)
@@ -647,11 +600,8 @@ class TestApp(BaseTests):
             "group_coordinator": "Coordinator",
             "normal_user": "User",
         }
-        try:
+        with pytest.raises(SystemExit):
             auth.init_roles()
-            pytest.fail("No exception raised")  # pragma: no cover
-        except SystemExit:
-            pass
 
         auth.roles_data = roles_data_backup
 

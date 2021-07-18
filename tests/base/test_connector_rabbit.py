@@ -16,22 +16,16 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
 
     if not Connector.check_availability(CONNECTOR):
 
-        try:
+        with pytest.raises(ServiceUnavailable):
             obj = connector.get_instance()
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ServiceUnavailable:
-            pass
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
         return None
 
     log.info("Executing {} tests", CONNECTOR)
 
-    try:
+    with pytest.raises(ServiceUnavailable):
         connector.get_instance(host="invalidhostname", port="123")
-        pytest.fail("No exception raised on unavailable service")  # pragma: no cover
-    except ServiceUnavailable:
-        pass
 
     obj = connector.get_instance()
     assert obj is not None

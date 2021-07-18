@@ -15,11 +15,9 @@ def test_redis(app: Flask) -> None:
 
     if not Connector.check_availability(CONNECTOR):
 
-        try:
+        with pytest.raises(ServiceUnavailable):
             obj = connector.get_instance()
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ServiceUnavailable:
-            pass
+
         log.warning("Skipping {} tests: service not available", CONNECTOR)
         return None
 

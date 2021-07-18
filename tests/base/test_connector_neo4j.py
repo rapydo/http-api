@@ -20,11 +20,8 @@ CONNECTOR = "neo4j"
 
 if not Connector.check_availability(CONNECTOR):
 
-    try:
+    with pytest.raises(ServiceUnavailable):
         obj = connector.get_instance()
-        pytest.fail("No exception raised")  # pragma: no cover
-    except ServiceUnavailable:
-        pass
 
     log.warning("Skipping {} tests: service not available", CONNECTOR)
 else:
@@ -51,32 +48,18 @@ else:
         @staticmethod
         def test_connector(app: Flask, faker: Faker) -> None:
 
-            try:
+            with pytest.raises(ServiceUnavailable):
                 connector.get_instance(host="invalidhostname", port="123")
-                pytest.fail(
-                    "No exception raised on unavailable service"
-                )  # pragma: no cover
-            except ServiceUnavailable:
-                pass
 
-            try:
-                connector.get_instance(
-                    user="invaliduser",
-                )
-                pytest.fail(
-                    "No exception raised on unavailable service"
-                )  # pragma: no cover
-            except ServiceUnavailable:
-                pass
+            with pytest.raises(ServiceUnavailable):
+                connector.get_instance(user="invaliduser")
 
             obj = connector.get_instance()
             assert obj is not None
 
-            try:
+            with pytest.raises(AttributeError) as e:
                 obj.InvalidModel
-                pytest.fail("No exception raised on InvalidModel")  # pragma: no cover
-            except AttributeError as e:
-                assert str(e) == "Model InvalidModel not found"
+            assert str(e.value) == "Model InvalidModel not found"
 
             for row in obj.cypher("MATCH (u: User) RETURN u limit 1"):
                 u = obj.User.inflate(row[0])
@@ -94,11 +77,10 @@ else:
             assert t.emitted_for.single() is None
             t.delete()
 
-            try:
+            with pytest.raises(CypherSyntaxError) as cyphersyntaxerror:
                 obj.cypher("MATCH (n) RETURN n with a syntax error")
-            # Query informtaion are removed from the CypherSyntaxError exception
-            except CypherSyntaxError as e:
-                assert str(e) == "{code: None} {message: None}"
+            # Query information are removed from the CypherSyntaxError exception
+            assert str(cyphersyntaxerror.value) == "{code: None} {message: None}"
 
             assert obj.sanitize_input("x") == "x"
             assert obj.sanitize_input("x ") == "x"
@@ -154,27 +136,21 @@ else:
         @staticmethod
         def test_parser() -> None:
 
-            try:
+            with pytest.raises(ValueError):
                 # missing :type
                 node1 = NodeDump("TestNode1", fields=["f1"])
-                pytest.fail("No exception raised")  # pragma: no cover
-            except ValueError:
-                pass
 
             node1 = NodeDump("TestNode1", fields=["f1:string", "f2:int", "f3:float"])
 
             node2 = NodeDump("TestNode2", fields=["f1:string", "f2:int", "f3:float"])
 
-            try:
+            with pytest.raises(ValueError):
                 rel = RelationDump(
                     "TestNode1",
                     "MY_REL",
                     "TestNode2",
                     fields=["f1", "f1", "custom:string"],
                 )
-                pytest.fail("No exception raised")  # pragma: no cover
-            except ValueError:
-                pass
 
             rel = RelationDump(
                 "TestNode1",
@@ -206,41 +182,23 @@ else:
             rel.dump("test-string", "test-string2", "custom")
             rel.dump("test-string-bis", "test-string2", "custom")
 
-            try:
+            with pytest.raises(ValueError):
                 node1.dump(None, 10, 20.30)
-                pytest.fail("No exception raised")  # pragma: no cover
-            except ValueError:
-                pass
 
-            try:
+            with pytest.raises(ValueError):
                 node1.dump("only-one")
-                pytest.fail("No exception raised")  # pragma: no cover
-            except ValueError:
-                pass
 
-            try:
+            with pytest.raises(ValueError):
                 node1.dump("only-two", 2)
-                pytest.fail("No exception raised")  # pragma: no cover
-            except ValueError:
-                pass
 
-            try:
+            with pytest.raises(ValueError):
                 node1.dump("too-many", 2, 2.2, 2.22)
-                pytest.fail("No exception raised")  # pragma: no cover
-            except ValueError:
-                pass
 
-            try:
+            with pytest.raises(ValueError):
                 rel.dump("test-string", "test-string2")
-                pytest.fail("No exception raised")  # pragma: no cover
-            except ValueError:
-                pass
 
-            try:
+            with pytest.raises(ValueError):
                 rel.dump("test-string", "test-string2", "custom1", "custom2")
-                pytest.fail("No exception raised")  # pragma: no cover
-            except ValueError:
-                pass
 
             # test the errors if a wrong number of fields is given
 

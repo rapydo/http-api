@@ -15,35 +15,27 @@ def test_mongo(app: Flask) -> None:
 
     if not Connector.check_availability(CONNECTOR):
 
-        try:
+        with pytest.raises(ServiceUnavailable):
             obj = connector.get_instance()
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ServiceUnavailable:
-            pass
 
         log.warning("Skipping {} tests: service not available", CONNECTOR)
         return None
 
     log.info("Executing {} tests", CONNECTOR)
 
-    try:
+    with pytest.raises(ServiceUnavailable):
         obj = connector.get_instance(host="invalidhostname", port="123")
         try:
             obj.Token.objects.first()
         except Exception:
             raise ServiceUnavailable("")
-        pytest.fail("No exception raised on unavailable service")  # pragma: no cover
-    except ServiceUnavailable:
-        pass
 
     obj = connector.get_instance()
     assert obj is not None
 
-    try:
+    with pytest.raises(AttributeError) as e:
         _ = obj.InvalidModel
-        pytest.fail("No exception raised on InvalidModel")  # pragma: no cover
-    except AttributeError as e:
-        assert str(e) == "Model InvalidModel not found"
+    assert str(e.value) == "Model InvalidModel not found"
 
     obj.disconnect()
 
