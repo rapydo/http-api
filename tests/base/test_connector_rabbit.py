@@ -10,17 +10,25 @@ from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
 CONNECTOR = "rabbitmq"
+CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
 
 
+@pytest.mark.skipif(
+    CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
+)
+def test_no_rabbit() -> None:
+
+    with pytest.raises(ServiceUnavailable):
+        connector.get_instance()
+
+    log.warning("Skipping {} tests: service not available", CONNECTOR)
+    return None
+
+
+@pytest.mark.skipif(
+    not CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
+)
 def test_rabbit(app: Flask, faker: Faker) -> None:
-
-    if not Connector.check_availability(CONNECTOR):
-
-        with pytest.raises(ServiceUnavailable):
-            obj = connector.get_instance()
-
-        log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return None
 
     log.info("Executing {} tests", CONNECTOR)
 

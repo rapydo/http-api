@@ -13,9 +13,9 @@ CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
 
 
 @pytest.mark.skipif(
-    CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
+    CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
 )
-def test_no_pushpin(app: Flask) -> None:
+def test_no_pushpin() -> None:
 
     with pytest.raises(ServiceUnavailable):
         connector.get_instance()

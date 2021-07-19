@@ -9,18 +9,26 @@ from restapi.tests import BaseTests
 from restapi.utilities.logs import log
 
 CONNECTOR = "smtp"
+CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
 
 
+# mailmock is always enabled during core tests
+@pytest.mark.skipif(
+    CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
+)
+def test_no_smtp() -> None:  # pragma: no cover
+
+    with pytest.raises(ServiceUnavailable):
+        connector.get_instance()
+
+    log.warning("Skipping {} tests: service not available", CONNECTOR)
+    return None
+
+
+@pytest.mark.skipif(
+    not CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
+)
 def test_smtp(app: Flask, faker: Faker) -> None:
-
-    # mailmock is always enabled during core tests
-    if not Connector.check_availability(CONNECTOR):  # pragma: no cover
-
-        with pytest.raises(ServiceUnavailable):
-            obj = connector.get_instance()
-
-        log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return None
 
     obj = connector.get_instance()
     assert obj is not None

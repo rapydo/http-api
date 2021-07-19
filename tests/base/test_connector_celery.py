@@ -22,7 +22,7 @@ CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
 @pytest.mark.skipif(
     CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
 )
-def test_no_celery(app: Flask) -> None:
+def test_no_celery() -> None:
 
     with pytest.raises(ServiceUnavailable):
         connector.get_instance()
@@ -148,7 +148,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
 
 
 @pytest.mark.skipif(
-    CONNECTOR_AVAILABLE and CeleryExt.CELERYBEAT_SCHEDULER is not None,
+    not CONNECTOR_AVAILABLE or CeleryExt.CELERYBEAT_SCHEDULER is not None,
     reason="This test needs celery-beat to be NOT available",
 )
 def test_no_celerybeat() -> None:
@@ -184,7 +184,7 @@ def test_no_celerybeat() -> None:
 
 
 @pytest.mark.skipif(
-    CONNECTOR_AVAILABLE and CeleryExt.CELERYBEAT_SCHEDULER is None,
+    not CONNECTOR_AVAILABLE or CeleryExt.CELERYBEAT_SCHEDULER is None,
     reason="This test needs celery-beat to be available",
 )
 def test_celerybeat() -> None:
@@ -237,7 +237,7 @@ def test_celerybeat() -> None:
 
 
 @pytest.mark.skipif(
-    CONNECTOR_AVAILABLE and CeleryExt.CELERYBEAT_SCHEDULER != "REDIS",
+    not CONNECTOR_AVAILABLE or CeleryExt.CELERYBEAT_SCHEDULER != "REDIS",
     reason="This test needs REDIS celery-beat to be available",
 )
 def test_redis_celerybeat() -> None:
@@ -309,7 +309,7 @@ def test_redis_celerybeat() -> None:
 
 
 @pytest.mark.skipif(
-    CONNECTOR_AVAILABLE and CeleryExt.CELERYBEAT_SCHEDULER != "MONGODB",
+    not CONNECTOR_AVAILABLE or CeleryExt.CELERYBEAT_SCHEDULER != "MONGODB",
     reason="This test needs MongoDB celery-beat to be available",
 )
 def test_mongodb_celerybeat() -> None:
