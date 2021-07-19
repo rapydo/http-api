@@ -5,22 +5,20 @@ Beware: if env TEST_DESTROY_MODE == 1 this test will destroy your database, be c
 """
 import os
 
+import pytest
+
 from restapi.connectors import Connector
 from restapi.server import ServerModes, create_app
 from restapi.services.authentication import BaseAuthentication
-from restapi.utilities.logs import log
 
 
+# Only executed if tests are run with --destroy flag
+@pytest.mark.skipif(
+    not Connector.check_availability("authentication")
+    or os.getenv("TEST_DESTROY_MODE", "0") != "1",
+    reason="This test needs authentication and TEST_DESTROY_MODE to be enabled",
+)
 def test_init() -> None:
-
-    if not Connector.check_availability("authentication"):
-        log.warning("Skipping init test: service not available")
-        return
-
-    # Only executed if tests are run with --destroy flag
-    if os.getenv("TEST_DESTROY_MODE", "0") != "1":
-        log.info("Skipping destroy test, TEST_DESTROY_MODE not enabled")
-        return
 
     auth = Connector.get_authentication_instance()
     if Connector.authentication_service == "sqlalchemy":

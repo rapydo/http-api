@@ -148,7 +148,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
 
 
 @pytest.mark.skipif(
-    not CONNECTOR_AVAILABLE or CeleryExt.CELERYBEAT_SCHEDULER is not None,
+    not CONNECTOR_AVAILABLE or CeleryExt.CELERYBEAT_SCHEDULER is None,
     reason="This test needs celery-beat to be NOT available",
 )
 def test_no_celerybeat() -> None:
@@ -184,7 +184,7 @@ def test_no_celerybeat() -> None:
 
 
 @pytest.mark.skipif(
-    not CONNECTOR_AVAILABLE or CeleryExt.CELERYBEAT_SCHEDULER is None,
+    not CONNECTOR_AVAILABLE or CeleryExt.CELERYBEAT_SCHEDULER is not None,
     reason="This test needs celery-beat to be available",
 )
 def test_celerybeat() -> None:

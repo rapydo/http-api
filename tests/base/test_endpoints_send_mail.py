@@ -1,19 +1,19 @@
 from typing import Any, Dict
 
+import pytest
 from faker import Faker
 
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.tests import API_URI, BaseTests, FlaskClient
-from restapi.utilities.logs import log
 
 
+@pytest.mark.skipif(
+    not Connector.check_availability("smtp") or not Env.get_bool("AUTH_ENABLE"),
+    reason="This test needs smtp and auth to be available",
+)
 class TestApp(BaseTests):
     def test_sendmail(self, client: FlaskClient, faker: Faker) -> None:
-
-        if not Connector.check_availability("smtp") or not Env.get_bool("AUTH_ENABLE"):
-            log.warning("Skipping admin send mail tests")
-            return
 
         headers, _ = self.do_login(client, None, None)
 

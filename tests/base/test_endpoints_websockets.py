@@ -1,18 +1,16 @@
+import pytest
 from faker import Faker
 
 from restapi.connectors import Connector
 from restapi.tests import API_URI, BaseTests, FlaskClient
-from restapi.utilities.logs import log
 
 
+@pytest.mark.skipif(
+    not Connector.check_availability("pushpin"),
+    reason="This test needs pushpin to be available",
+)
 class TestApp(BaseTests):
     def test_websockets(self, client: FlaskClient, faker: Faker) -> None:
-
-        if not Connector.check_availability("pushpin"):
-            log.warning("Skipping websockets test: pushpin service not available")
-            return
-
-        log.info("Executing websockets tests")
 
         channel = faker.pystr()
         r = client.post(f"{API_URI}/socket/{channel}")

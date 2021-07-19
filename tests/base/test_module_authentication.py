@@ -18,7 +18,6 @@ from restapi.services.authentication import (
     RoleObj,
 )
 from restapi.tests import BaseTests, FlaskClient
-from restapi.utilities.logs import log
 
 
 def verify_token_is_valid(
@@ -44,12 +43,12 @@ def verify_token_is_not_valid(
         auth.verify_token(token, token_type=ttype, raiseErrors=True)
 
 
+@pytest.mark.skipif(
+    Connector.check_availability("authentication"),
+    reason="This test needs authentication to be available",
+)
 class TestApp(BaseTests):
     def test_password_management(self, faker: Faker) -> None:
-
-        if not Connector.check_availability("authentication"):
-            log.warning("Skipping authentication test: service not available")
-            return
 
         # Ensure name and surname longer than 3
         name = self.get_first_name(faker)
@@ -224,11 +223,11 @@ class TestApp(BaseTests):
 
         assert not auth.verify_password(None, None)  # type: ignore
 
+    @pytest.mark.skipif(
+        not Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"),
+        reason="This test needs 2FA to be available",
+    )
     def test_totp_management(self) -> None:
-
-        if not Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
-            log.warning("Skipping TOTP test: 2FA not enabled")
-            return
 
         auth = Connector.get_authentication_instance()
 
@@ -277,10 +276,6 @@ class TestApp(BaseTests):
 
     def test_ip_management(self) -> None:
 
-        if not Connector.check_availability("authentication"):
-            log.warning("Skipping authentication test: service not available")
-            return
-
         auth = Connector.get_authentication_instance()
 
         ip_data = auth.localize_ip("8.8.8.8")
@@ -292,10 +287,6 @@ class TestApp(BaseTests):
         assert auth.localize_ip("8.8.8.8, 4.4.4.4") is None
 
     def test_login_management(self, faker: Faker) -> None:
-
-        if not Connector.check_availability("authentication"):
-            log.warning("Skipping authentication test: service not available")
-            return
 
         auth = Connector.get_authentication_instance()
 
@@ -325,10 +316,6 @@ class TestApp(BaseTests):
         assert len(logins) == 0
 
     def test_tokens_management(self, client: FlaskClient, faker: Faker) -> None:
-
-        if not Connector.check_availability("authentication"):
-            log.warning("Skipping authentication test: service not available")
-            return
 
         auth = Connector.get_authentication_instance()
 
@@ -435,10 +422,6 @@ class TestApp(BaseTests):
         assert not auth.verify_token_validity(jti, another_user)
 
     def test_users_groups_roles(self, faker: Faker) -> None:
-
-        if not Connector.check_availability("authentication"):
-            log.warning("Skipping authentication test: service not available")
-            return
 
         auth = Connector.get_authentication_instance()
 
@@ -624,10 +607,6 @@ class TestApp(BaseTests):
         assert group.fullname != "Changed"
 
     def test_authentication_abstract_methods(self, faker: Faker) -> None:
-
-        if not Connector.check_availability("authentication"):
-            log.warning("Skipping authentication test: service not available")
-            return
 
         # Super trick!
         # https://clamytoe.github.io/articles/2020/Mar/12/testing-abcs-with-abstract-methods-with-pytest
