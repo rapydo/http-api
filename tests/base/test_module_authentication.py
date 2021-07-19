@@ -44,7 +44,7 @@ def verify_token_is_not_valid(
 
 
 @pytest.mark.skipif(
-    Connector.check_availability("authentication"),
+    not Connector.check_availability("authentication"),
     reason="This test needs authentication to be available",
 )
 class TestApp(BaseTests):
