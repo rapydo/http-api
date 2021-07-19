@@ -10,6 +10,7 @@ from restapi.config import get_project_configuration
 from restapi.connectors import Connector
 from restapi.connectors import celery as connector
 from restapi.connectors.celery import CeleryExt, Ignore
+from restapi.env import Env
 from restapi.exceptions import BadRequest, ServiceUnavailable
 from restapi.server import ServerModes, create_app
 from restapi.tests import BaseTests
@@ -148,7 +149,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
 
 
 @pytest.mark.skipif(
-    not CONNECTOR_AVAILABLE or CeleryExt.CELERYBEAT_SCHEDULER is not None,
+    not CONNECTOR_AVAILABLE or Env.get_bool("CELERYBEAT_ENABLED"),
     reason="This test needs celery-beat to be NOT available",
 )
 def test_no_celerybeat() -> None:
@@ -184,7 +185,7 @@ def test_no_celerybeat() -> None:
 
 
 @pytest.mark.skipif(
-    not CONNECTOR_AVAILABLE or CeleryExt.CELERYBEAT_SCHEDULER is None,
+    not CONNECTOR_AVAILABLE or not Env.get_bool("CELERYBEAT_ENABLED"),
     reason="This test needs celery-beat to be available",
 )
 def test_celerybeat() -> None:
@@ -235,89 +236,73 @@ def test_celerybeat() -> None:
     assert obj.delete_periodic_task("task2_bis")
     assert not obj.delete_periodic_task("task2_bis")
 
+    if CeleryExt.CELERYBEAT_SCHEDULER == "REDIS":
 
-@pytest.mark.skipif(
-    not CONNECTOR_AVAILABLE or CeleryExt.CELERYBEAT_SCHEDULER != "REDIS",
-    reason="This test needs REDIS celery-beat to be available",
-)
-def test_redis_celerybeat() -> None:
-
-    obj = connector.get_instance()
-    assert obj is not None
-
-    obj.create_periodic_task(
-        name="task3",
-        task="task.does.not.exists",
-        every=60,
-    )
-    assert obj.delete_periodic_task("task3")
-
-    obj.create_periodic_task(
-        name="task4", task="task.does.not.exists", every=60, period="seconds"
-    )
-    assert obj.delete_periodic_task("task4")
-
-    obj.create_periodic_task(
-        name="task5", task="task.does.not.exists", every=60, period="minutes"
-    )
-    assert obj.delete_periodic_task("task5")
-
-    obj.create_periodic_task(
-        name="task6", task="task.does.not.exists", every=60, period="hours"
-    )
-    assert obj.delete_periodic_task("task6")
-
-    obj.create_periodic_task(
-        name="task7", task="task.does.not.exists", every=60, period="days"
-    )
-    assert obj.delete_periodic_task("task7")
-
-    with pytest.raises(BadRequest, match=r"Invalid timedelta period: years"):
         obj.create_periodic_task(
-            name="task8",
+            name="task3",
             task="task.does.not.exists",
-            every="60",
-            period="years",  # type: ignore
+            every=60,
         )
+        assert obj.delete_periodic_task("task3")
 
-    obj.create_periodic_task(
-        name="task9",
-        task="task.does.not.exists",
-        every=timedelta(seconds=60),
-    )
-    assert obj.delete_periodic_task("task9")
-
-    with pytest.raises(
-        AttributeError,
-        match=r"Invalid input parameter every = \['60'\] \(type list\)",
-    ):
         obj.create_periodic_task(
-            name="task10",
-            task="task.does.not.exists",
-            every=["60"],  # type: ignore
+            name="task4", task="task.does.not.exists", every=60, period="seconds"
         )
+        assert obj.delete_periodic_task("task4")
 
-    with pytest.raises(
-        AttributeError,
-        match=r"Invalid input parameter every = invalid \(type str\)",
-    ):
         obj.create_periodic_task(
-            name="task11",
-            task="task.does.not.exists",
-            every="invalid",
+            name="task5", task="task.does.not.exists", every=60, period="minutes"
         )
+        assert obj.delete_periodic_task("task5")
 
+        obj.create_periodic_task(
+            name="task6", task="task.does.not.exists", every=60, period="hours"
+        )
+        assert obj.delete_periodic_task("task6")
 
-@pytest.mark.skipif(
-    not CONNECTOR_AVAILABLE or CeleryExt.CELERYBEAT_SCHEDULER != "MONGODB",
-    reason="This test needs MongoDB celery-beat to be available",
-)
-def test_mongodb_celerybeat() -> None:
+        obj.create_periodic_task(
+            name="task7", task="task.does.not.exists", every=60, period="days"
+        )
+        assert obj.delete_periodic_task("task7")
 
-    obj = connector.get_instance()
-    assert obj is not None
+        with pytest.raises(BadRequest, match=r"Invalid timedelta period: years"):
+            obj.create_periodic_task(
+                name="task8",
+                task="task.does.not.exists",
+                every="60",
+                period="years",  # type: ignore
+            )
 
-    obj.create_periodic_task(
-        name="task3", task="task.does.not.exists", every="60", period="minutes"
-    )
-    assert obj.delete_periodic_task("task3")
+        obj.create_periodic_task(
+            name="task9",
+            task="task.does.not.exists",
+            every=timedelta(seconds=60),
+        )
+        assert obj.delete_periodic_task("task9")
+
+        with pytest.raises(
+            AttributeError,
+            match=r"Invalid input parameter every = \['60'\] \(type list\)",
+        ):
+            obj.create_periodic_task(
+                name="task10",
+                task="task.does.not.exists",
+                every=["60"],  # type: ignore
+            )
+
+        with pytest.raises(
+            AttributeError,
+            match=r"Invalid input parameter every = invalid \(type str\)",
+        ):
+            obj.create_periodic_task(
+                name="task11",
+                task="task.does.not.exists",
+                every="invalid",
+            )
+
+    if CeleryExt.CELERYBEAT_SCHEDULER == "MONGODB":
+
+        obj.create_periodic_task(
+            name="task3", task="task.does.not.exists", every="60", period="minutes"
+        )
+        assert obj.delete_periodic_task("task3")
