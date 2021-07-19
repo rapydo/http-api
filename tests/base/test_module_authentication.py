@@ -223,11 +223,12 @@ class TestApp(BaseTests):
 
         assert not auth.verify_password(None, None)  # type: ignore
 
+    @staticmethod
     @pytest.mark.skipif(
         not Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"),
         reason="This test needs 2FA to be available",
     )
-    def test_totp_management(self) -> None:
+    def test_totp_management() -> None:
 
         auth = Connector.get_authentication_instance()
 
@@ -274,7 +275,8 @@ class TestApp(BaseTests):
             # Past totp
             auth.verify_totp(user, totp.at(now - t30s - t30s - t30s))
 
-    def test_ip_management(self) -> None:
+    @staticmethod
+    def test_ip_management() -> None:
 
         auth = Connector.get_authentication_instance()
 
@@ -286,7 +288,8 @@ class TestApp(BaseTests):
 
         assert auth.localize_ip("8.8.8.8, 4.4.4.4") is None
 
-    def test_login_management(self, faker: Faker) -> None:
+    @staticmethod
+    def test_login_management(faker: Faker) -> None:
 
         auth = Connector.get_authentication_instance()
 
@@ -421,7 +424,8 @@ class TestApp(BaseTests):
 
         assert not auth.verify_token_validity(jti, another_user)
 
-    def test_users_groups_roles(self, faker: Faker) -> None:
+    @staticmethod
+    def test_users_groups_roles(faker: Faker) -> None:
 
         auth = Connector.get_authentication_instance()
 
@@ -606,7 +610,8 @@ class TestApp(BaseTests):
         group = auth.get_group(name="Default")
         assert group.fullname != "Changed"
 
-    def test_authentication_abstract_methods(self, faker: Faker) -> None:
+    @staticmethod
+    def test_authentication_abstract_methods(faker: Faker) -> None:
 
         # Super trick!
         # https://clamytoe.github.io/articles/2020/Mar/12/testing-abcs-with-abstract-methods-with-pytest
