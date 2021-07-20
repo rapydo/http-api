@@ -47,15 +47,6 @@ class EndpointResource(MethodResource, Resource):
     def get_user(self) -> Optional[User]:
         return self.auth.get_user(user_id=self.authorized_user)
 
-    # Deprecated since 1.1
-    def verify_admin(self) -> bool:  # pragma: no cover
-        """Check if current user has Administration role"""
-        warnings.warn(
-            "Deprecated use of verify_admin, use auth.is_admin(user) instead",
-            DeprecationWarning,
-        )
-        return self.auth.verify_roles(self.get_user(), [Role.ADMIN], warnings=False)
-
     @staticmethod
     def response(
         content: ResponseContent = None,
