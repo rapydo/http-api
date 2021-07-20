@@ -99,8 +99,8 @@ class Mail(Connector):
         subject: str,
         to_address: Optional[str] = None,
         from_address: Optional[str] = None,
-        cc: Optional[Union[str, List[str]]] = None,
-        bcc: Optional[Union[str, List[str]]] = None,
+        cc: Union[None, str, List[str]] = None,
+        bcc: Union[None, str, List[str]] = None,
         plain_body: Optional[str] = None,
     ) -> None:
 
@@ -126,8 +126,8 @@ class Mail(Connector):
         subject: str,
         to_address: Optional[str] = None,
         from_address: Optional[str] = None,
-        cc: Optional[Union[str, List[str]]] = None,
-        bcc: Optional[Union[str, List[str]]] = None,
+        cc: Union[None, str, List[str]] = None,
+        bcc: Union[None, str, List[str]] = None,
         plain_body: Optional[str] = None,
         retry: int = 1,
     ) -> bool:
@@ -158,8 +158,8 @@ class Mail(Connector):
         subject: str,
         to_address: Optional[str] = None,
         from_address: Optional[str] = None,
-        cc: Optional[Union[str, List[str]]] = None,
-        bcc: Optional[Union[str, List[str]]] = None,
+        cc: Union[None, str, List[str]] = None,
+        bcc: Union[None, str, List[str]] = None,
         plain_body: Optional[str] = None,
     ) -> bool:
 

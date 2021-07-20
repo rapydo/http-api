@@ -21,7 +21,7 @@ class Env:
 
     @staticmethod
     @lru_cache
-    def to_bool(var: Optional[Union[str, bool]], default: bool = False) -> bool:
+    def to_bool(var: Union[None, str, bool], default: bool = False) -> bool:
 
         if var is None:
             return default
@@ -50,7 +50,7 @@ class Env:
 
     @staticmethod
     @lru_cache
-    def to_int(var: Optional[Union[str, int]], default: int = 0) -> int:
+    def to_int(var: Union[None, str, int], default: int = 0) -> int:
 
         if var is None:
             return default

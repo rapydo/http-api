@@ -72,8 +72,8 @@ class DateTime(Field, webargs_fields.DateTime):
 class Dict(webargs_fields.Dict, Field):
     def __init__(
         self,
-        keys: Optional[Union[Field, type]] = None,
-        values: Optional[Union[Field, type]] = None,
+        keys: Union[None, Field, type] = None,
+        values: Union[None, Field, type] = None,
         **kwargs: Any,
     ) -> None:
 
