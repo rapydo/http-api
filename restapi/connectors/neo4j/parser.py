@@ -136,7 +136,8 @@ class DataDump:
             cls.delete_relationships(label1, relation, label2, limit=limit)
 
     def close(self) -> None:
-        self.handle.close()
+        if self.handle:
+            self.handle.close()
 
     def __del__(self) -> None:
         self.close()
