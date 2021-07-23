@@ -864,6 +864,8 @@ class BaseAuthentication(metaclass=ABCMeta):
             message["actions"].append("FIRST LOGIN")
             message["errors"].append("Please change your temporary password")
 
+            self.log_event(Events.password_expired, user=user)
+
             if totp_authentication:
 
                 message["qr_code"] = [self.get_qrcode(user)]
@@ -881,6 +883,8 @@ class BaseAuthentication(metaclass=ABCMeta):
 
                 message["actions"].append("PASSWORD EXPIRED")
                 message["errors"].append("Your password is expired, please change it")
+
+                self.log_event(Events.password_expired, user=user)
 
         return message
 

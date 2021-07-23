@@ -28,7 +28,7 @@ from restapi.connectors import Connector, celery
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.utilities.faker import get_faker
-from restapi.utilities.logs import LOGS_FOLDER, log
+from restapi.utilities.logs import LOGS_FOLDER, Events, log
 
 SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
 API_URI = f"{SERVER_URI}{API_URL}"
@@ -176,6 +176,11 @@ class BaseTests:
                 data = {}
 
                 if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
+
+                    events = cls.get_last_events(1)
+                    assert events[0].event == Events.password_expired.value
+                    assert events[0].user == USER
+
                     newpwd = cls.faker.password(strong=True)
                     if test_failures:
                         data["new_password"] = newpwd

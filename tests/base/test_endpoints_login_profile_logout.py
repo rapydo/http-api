@@ -495,6 +495,10 @@ class TestApp(BaseTests):
             # validate that the QR code is a valid PNG image
             # ... not implemented
 
+            events = self.get_last_events(1)
+            assert events[0].event == Events.password_expired.value
+            assert events[0].user == username
+
             data["totp_code"] = "000000"
             r = client.post(f"{AUTH_URI}/login", data=data)
             assert r.status_code == 401
