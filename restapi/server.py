@@ -104,7 +104,12 @@ def create_app(
     # CORS
     if not PRODUCTION:
 
-        cors_origin = get_frontend_url() if not TESTING else "*"
+        if TESTING:
+            cors_origin = "*"
+        else:  # pragma: no cover
+            cors_origin = get_frontend_url()
+            # Beware, this only works because get_frontend_url never append a port
+            cors_origin += ":*"
 
         CORS(
             microservice,
