@@ -14,8 +14,8 @@ class TestApp(BaseTests):
         # Verify default is not HTML
         r = client.get(f"{API_URI}/status")
         assert r.status_code == 200
-        output = self.get_content(r)
-        assert output == alive_message
+        response = self.get_content(r)
+        assert response == alive_message
 
         # Check HTML response if agent/request is text/html
         headers = {"Accept": "text/html"}

@@ -8,6 +8,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/specs")
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert "host" in content
         assert "info" in content
         assert "swagger" in content
@@ -39,6 +40,7 @@ class TestApp(BaseTests):
             r = client.get(f"{API_URI}/specs", headers=headers)
             assert r.status_code == 200
             content = self.get_content(r)
+            assert isinstance(content, dict)
             assert "host" in content
             assert "info" in content
             assert "swagger" in content

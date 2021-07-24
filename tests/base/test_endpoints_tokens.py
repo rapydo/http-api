@@ -23,8 +23,9 @@ class TestApp(BaseTests):
 
         # TEST GET ALL TOKENS
         r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
-        content = self.get_content(r)
         assert r.status_code == 200
+        content = self.get_content(r)
+        assert isinstance(content, list)
 
         # Probably due to password expiration:
         # change password invalidated tokens created before
@@ -38,8 +39,9 @@ class TestApp(BaseTests):
 
             # TEST GET ALL TOKENS
             r = client.get(f"{AUTH_URI}/tokens", headers=last_tokens_header)
-            content = self.get_content(r)
             assert r.status_code == 200
+            content = self.get_content(r)
+            assert isinstance(content, list)
             assert len(content) >= 3
 
         # save a token to be used for further tests
@@ -64,6 +66,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 206
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert "total" in content
         assert content["total"] > 0
 
@@ -74,6 +77,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 206
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert "total" in content
         assert content["total"] > 0
 
@@ -84,6 +88,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 206
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert "total" in content
         assert content["total"] == 0
 
@@ -94,6 +99,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 206
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert "total" in content
         assert content["total"] > 0
 
@@ -124,7 +130,9 @@ class TestApp(BaseTests):
             headers=last_tokens_header,
         )
         assert r.status_code == 200
-        assert len(self.get_content(r)) == 0
+        content = self.get_content(r)
+        assert isinstance(content, list)
+        assert len(content) == 0
 
         r = client.get(
             f"{API_URI}/admin/tokens",
@@ -133,6 +141,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) <= 2
 
         r = client.get(
@@ -141,7 +150,9 @@ class TestApp(BaseTests):
             headers=last_tokens_header,
         )
         assert r.status_code == 200
-        assert len(self.get_content(r)) >= 1
+        content = self.get_content(r)
+        assert isinstance(content, list)
+        assert len(content) >= 1
 
         r = client.get(
             f"{API_URI}/admin/tokens",
@@ -149,7 +160,9 @@ class TestApp(BaseTests):
             headers=last_tokens_header,
         )
         assert r.status_code == 200
-        assert len(self.get_content(r)) == 0
+        content = self.get_content(r)
+        assert isinstance(content, list)
+        assert len(content) == 0
 
         r = client.get(
             f"{API_URI}/admin/tokens",
@@ -166,6 +179,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         default_sort = self.get_content(r)
+        assert isinstance(default_sort, list)
         assert len(default_sort) >= 2
 
         r = client.get(
@@ -184,6 +198,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         asc_sort = self.get_content(r)
+        assert isinstance(asc_sort, list)
         assert len(asc_sort) >= 2
         assert default_sort[0]["token"] == asc_sort[0]["token"]
         assert default_sort[-1]["token"] == asc_sort[-1]["token"]
@@ -204,6 +219,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         desc_sort = self.get_content(r)
+        assert isinstance(desc_sort, list)
         # Results of desc_sort can't be compared with previous contents
         # It may only be done if we were able to retrieve all tokens, in this case the
         # first desc will be the last asc... But we cannot ensure to be able to always
@@ -216,7 +232,9 @@ class TestApp(BaseTests):
         # TEST GET ALL TOKENS
         r = client.get(f"{API_URI}/admin/tokens", headers=last_tokens_header)
         assert r.status_code == 200
-        assert len(self.get_content(r)) >= 3
+        content = self.get_content(r)
+        assert isinstance(content, list)
+        assert len(content) >= 3
 
         # DELETE INVALID TOKEN
         r = client.delete(f"{API_URI}/admin/tokens/xyz", headers=last_tokens_header)
@@ -260,8 +278,9 @@ class TestApp(BaseTests):
 
         # TEST GET ALL TOKENS
         r = client.get(f"{AUTH_URI}/tokens", headers=user_header)
-        content = self.get_content(r)
         assert r.status_code == 200
+        content = self.get_content(r)
+        assert isinstance(content, list)
 
         token_id = None
         for c in content:

@@ -233,6 +233,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         response = self.get_content(r)
+        assert isinstance(response, dict)
         assert "choice" in response
         assert "key" in response["choice"]
         assert "description" in response["choice"]
@@ -258,6 +259,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         response = self.get_content(r)
+        assert isinstance(response, dict)
         assert "choice" in response
         assert "key" in response["choice"]
         assert "description" in response["choice"]
@@ -269,6 +271,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         response = self.get_content(r)
+        assert isinstance(response, dict)
         assert "choice" in response
         assert "key" in response["choice"]
         assert "description" in response["choice"]
@@ -284,6 +287,7 @@ class TestApp(BaseTests):
         # not included in the choice, the description will simply match the key
         assert r.status_code == 200
         response = self.get_content(r)
+        assert isinstance(response, dict)
         assert "choice" in response
         assert "key" in response["choice"]
         assert "description" in response["choice"]

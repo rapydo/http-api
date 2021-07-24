@@ -287,7 +287,9 @@ else:
             headers, _ = self.do_login(client, None, None)
             r = client.get(f"{AUTH_URI}/profile", headers=headers)
             assert r.status_code == 200
-            uuid = self.get_content(r).get("uuid")
+            response = self.get_content(r)
+            assert isinstance(response, dict)
+            uuid = str(response.get("uuid"))
 
             token = self.get_crafted_token("x", user_id=uuid)
             r = client.post(f"{AUTH_URI}/login/unlock/{token}")

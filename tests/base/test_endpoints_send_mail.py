@@ -59,6 +59,7 @@ class TestApp(BaseTests):
         assert r.status_code == 200
 
         response = self.get_content(r)
+        assert isinstance(response, dict)
         assert "html_body" in response
         assert "plain_body" in response
         assert "subject" in response
@@ -80,6 +81,7 @@ class TestApp(BaseTests):
         assert r.status_code == 200
 
         response = self.get_content(r)
+        assert isinstance(response, dict)
         assert "html_body" in response
         assert "plain_body" in response
         assert "subject" in response

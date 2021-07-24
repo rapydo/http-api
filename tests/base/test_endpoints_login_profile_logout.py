@@ -114,7 +114,9 @@ class TestApp(BaseTests):
         log.info("*** VERIFY valid token")
         r = client.get(f"{AUTH_URI}/profile", headers=self.get("auth_header"))
         assert r.status_code == 200
-        uuid = self.get_content(r).get("uuid")
+        content = self.get_content(r)
+        assert isinstance(content, dict)
+        uuid = content.get("uuid")
 
         # Check failure
         log.info("*** VERIFY invalid token")
@@ -245,6 +247,7 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
         c = self.get_content(r)
+        assert isinstance(c, dict)
         assert c.get("name") is not None
         assert c.get("name") != newname
         assert c.get("uuid") is not None
@@ -273,6 +276,7 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
         c = self.get_content(r)
+        assert isinstance(c, dict)
         assert c.get("name") == newname
         assert c.get("uuid") != newuuid
 
@@ -484,6 +488,7 @@ class TestApp(BaseTests):
             r = client.post(f"{AUTH_URI}/login", data=data)
             assert r.status_code == 403
             resp = self.get_content(r)
+            assert isinstance(resp, dict)
 
             assert "actions" in resp
             assert "errors" in resp
@@ -516,6 +521,7 @@ class TestApp(BaseTests):
                 r = client.post(f"{AUTH_URI}/login", data=data)
                 assert r.status_code == 400
                 resp = self.get_content(r)
+                assert isinstance(resp, dict)
                 assert "totp_code" in resp
                 assert "Invalid TOTP format" in resp["totp_code"]
 
@@ -541,6 +547,7 @@ class TestApp(BaseTests):
             r = client.post(f"{AUTH_URI}/login", data=data)
             assert r.status_code == 403
             resp = self.get_content(r)
+            assert isinstance(resp, dict)
             assert "actions" in resp
             assert "errors" in resp
             assert "TOTP" in resp["actions"]
@@ -563,6 +570,7 @@ class TestApp(BaseTests):
                 r = client.post(f"{AUTH_URI}/login", data=data)
                 assert r.status_code == 400
                 resp = self.get_content(r)
+                assert isinstance(resp, dict)
                 assert "totp_code" in resp
                 assert "Invalid TOTP format" in resp["totp_code"]
 
@@ -608,6 +616,7 @@ class TestApp(BaseTests):
                 r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
                 assert r.status_code == 400
                 resp = self.get_content(r)
+                assert isinstance(resp, dict)
                 assert "totp_code" in resp
                 assert "Invalid TOTP format" in resp["totp_code"]
 

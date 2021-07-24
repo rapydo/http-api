@@ -28,11 +28,12 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
         assert r.status_code == 200
         uuid = self.get_content(r)
+        assert isinstance(uuid, str)
 
         r = client.get(f"{API_URI}/admin/groups", headers=headers)
         assert r.status_code == 200
         groups = self.get_content(r)
-        assert groups
+        assert isinstance(groups, list)
         assert len(groups) > 0
 
         assert "uuid" in groups[0]
@@ -83,6 +84,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/admin/groups", headers=headers)
         assert r.status_code == 200
         groups = self.get_content(r)
+        assert isinstance(groups, list)
         for g in groups:
             if g.get("uuid") == uuid:
 
@@ -100,6 +102,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/admin/groups", headers=headers)
         assert r.status_code == 200
         groups = self.get_content(r)
+        assert isinstance(groups, list)
         for g in groups:
             if g.get("uuid") == uuid:  # pragma: no cover
                 pytest.fail("Group not deleted!")
@@ -113,7 +116,9 @@ class TestApp(BaseTests):
 
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
-        user_uuid = self.get_content(r).get("uuid")
+        content = self.get_content(r)
+        assert isinstance(content, dict)
+        user_uuid = content.get("uuid")
 
         data = {
             "fullname": "Default group",

@@ -46,6 +46,7 @@ class TestNeo4j(BaseTests):
         r = client.get(f"{API_URI}/tests/neo4j/3")
         assert r.status_code == 200
         data = self.get_content(r)
+        assert isinstance(data, dict)
         data["created"] = dateutil.parser.parse(data["created"])
         data["modified1"] = dateutil.parser.parse(data["modified1"])
         data["modified2"] = dateutil.parser.parse(data["modified2"])

@@ -98,15 +98,27 @@ class BaseTests:
         return json.loads(r.data.decode("utf-8"))
 
     @staticmethod
-    def get_content(http_out: Response) -> Any:
+    def get_content(http_out: Response) -> Union[str, bool, List[Any], Dict[str, Any]]:
 
         try:
             response = json.loads(http_out.get_data().decode())
+            if isinstance(
+                response,
+                (
+                    str,
+                    bool,
+                    list,
+                    dict,
+                ),
+            ):
+                return response
+
+            raise ValueError(  # pragma: no cover
+                f"Unknown response type: {type(response)}"
+            )
         except Exception as e:  # pragma: no cover
             log.error("Failed to load response:\n{}", e)
             raise ValueError(f"Malformed response: {http_out}")
-
-        return response
 
     @staticmethod
     def generate_totp(email: Optional[str]) -> str:
@@ -316,6 +328,7 @@ class BaseTests:
         r = client.post(f"{API_URI}/admin/users", data=user_data, headers=admin_headers)
         assert r.status_code == 200
         uuid = cls.get_content(r)
+        assert isinstance(uuid, str)
 
         return uuid, user_data
 
@@ -347,6 +360,7 @@ class BaseTests:
         )
         assert r.status_code == 200
         uuid = cls.get_content(r)
+        assert isinstance(uuid, str)
 
         return uuid, group_data
 

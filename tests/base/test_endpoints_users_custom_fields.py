@@ -31,6 +31,7 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
         response = self.get_content(r)
+        assert isinstance(response, dict)
 
         for field in output_fields:
             assert field in response
@@ -38,8 +39,9 @@ class TestApp(BaseTests):
         # Verify custom input fields (if defined) included in the profile input schema
         r = client.patch(f"{AUTH_URI}/profile", data={"get_schema": 1}, headers=headers)
         response = self.get_content(r)
+        assert isinstance(response, dict)
         for field in profile_inputs.keys():
-            for expected in response:
+            for expected in response.values():
                 if expected["key"] == field:
                     break
             else:  # pragma: no cover
@@ -48,8 +50,9 @@ class TestApp(BaseTests):
         # Verify custom registration fields (if defined) included in the reg. schema
         r = client.post(f"{AUTH_URI}/profile", data={"get_schema": 1})
         response = self.get_content(r)
+        assert isinstance(response, dict)
         for field in registration_inputs.keys():
-            for expected in response:
+            for expected in response.values():
                 if expected["key"] == field:
                     break
             else:  # pragma: no cover
@@ -63,8 +66,9 @@ class TestApp(BaseTests):
             f"{API_URI}/admin/users", data={"get_schema": 1}, headers=headers
         )
         response = self.get_content(r)
+        assert isinstance(response, dict)
         for field in admin_inputs.keys():
-            for expected in response:
+            for expected in response.values():
                 if expected["key"] == field:
                     break
             else:  # pragma: no cover
@@ -75,6 +79,7 @@ class TestApp(BaseTests):
         # Verify custom admin output fields (if defined) included in admin users output
         r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
         response = self.get_content(r)
+        assert isinstance(response, dict)
         for field in output_fields:
             # This will fail
             assert field in response

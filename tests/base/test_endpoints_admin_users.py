@@ -34,6 +34,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
         assert r.status_code == 200
         uuid = self.get_content(r)
+        assert isinstance(uuid, str)
 
         mail = self.read_mock_email()
         body = mail.get("body")
@@ -81,6 +82,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
         assert r.status_code == 200
         users_list = self.get_content(r)
+        assert isinstance(users_list, dict)
         assert len(users_list) > 0
         # email is saved lowercase
         assert users_list.get("email") == data.get("email", "MISSING").lower()
@@ -99,6 +101,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/admin/users", data=data2, headers=headers)
         assert r.status_code == 200
         uuid2 = self.get_content(r)
+        assert isinstance(uuid2, str)
 
         mail = self.read_mock_email()
         body = mail.get("body")
@@ -138,6 +141,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/admin/users/{uuid2}", headers=headers)
         assert r.status_code == 200
         users_list = self.get_content(r)
+        assert isinstance(users_list, dict)
         assert len(users_list) > 0
         # email is not modified -> still equal to data2, not data1
         assert users_list.get("email") != data.get("email", "MISSING").lower()
@@ -207,7 +211,9 @@ class TestApp(BaseTests):
         # or MAX_PASSWORD_VALIDITY errors
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
-        uuid = self.get_content(r).get("uuid")
+        content = self.get_content(r)
+        assert isinstance(content, dict)
+        uuid = str(content.get("uuid"))
 
         data = {
             "password": BaseAuthentication.default_password,

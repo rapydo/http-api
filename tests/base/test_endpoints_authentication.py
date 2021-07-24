@@ -47,6 +47,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/authentication", headers=headers)
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert len(content) == 1
         assert "email" in content
         assert content["email"] == BaseAuthentication.default_user
@@ -74,6 +75,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/optionalauthentication", headers=headers)
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert len(content) == 1
         assert "email" in content
         assert content["email"] == BaseAuthentication.default_user
@@ -121,6 +123,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/queryauthentication", headers=headers)
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert len(content) == 1
         assert "email" in content
         assert content["email"] == BaseAuthentication.default_user
@@ -130,6 +133,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert len(content) == 1
         assert "email" in content
         assert content["email"] == BaseAuthentication.default_user
@@ -156,6 +160,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/optionalqueryauthentication", headers=headers)
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert len(content) == 1
         assert "email" in content
         assert content["email"] == BaseAuthentication.default_user
@@ -173,6 +178,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert len(content) == 1
         assert "email" in content
         assert content["email"] == BaseAuthentication.default_user
@@ -203,6 +209,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert len(content) == 1
         assert "email" in content
         assert content["email"] == BaseAuthentication.default_user
@@ -223,6 +230,7 @@ class TestApp(BaseTests):
             )
             assert r.status_code == 200
             content = self.get_content(r)
+            assert isinstance(content, dict)
             assert len(content) == 1
             assert "email" in content
             assert content["email"] == data.get("email")
@@ -256,6 +264,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, dict)
         assert len(content) == 1
         assert "email" in content
         assert content["email"] == user.email

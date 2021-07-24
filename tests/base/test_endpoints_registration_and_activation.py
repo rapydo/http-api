@@ -273,7 +273,9 @@ class TestApp(BaseTests):
         headers, _ = self.do_login(client, None, None)
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
-        uuid = self.get_content(r).get("uuid")
+        content = self.get_content(r)
+        assert isinstance(content, dict)
+        uuid = content.get("uuid")
 
         token = self.get_crafted_token("x", user_id=uuid)
         r = client.put(f"{AUTH_URI}/profile/activate/{token}")
@@ -328,6 +330,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/admin/users", headers=headers)
         assert r.status_code == 200
         users = self.get_content(r)
+        assert isinstance(users, list)
         uuid = None
         for u in users:
             if u.get("email") == registration_data["email"]:
@@ -347,6 +350,7 @@ class TestApp(BaseTests):
 
         r = client.get(f"{API_URI}/admin/tokens", headers=headers)
         content = self.get_content(r)
+        assert isinstance(content, list)
 
         for t in content:
             if t.get("token") == token:  # pragma: no cover

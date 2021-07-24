@@ -27,11 +27,13 @@ class TestApp(BaseTests):
         r = client.get(f"{autocomplete_endpoint}/nobody")
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) == 0
 
         r = client.get(f"{autocomplete_endpoint}/oliver")
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) > 0
         assert schema[0]["autocomplete_id_bind"] in content[0]
         assert schema[0]["autocomplete_label_bind"] in content[0]
@@ -39,6 +41,7 @@ class TestApp(BaseTests):
         r = client.get(f"{autocomplete_endpoint}/s the")
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) > 0
         assert schema[0]["autocomplete_id_bind"] in content[0]
         assert schema[0]["autocomplete_label_bind"] in content[0]
