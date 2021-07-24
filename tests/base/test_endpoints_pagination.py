@@ -17,7 +17,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/pagination", query_string={"get_total": True})
         assert r.status_code == 200
         content = self.get_content(r)
-        assert isinstance(content, list)
+        assert isinstance(content, int)
         assert content == 150
 
         # Check precedence: get_total wins
@@ -25,12 +25,12 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/pagination", query_string=data)
         assert r.status_code == 200
         content = self.get_content(r)
-        assert isinstance(content, list)
+        assert isinstance(content, int)
         assert content == 150
 
         assert r.status_code == 200
         content = self.get_content(r)
-        assert isinstance(content, list)
+        assert isinstance(content, int)
         assert content == 150
 
         r = client.get(f"{API_URI}/tests/pagination", query_string={"page": 2})
