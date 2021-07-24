@@ -39,9 +39,9 @@ class TestApp(BaseTests):
         # Verify custom input fields (if defined) included in the profile input schema
         r = client.patch(f"{AUTH_URI}/profile", data={"get_schema": 1}, headers=headers)
         response = self.get_content(r)
-        assert isinstance(response, dict)
+        assert isinstance(response, list)
         for field in profile_inputs.keys():
-            for expected in response.values():
+            for expected in response:
                 if expected["key"] == field:
                     break
             else:  # pragma: no cover
@@ -50,9 +50,9 @@ class TestApp(BaseTests):
         # Verify custom registration fields (if defined) included in the reg. schema
         r = client.post(f"{AUTH_URI}/profile", data={"get_schema": 1})
         response = self.get_content(r)
-        assert isinstance(response, dict)
+        assert isinstance(response, list)
         for field in registration_inputs.keys():
-            for expected in response.values():
+            for expected in response:
                 if expected["key"] == field:
                     break
             else:  # pragma: no cover
@@ -66,9 +66,9 @@ class TestApp(BaseTests):
             f"{API_URI}/admin/users", data={"get_schema": 1}, headers=headers
         )
         response = self.get_content(r)
-        assert isinstance(response, dict)
+        assert isinstance(response, list)
         for field in admin_inputs.keys():
-            for expected in response.values():
+            for expected in response:
                 if expected["key"] == field:
                     break
             else:  # pragma: no cover
