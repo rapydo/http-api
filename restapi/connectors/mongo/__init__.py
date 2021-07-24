@@ -167,7 +167,7 @@ class MongoExt(Connector):
 
 class Authentication(BaseAuthentication):
     def __init__(self) -> None:
-        self.db = get_instance()
+        self.db: MongoExt = get_instance()
 
     # Also used by POST user
     def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:

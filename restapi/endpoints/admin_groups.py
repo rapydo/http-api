@@ -40,7 +40,11 @@ class AdminGroups(EndpointResource):
         for g in self.auth.get_groups():
 
             if Connector.authentication_service == "mongo":
-                members = self.auth.db.User.objects.raw({"belongs_to": g.id}).all()
+                # mypy correctly raises errors because User is not defined
+                # in generic Connector instances (as auth.db is)...
+                # but in mongo connector the User model is properly injected
+                User = self.auth.db.User  # type: ignore
+                members = User.objects.raw({"belongs_to": g.id}).all()
             else:
                 members = list(g.members)
             coordinators = [u for u in members if self.auth.is_coordinator(u)]
@@ -88,7 +92,10 @@ class AdminGroups(EndpointResource):
     )
     def put(self, group_id: str, group: Group, **kwargs: Any) -> Response:
 
-        self.auth.db.update_properties(group, kwargs)
+        # mypy correctly raises errors because update_properties is not defined
+        # in generic Connector instances, but in this case this is an instance
+        # of an auth db and their implementation always contains this method
+        self.auth.db.update_properties(group, kwargs)  # type: ignore
 
         self.auth.save_group(group)
 

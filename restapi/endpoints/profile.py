@@ -97,7 +97,10 @@ class Profile(EndpointResource):
 
         user = self.get_user()
 
-        self.auth.db.update_properties(user, kwargs)
+        # mypy correctly raises errors because update_properties is not defined
+        # in generic Connector instances, but in this case this is an instance
+        # of an auth db and their implementation always contains this method
+        self.auth.db.update_properties(user, kwargs)  # type: ignore
 
         log.info("Profile updated")
 

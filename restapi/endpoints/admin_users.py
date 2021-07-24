@@ -139,7 +139,10 @@ class AdminUsers(EndpointResource):
 
         prev_expiration = user.expiration
 
-        self.auth.db.update_properties(user, userdata)
+        # mypy correctly raises errors because update_properties is not defined
+        # in generic Connector instances, but in this case this is an instance
+        # of an auth db and their implementation always contains this method
+        self.auth.db.update_properties(user, userdata)  # type: ignore
 
         self.auth.custom_user_properties_post(
             user, userdata, extra_userdata, self.auth.db

@@ -59,6 +59,10 @@ from restapi.utilities.uuid import getUUID
 # Trick to avoid circular dependencies
 if TYPE_CHECKING:
     from restapi.connectors import Connector
+User = Any
+Group = Any
+RoleObj = Any
+Login = Any
 
 
 def import_secret(abs_filename: Path) -> bytes:
@@ -84,11 +88,6 @@ ANY_ROLE = "any"
 ROLE_DISABLED = "disabled"
 DEFAULT_GROUP_NAME = "Default"
 DEFAULT_GROUP_DESCR = "Default group"
-
-User = Any
-Group = Any
-RoleObj = Any
-Login = Any
 
 DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE = 60
 MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE = 60
