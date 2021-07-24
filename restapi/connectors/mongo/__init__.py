@@ -383,7 +383,7 @@ class Authentication(BaseAuthentication):
         if token_entry.creation + self.GRACE_PERIOD < now:
             ip = self.get_remote_ip()
             if token_entry.IP != ip:
-                log.error(
+                log.warning(
                     "This token is emitted for IP {}, invalid use from {}",
                     token_entry.IP,
                     ip,

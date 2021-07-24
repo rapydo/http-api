@@ -235,9 +235,9 @@ def forced_clean() -> None:  # pragma: no cover
 @click.option(
     "--destroy/--no-destroy", default=False, help="Destroy database after tests"
 )
-def tests(  # pragma: no cover
+def tests(
     wait: bool, core: bool, file: Optional[str], folder: Optional[str], destroy: bool
-) -> None:
+) -> None:  # pragma: no cover
     """Compute tests and coverage"""
 
     if wait:

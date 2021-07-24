@@ -32,7 +32,7 @@ if TESTING:
 
             if user := self.get_user():
                 return self.response({"email": user.email})
-            return self.empty_response()
+            return self.empty_response()  # pragma: no cover
 
     class TestOptionalAuthentication(EndpointResource):
         @decorators.auth.optional()
@@ -63,7 +63,7 @@ if TESTING:
 
             if user := self.get_user():
                 return self.response({"email": user.email})
-            return self.empty_response()
+            return self.empty_response()  # pragma: no cover
 
     class TestOptionalQueryParameterAuthentication(EndpointResource):
         @decorators.auth.optional(allow_access_token_parameter=True)

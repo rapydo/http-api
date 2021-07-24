@@ -467,7 +467,7 @@ class Authentication(BaseAuthentication):
         if token_node.creation + self.GRACE_PERIOD < now:
             ip = self.get_remote_ip()
             if token_node.IP != ip:
-                log.error(
+                log.warning(
                     "This token is emitted for IP {}, invalid use from {}",
                     token_node.IP,
                     ip,
