@@ -6,7 +6,17 @@ from enum import Enum
 from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    TypedDict,
+    Union,
+    cast,
+)
 
 import jwt
 import pyotp
@@ -45,6 +55,10 @@ from restapi.utilities.globals import mem
 from restapi.utilities.logs import Events, log, save_event_log
 from restapi.utilities.time import EPOCH, get_now
 from restapi.utilities.uuid import getUUID
+
+# Trick to avoid circular dependencies
+if TYPE_CHECKING:
+    from restapi.connectors import Connector
 
 
 def import_secret(abs_filename: Path) -> bytes:
@@ -218,7 +232,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     # This is to let inform mypy about the existence of self.db
     def __init__(self) -> None:  # pragma: no cover
-        self.db: Any
+        self.db: "Connector"
 
     # Executed once by Connector in init_app
     @classmethod
@@ -641,7 +655,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     @staticmethod
     def custom_user_properties_post(
-        user: User, userdata: Props, extra_userdata: Props, db: Any
+        user: User, userdata: Props, extra_userdata: Props, db: "Connector"
     ) -> Props:
         try:
             mem.customizer.custom_user_properties_post(
