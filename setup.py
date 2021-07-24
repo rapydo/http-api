@@ -69,6 +69,8 @@ setup(
         # Used by Marshmallow to serialize Decimals
         "simplejson",
         "orjson",
+        # Temporary fix to silence deprecation warnings, to be fixed on 2.1
+        "marshmallow==3.12.2",
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.1.0",
