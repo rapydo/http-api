@@ -100,7 +100,7 @@ class BaseTests:
     @staticmethod
     def get_content(
         http_out: Response,
-    ) -> Union[str, float, bool, List[Any], Dict[str, Any]]:
+    ) -> Union[str, float, int, bool, List[Any], Dict[str, Any]]:
 
         try:
             response = json.loads(http_out.get_data().decode())
@@ -110,6 +110,7 @@ class BaseTests:
                     str,
                     bool,
                     float,
+                    int,
                     list,
                     dict,
                 ),
