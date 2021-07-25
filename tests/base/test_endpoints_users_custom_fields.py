@@ -7,8 +7,10 @@ from restapi.utilities.globals import mem
 
 class TestApp(BaseTests):
     @pytest.mark.skipif(
-        not Env.get_bool("AUTH_ENABLE") or not Env.get_bool("MAIN_LOGIN_ENABLE"),
-        reason="This test needs authentication and profile to be available",
+        not Env.get_bool("AUTH_ENABLE")
+        or not Env.get_bool("MAIN_LOGIN_ENABLE")
+        or not Env.get_bool("ALLOW_REGISTRATION"),
+        reason="This test needs authentication and registration to be available",
     )
     def test_users_custom_fields(self, client: FlaskClient) -> None:
 
