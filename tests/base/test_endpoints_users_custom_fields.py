@@ -3,15 +3,14 @@ import pytest
 from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
+    @pytest.mark.skipif(
+        not Env.get_bool("AUTH_ENABLE") or not Env.get_bool("MAIN_LOGIN_ENABLE"),
+        reason="This test needs authentication and profile to be available",
+    )
     def test_users_custom_fields(self, client: FlaskClient) -> None:
-
-        if not Env.get_bool("AUTH_ENABLE"):
-            log.warning("Skipping users custom fields tests")
-            return
 
         output_fields = mem.customizer.get_custom_output_fields(None)
 
