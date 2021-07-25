@@ -6,7 +6,7 @@ import urllib.parse
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
 
 import jwt
 import pyotp
@@ -29,6 +29,16 @@ from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.utilities.faker import get_faker
 from restapi.utilities.logs import LOGS_FOLDER, Events, log
+
+
+class MockedEmail(TypedDict):
+    # from: str
+    cc: List[str]
+    msg: str
+    # body and headers are added by read_mock_email function
+    body: str
+    headers: str
+
 
 SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
 API_URI = f"{SERVER_URI}{API_URL}"
@@ -77,7 +87,7 @@ class BaseTests:
         endpoint: str,
         headers: Optional[Dict[str, str]],
         method: str = "post",
-    ) -> Any:
+    ) -> List[Dict[str, Any]]:
         """
         Retrieve a dynamic data schema associated with a endpoint
         """
@@ -95,7 +105,11 @@ class BaseTests:
 
         assert r.status_code == 200
 
-        return json.loads(r.data.decode("utf-8"))
+        schema = json.loads(r.data.decode("utf-8"))
+        assert isinstance(schema, list)
+        for f in schema:
+            assert isinstance(f, dict)
+        return schema
 
     @staticmethod
     def get_content(
@@ -430,7 +444,7 @@ class BaseTests:
         )
 
     @classmethod
-    def buildData(cls, schema: Any) -> Dict[str, Any]:
+    def buildData(cls, schema: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Input: a Marshmallow schema
         Output: a dictionary of random data
@@ -438,8 +452,14 @@ class BaseTests:
         data: Dict[str, Any] = {}
         for d in schema:
 
+            assert "key" in d
+            assert "type" in d
+
             key = d.get("key")
             field_type = d.get("type")
+
+            assert key is not None
+            assert field_type is not None
 
             if is_array := field_type.endswith("[]"):
                 # py39:
@@ -447,6 +467,7 @@ class BaseTests:
                 field_type = field_type[0:-2]
 
             if "options" in d:
+                assert isinstance(d["options"], dict)
                 if len(d["options"]) > 0:
                     keys = list(d["options"].keys())
                     if is_array:
@@ -470,10 +491,10 @@ class BaseTests:
                 if max_value := d.get("max"):
                     max_date = datetime.fromisoformat(max_value)
 
-                d = cls.faker.date_time_between_dates(
+                random_date = cls.faker.date_time_between_dates(
                     datetime_start=min_date, datetime_end=max_date
                 )
-                data[key] = f"{d.isoformat()}.000Z"
+                data[key] = f"{random_date.isoformat()}.000Z"
             elif field_type == "email":
                 data[key] = cls.faker.ascii_email()
             elif field_type == "boolean":
@@ -521,20 +542,20 @@ class BaseTests:
         return data
 
     @staticmethod
-    def delete_mock_email(previous: bool = False) -> Any:
+    def delete_mock_email(previous: bool = False) -> None:
         target = "prevsent" if previous else "lastsent"
         fpath = LOGS_FOLDER.joinpath(f"mock.mail.{target}.json")
         fpath.unlink(missing_ok=True)
 
     @staticmethod
-    def read_mock_email(previous: bool = False) -> Any:
+    def read_mock_email(previous: bool = False) -> MockedEmail:
         target = "prevsent" if previous else "lastsent"
         fpath = LOGS_FOLDER.joinpath(f"mock.mail.{target}.json")
         if not fpath.exists():
-            return None
+            raise FileNotFoundError(fpath)
 
         with open(fpath) as file:
-            data = json.load(file)
+            data = cast(MockedEmail, json.load(file))
 
         if "msg" in data:
             tokens = data["msg"].split("\n\n")

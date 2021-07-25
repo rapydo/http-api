@@ -37,14 +37,17 @@ class TestApp(BaseTests):
         assert isinstance(uuid, str)
 
         mail = self.read_mock_email()
-        body = mail.get("body")
+        body = mail.get("body", "")
 
         # Subject: is a key in the MIMEText
         assert body is not None
         assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
+        assert f"Subject: {project_tile}: New credentials" in mail.get("headers", "")
         assert data.get("email", "MISSING").lower() in body
-        assert data.get("password") in body or escape(str(data.get("password"))) in body
+        assert (
+            data.get("password", "MISSING") in body
+            or escape(str(data.get("password"))) in body
+        )
 
         # Test the differences between post and put schema
         post_schema = {s["key"]: s for s in schema}
@@ -104,13 +107,13 @@ class TestApp(BaseTests):
         assert isinstance(uuid2, str)
 
         mail = self.read_mock_email()
-        body = mail.get("body")
+        body = mail.get("body", "")
         # Subject: is a key in the MIMEText
         assert body is not None
         assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
+        assert f"Subject: {project_tile}: New credentials" in mail.get("headers", "")
         assert data2.get("email", "MISSING").lower() in body
-        pwd = data2.get("password")
+        pwd = data2.get("password", "MISSING")
         assert pwd in body or escape(str(pwd)) in body
 
         # send and invalid user_id
@@ -166,11 +169,11 @@ class TestApp(BaseTests):
 
         mail = self.read_mock_email()
         # Subject: is a key in the MIMEText
-        assert mail.get("body") is not None
-        assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: Password changed" in mail.get("headers")
-        assert data2.get("email", "MISSING").lower() in mail.get("body")
-        assert newpwd in mail.get("body") or escape(newpwd) in mail.get("body")
+        assert mail.get("body", "") is not None
+        assert mail.get("headers", "") is not None
+        assert f"Subject: {project_tile}: Password changed" in mail.get("headers", "")
+        assert data2.get("email", "MISSING").lower() in mail.get("body", "")
+        assert newpwd in mail.get("body", "") or escape(newpwd) in mail.get("body", "")
 
         # login with a newly created user
         headers2, _ = self.do_login(client, data2.get("email"), newpwd)

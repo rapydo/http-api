@@ -1,5 +1,6 @@
 import time
 
+import pytest
 from faker import Faker
 
 from restapi.config import PRODUCTION, get_project_configuration
@@ -65,15 +66,15 @@ else:
             # Verify email sent to notify credentials block,
             # + extract and return the unlock url
             mail = self.read_mock_email()
-            body = mail.get("body")
+            body = mail.get("body", "")
             project_tile = get_project_configuration(
                 "project.title", default="YourProject"
             )
 
             assert body is not None
-            assert mail.get("headers") is not None
+            assert mail.get("headers", "") is not None
             title = "Your credentials have been blocked"
-            assert f"Subject: {project_tile}: {title}" in mail.get("headers")
+            assert f"Subject: {project_tile}: {title}" in mail.get("headers", "")
             # Body can't be asserted if can be changed at project level...
             # assert "this email is to inform you that your credentials have been "
             # "temporarily due to the number of failed login attempts" in body
@@ -522,8 +523,8 @@ else:
             self.delete_mock_email()
 
             # Just to verify that email is deleted
-            mail = self.read_mock_email()
-            assert mail is None
+            with pytest.raises(FileNotFoundError):
+                self.read_mock_email()
 
             email = faker.ascii_email()
             # Wrong credentials with a non existing email
@@ -536,8 +537,8 @@ else:
             assert headers is None
 
             # Verify that there are no mocked email
-            mail = self.read_mock_email()
-            assert mail is None
+            with pytest.raises(FileNotFoundError):
+                self.read_mock_email()
 
             # Goodbye temporary user
             self.delete_user(client, uuid)

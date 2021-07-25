@@ -52,9 +52,9 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/group/users", headers=headers)
         assert r.status_code == 200
         response = self.get_content(r)
+        assert isinstance(response, list)
 
         assert response is not None
-        assert isinstance(response, list)
         assert len(response) == 2
         assert "email" in response[0]
         assert "name" in response[0]
@@ -85,9 +85,9 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/group/users", headers=headers)
         assert r.status_code == 200
         response = self.get_content(r)
+        assert isinstance(response, list)
 
         assert response is not None
-        assert isinstance(response, list)
         assert len(response) == 1
         assert "email" in response[0]
         assert "name" in response[0]

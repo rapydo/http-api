@@ -144,7 +144,9 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get("headers") is not None
         # Subject: is a key in the MIMEText
-        assert f"Subject: {project_tile}: New user registered" in mail.get("headers")
+        assert f"Subject: {project_tile}: New user registered" in mail.get(
+            "headers", ""
+        )
         assert registration_data["email"] in body
 
         # Previous sent email is the activation link sent to the user
@@ -153,7 +155,7 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get("headers") is not None
         # Subject: is a key in the MIMEText
-        assert f"Subject: {project_tile}: Account activation" in mail.get("headers")
+        assert f"Subject: {project_tile}: Account activation" in mail.get("headers", "")
         assert f"{proto}://localhost/public/register/" in body
 
         # This will fail because the user is not active
@@ -222,7 +224,7 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get("headers") is not None
         # Subject: is a key in the MIMEText
-        assert f"Subject: {project_tile}: Account activation" in mail.get("headers")
+        assert f"Subject: {project_tile}: Account activation" in mail.get("headers", "")
         assert f"{proto}://localhost/public/register/" in body
 
         token = self.get_token_from_body(body)

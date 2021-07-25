@@ -25,7 +25,6 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/admin/logins", headers=headers)
         assert r.status_code == 200
         logins = self.get_content(r)
-
         assert isinstance(logins, list)
         assert len(logins) > 0
         assert "username" in logins[0]

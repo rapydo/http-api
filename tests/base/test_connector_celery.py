@@ -87,9 +87,9 @@ def test_celery(app: Flask, faker: Faker) -> None:
     with pytest.raises(Ignore):
         BaseTests.send_task(app, "test_task", "ignore")
     # the errors decorator re-raise the Ignore exception, without any further action
-    mail = BaseTests.read_mock_email()
-    # No email is raised with Ignore exceptions
-    assert mail is None
+    # No email is sent in case of Ignore exceptions
+    with pytest.raises(FileNotFoundError):
+        mail = BaseTests.read_mock_email()
 
     with pytest.raises(AttributeError, match=r"Task not found"):
         BaseTests.send_task(app, "does-not-exist")

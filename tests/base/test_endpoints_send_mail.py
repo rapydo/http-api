@@ -51,7 +51,7 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
         mail = self.read_mock_email()
-        body = mail.get("body")
+        body = mail.get("body", "")
         assert "TEST EMAIL BODY" in body
 
         data["dry_run"] = True
@@ -73,7 +73,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/admin/mail", data=data, headers=headers)
         assert r.status_code == 204
         mail = self.read_mock_email()
-        body = mail.get("body")
+        body = mail.get("body", "")
         assert "TEST EMAIL <b>HTML</b> BODY" in body
 
         data["dry_run"] = True
@@ -130,13 +130,13 @@ class TestApp(BaseTests):
 
         mail = self.read_mock_email()
 
-        body = mail.get("body")
-        headers = mail.get("headers")
+        body = mail.get("body", "")
+        email_headers = mail.get("headers", "")
         assert body is not None
-        assert headers is not None
+        assert email_headers is not None
         # Subject: is a key in the MIMEText
-        assert f"Subject: {data['subject']}" in headers
-        ccs = mail.get("cc")
+        assert f"Subject: {data['subject']}" in email_headers
+        ccs = mail.get("cc", [])
         assert ccs[0] == data["to"]
         assert ccs[1] == data["cc"].split(",")
         assert ccs[2] == data["bcc"].split(",")
