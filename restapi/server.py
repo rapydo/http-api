@@ -148,9 +148,10 @@ def create_app(
     if not mem.initializer:  # pragma: no cover
         print_and_exit("Invalid Initializer class")
 
-    mem.customizer = Meta.get_instance("customization", "Customizer")
-    if not mem.customizer:  # pragma: no cover
+    customizer = Meta.get_class("customization", "Customizer")
+    if not customizer:  # pragma: no cover
         print_and_exit("Invalid Customizer class")
+    mem.customizer = customizer()
 
     if not isinstance(mem.customizer, BaseCustomizer):  # pragma: no cover
         print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")

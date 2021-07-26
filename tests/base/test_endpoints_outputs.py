@@ -1,12 +1,8 @@
-from typing import Any
-
 from restapi.tests import API_URI, BaseTests, FlaskClient
 
 
 class TestApp(BaseTests):
     def test_outputs(self, client: FlaskClient) -> None:
-
-        response: Any = "just to fake mypy :p"
 
         r = client.post(f"{API_URI}/tests/outputs/string")
         assert r.status_code == 200

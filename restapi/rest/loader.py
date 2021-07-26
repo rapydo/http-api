@@ -211,7 +211,6 @@ class EndpointsLoader:
                         method_fn,
                         epclss.__name__,
                     )
-                    continue
 
                 endpoint.methods[method_fn] = fn.uri
 

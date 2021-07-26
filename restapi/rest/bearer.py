@@ -19,6 +19,7 @@ from flask import request
 from restapi.env import Env
 from restapi.services.authentication import ALL_ROLES, ANY_ROLE, Role
 from restapi.types import EndpointFunction
+from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
@@ -94,12 +95,9 @@ class HTTPTokenAuth:
                     # An exit here is really really dangerous, but even if
                     # get_self_reference_from_args can return None, this case is quite
                     # impossible... however with None the server can't continue!
-                    log.critical(
+                    print_and_exit(
                         "Server misconfiguration, self reference can't be None!"
                     )
-                    # with print_and_exit my-py does not understand that the execute
-                    # halts here... let's use an explicit exit
-                    sys.exit(1)
 
                 if (
                     auth_type is not None
@@ -187,12 +185,9 @@ class HTTPTokenAuth:
                     # An exit here is really really dangerous, but even if
                     # get_self_reference_from_args can return None, this case is quite
                     # impossible... however with None the server can't continue!
-                    log.critical(
+                    print_and_exit(
                         "Server misconfiguration, self reference can't be None!"
                     )
-                    # with print_and_exit my-py does not understand that the execute
-                    # halts here... let's use an explicit exit
-                    sys.exit(1)
 
                 if auth_type is None or auth_type != HTTPAUTH_SCHEME:
                     # Wrong authentication string

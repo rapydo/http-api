@@ -248,10 +248,6 @@ class TestApp(BaseTests):
         assert isinstance(models, dict)
         assert len(models) == 0
 
-        assert Meta.get_instance("invalid.path", "InvalidClass") is None
-        assert Meta.get_instance("customization", "InvalidClass") is None
-        assert Meta.get_instance("customization", "Customizer") is not None
-
     # #######################################
     # ####      Templates
     #########################################

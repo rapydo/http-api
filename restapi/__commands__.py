@@ -132,13 +132,11 @@ def get_service_address(
 
     host = variables.get(host_var)
     if host is None:
-        log.critical("Cannot find any variable matching {} for {}", host_var, service)
-        sys.exit(1)
+        print_and_exit("Cannot find any variable matching {} for {}", host_var, service)
 
     port = variables.get(port_var)
     if port is None:
-        log.critical("Cannot find any variable matching {} for {}", port_var, service)
-        sys.exit(1)
+        print_and_exit("Cannot find any variable matching {} for {}", port_var, service)
 
     log.info("Connecting to {} ({}:{})...", service, host, port)
 
@@ -294,8 +292,7 @@ def tests(
         sys.exit(0)
 
     except Exception as e:
-        log.error(e)
-        sys.exit(1)
+        print_and_exit(str(e))
 
 
 @cli.command()
