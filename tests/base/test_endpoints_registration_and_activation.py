@@ -209,7 +209,8 @@ class TestApp(BaseTests):
         assert events[0].event != Events.activation.value
         assert events[0].url == "/auth/login"
 
-        assert self.read_mock_email() is None
+        with pytest.raises(FileNotFoundError):
+            self.read_mock_email()
 
         # request activation, correct username
         r = client.post(
