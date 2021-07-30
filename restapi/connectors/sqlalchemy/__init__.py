@@ -183,11 +183,13 @@ class SQLAlchemy(Connector):
     DB_INITIALIZING = False
 
     def __init__(self) -> None:
-        self.db: OriginalAlchemy = None
+        # Type of variable becomes "Any" due to an unfollowed import
+        self.db: OriginalAlchemy = None  # type: ignore
         super().__init__()
 
     # This is used to return Models in a type-safe way
-    def __getattr__(self, name: str) -> Model:
+    # Return type becomes "Any" due to an unfollowed import
+    def __getattr__(self, name: str) -> Model:  # type: ignore
         if name in self._models:
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
@@ -322,10 +324,12 @@ class SQLAlchemy(Connector):
                 instance.db.drop_all()
 
     @staticmethod
-    def update_properties(instance: Model, properties: Dict[str, Any]) -> None:
+    # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
+    def update_properties(instance: Model, properties: Dict[str, Any]) -> None:  # type: ignore
 
         for field, value in properties.items():
-            set_attribute(instance, field, value)
+            # Call to untyped function "set_attribute" in typed context
+            set_attribute(instance, field, value)  # type: ignore
 
 
 class Authentication(BaseAuthentication):
@@ -419,7 +423,8 @@ class Authentication(BaseAuthentication):
         if not user:
             return False
 
-        self.db.session.delete(user)
+        # Call to untyped function "delete" in typed context
+        self.db.session.delete(user)  # type: ignore
         self.db.session.commit()
         return True
 
@@ -455,7 +460,8 @@ class Authentication(BaseAuthentication):
         if not group:
             return False
 
-        self.db.session.delete(group)
+        # Call to untyped function "delete" in typed context
+        self.db.session.delete(group)  # type: ignore
         self.db.session.commit()
         return True
 
@@ -611,7 +617,8 @@ class Authentication(BaseAuthentication):
         token_entry = self.db.Token.query.filter_by(token=token).first()
         if token_entry:
             try:
-                self.db.session.delete(token_entry)
+                # Call to untyped function "delete" in typed context
+                self.db.session.delete(token_entry)  # type: ignore
                 self.db.session.commit()
                 self.log_event(Events.delete, target=token_entry)
                 return True

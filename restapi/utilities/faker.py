@@ -126,7 +126,8 @@ def get_faker() -> Faker:
 
     loc = secrets.choice(list(FAKER_LOCALES.keys()))
     log.warning(f"Today I'm {FAKER_LOCALES.get(loc)}")
-    faker = Faker(loc)
+    # Call to untyped function "Faker" in typed context
+    faker = Faker(loc)  # type: ignore
 
     faker.add_provider(PasswordProvider)
 

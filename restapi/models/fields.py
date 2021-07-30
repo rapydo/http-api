@@ -242,7 +242,8 @@ class Nested(webargs_fields.Nested, Field):
                 value = json.loads(value)
             except Exception as e:  # pragma: no cover
                 log.warning(e)
-        return super()._deserialize(value, attr, data, **kwargs)
+        # Call to untyped function "_deserialize" in typed context
+        return super()._deserialize(value, attr, data, **kwargs)  # type: ignore
 
 
 # DelimitedList is child of List as defined in:
@@ -273,7 +274,8 @@ class DelimitedList(webargs_fields.DelimitedList, List):
         if not value:
             return value
 
-        values = super()._deserialize(value, attr, data, **kwargs)
+        # Call to untyped function "_deserialize" in typed context
+        values = super()._deserialize(value, attr, data, **kwargs)  # type: ignore
 
         if self.no_duplicates and len(values) != len(set(values)):
             raise ValidationError("Input list contains duplicates")
@@ -327,7 +329,8 @@ class Neo4jRelationshipToMany(Nested):
         self, nested_obj: Any, attr: str, obj: Any, **kwargs: Any
     ) -> Any:
         self.many = True
-        return super()._serialize(nested_obj.all(), attr, obj, **kwargs)
+        # Call to untyped function "_serialize" in typed context
+        return super()._serialize(nested_obj.all(), attr, obj, **kwargs)  # type: ignore
 
 
 class Neo4jRelationshipToSingle(Nested):
@@ -340,7 +343,10 @@ class Neo4jRelationshipToSingle(Nested):
     ) -> Any:
         self.many = False
         self.schema.many = False
-        return super()._serialize(nested_obj.single(), attr, obj, **kwargs)
+        # Call to untyped function "_serialize" in typed context
+        return super()._serialize(  # type: ignore
+            nested_obj.single(), attr, obj, **kwargs
+        )
 
 
 class Neo4jRelationshipToCount(Int):

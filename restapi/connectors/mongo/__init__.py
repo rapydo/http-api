@@ -93,7 +93,8 @@ class MongoExt(Connector):
     DATABASE: str = "rapydo"
 
     # This is used to return Models in a type-safe way
-    def __getattr__(self, name: str) -> MongoModel:
+    # Return type becomes "Any" due to an unfollowed import
+    def __getattr__(self, name: str) -> MongoModel:  # type: ignore
         if name in self._models:
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
@@ -159,7 +160,8 @@ class MongoExt(Connector):
                 log.critical("Dropped db '{}'", db)
 
     @staticmethod
-    def update_properties(instance: MongoModel, properties: Dict[str, Any]) -> None:
+    # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
+    def update_properties(instance: MongoModel, properties: Dict[str, Any]) -> None:  # type: ignore
 
         for field, value in properties.items():
             setattr(instance, field, value)

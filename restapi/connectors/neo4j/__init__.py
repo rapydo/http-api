@@ -110,7 +110,8 @@ def catch_db_exceptions(func: F) -> F:
 class NeoModel(Connector):
 
     # This is used to return Models in a type-safe way
-    def __getattr__(self, name: str) -> StructuredNode:
+    # Return type becomes "Any" due to an unfollowed import
+    def __getattr__(self, name: str) -> StructuredNode:  # type: ignore
         if name in self._models:
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
@@ -223,7 +224,8 @@ class NeoModel(Connector):
     #     return True
 
     @staticmethod
-    def update_properties(instance: StructuredNode, properties: Dict[str, Any]) -> None:
+    # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
+    def update_properties(instance: StructuredNode, properties: Dict[str, Any]) -> None:  # type: ignore
 
         for field, value in properties.items():
             instance.__dict__[field] = value

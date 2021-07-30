@@ -32,8 +32,8 @@ uri_pattern = re.compile(r"\<([^\>]+)\>")
 
 @ClassOfAttributes
 class EndpointElements:
-    # type of endpoint from flask_restful
-    cls: Type[Resource] = attribute(default=None)
+    # Type of variable becomes "Type[Any]" due to an unfollowed import
+    cls: Type[Resource] = attribute(default=None)  # type: ignore
     uris: List[str] = attribute(default=[])
     # {'method': path, 'get': path, 'post': path}
     methods: Dict[str, str] = attribute(default={})
@@ -123,7 +123,8 @@ class EndpointsLoader:
 
         return False, None
 
-    def extract_endpoints(self, base_dir: str) -> List[Type[Resource]]:
+    # Return type becomes "List[Type[Any]]" due to an unfollowed import
+    def extract_endpoints(self, base_dir: str) -> List[Type[Resource]]:  # type: ignore
 
         endpoints_classes = []
         # get last item of the path
@@ -277,7 +278,9 @@ class EndpointsLoader:
         # /xyz/abc
         # The second endpoint is shadowed by the first one
         mappings: Dict[str, Set[str]] = {}
-        classes: Dict[str, Dict[str, Type[Resource]]] = {}
+        # Type of variable becomes "Dict[str, Dict[str, Type[Any]]]"
+        #   due to an unfollowed import
+        classes: Dict[str, Dict[str, Type[Resource]]] = {}  # type: ignore
         # duplicates are found while filling the dictionaries
         for endpoint in self.endpoints:
             for method, uri in endpoint.methods.items():

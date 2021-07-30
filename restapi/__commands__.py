@@ -29,11 +29,13 @@ def main(args: List[str]) -> None:  # pragma: no cover
     if current_app is None or current_app.strip() == "":
         os.environ["FLASK_APP"] = f"{current_package}.__main__"
 
-    fg_cli = FlaskGroup()
+    # Call to untyped function "FlaskGroup" in typed context
+    fg_cli = FlaskGroup()  # type: ignore
     options = {"prog_name": "restapi", "args": args}
 
     # cannot catch for CTRL+c
-    fg_cli.main(**options)
+    # Call to untyped function "main" in typed context
+    fg_cli.main(**options)  # type: ignore
 
 
 def initializing() -> bool:
