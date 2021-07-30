@@ -204,6 +204,7 @@ class SQLAlchemy(Connector):
 
     @staticmethod
     def get_connection_exception() -> ExceptionsList:
+        # type is ignored here due to untyped psycopg2
         return (
             OperationalError,
             PsycopgOperationalError,
