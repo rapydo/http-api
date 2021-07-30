@@ -53,6 +53,7 @@ jobs:
             neo4j \
             neobolt \
             neomodel \
+            psycopg2 \
             pymodm \
             celerybeatmongo \
             redbeat \

@@ -16,6 +16,7 @@ import sqlalchemy
 from flask_migrate import Migrate
 from flask_sqlalchemy import Model
 from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
+from psycopg2 import OperationalError as PsycopgOperationalError
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.engine.url import URL
@@ -203,7 +204,10 @@ class SQLAlchemy(Connector):
 
     @staticmethod
     def get_connection_exception() -> ExceptionsList:
-        return (OperationalError,)
+        return (
+            OperationalError,
+            PsycopgOperationalError,
+        )  # type: ignore
 
     def connect(self, **kwargs: str) -> "SQLAlchemy":
 

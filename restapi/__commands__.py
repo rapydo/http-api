@@ -72,7 +72,7 @@ def launch() -> None:  # pragma: no cover
 @cli.command()
 @click.option("--service", "-s")
 def verify(service: str) -> None:
-    """Verify if a service is connecte"""
+    """Verify if a service is connected"""
 
     if not Connector.check_availability(service):
         print_and_exit("Service {} not detected", service)
