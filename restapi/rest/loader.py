@@ -31,7 +31,8 @@ uri_pattern = re.compile(r"\<([^\>]+)\>")
 
 
 @ClassOfAttributes
-class EndpointElements:
+# Argument 2 to "__init__" becomes "Type[Any]" due to an unfollowed import
+class EndpointElements:  # type: ignore
     # Type of variable becomes "Type[Any]" due to an unfollowed import
     cls: Type[Resource] = attribute(default=None)  # type: ignore
     uris: List[str] = attribute(default=[])
