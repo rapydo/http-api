@@ -222,6 +222,10 @@ class TestApp(BaseTests):
         assert isinstance(mcls, dict)
         assert len(mcls) == 0
 
+        assert Meta.get_class("this-should-not-exist", "this-should-not-exist") is None
+        assert Meta.get_class("initialization", "this-should-not-exist") is None
+        assert Meta.get_class("initialization", "Initializer") is not None
+
         assert not Meta.get_module_from_string("this-should-not-exist")
 
         with pytest.raises(ModuleNotFoundError):

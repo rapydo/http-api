@@ -57,7 +57,7 @@ from restapi.utilities.time import EPOCH, get_now
 from restapi.utilities.uuid import getUUID
 
 # Trick to avoid circular dependencies
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from restapi.connectors import Connector
 User = Any
 Group = Any
