@@ -42,7 +42,8 @@ def test_mongo(app: Flask) -> None:
     assert obj is not None
 
     with pytest.raises(AttributeError, match=r"Model InvalidModel not found"):
-        obj.InvalidModel
+        # _ assignment prevents pointless-statement (W0104) Codacy errors
+        _ = obj.InvalidModel
 
     obj.disconnect()
 

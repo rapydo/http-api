@@ -1,4 +1,3 @@
-import warnings
 from typing import Any, Dict, List, Optional
 
 from flask import Response as FlaskResponse
@@ -8,7 +7,7 @@ from flask_restful import Resource
 
 from restapi.connectors import Connector
 from restapi.rest.response import ResponseMaker
-from restapi.services.authentication import BaseAuthentication, Role, User
+from restapi.services.authentication import BaseAuthentication, User
 from restapi.services.cache import Cache
 from restapi.types import Response, ResponseContent
 from restapi.utilities.logs import Events, log, save_event_log
