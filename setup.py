@@ -30,32 +30,30 @@ setup(
     # Remember to update mypy.additional_dependencies
     install_requires=[
         # Flask, plugins and webservers
-        "Flask==1.1.4",
-        # To be removed with flask 2.0
-        "itsdangerous==1.1.0",
-        "Flask-RESTful==0.3.8",
+        "Flask==2.0.1",
+        "Flask-RESTful==0.3.9",
         "flask-apispec==0.11.0",
         "Flask-Caching==1.10.1",
         "Flask-Cors==3.0.10",
         "Flask-SQLAlchemy==2.5.1",
-        "Flask-Migrate==2.7.0",
-        "PyJWT==2.0.1",
+        "Flask-Migrate==3.0.1",
+        "PyJWT==2.1.0",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.4",
         "meinheld==1.0.2",
         "gunicorn==20.1.0",
         # DB and services drivers
-        "neomodel==4.0.2",
+        "neomodel==4.0.3",
         "psycopg2-binary",
         "pymodm",
         "PyMySQL",
         "redis",
         "pika",
-        "celery[redis]==5.0.5",
-        "flower==0.9.5",
+        "celery[redis]==5.1.2",
+        "flower==1.0.0",
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
-        "python-telegram-bot==13.4.1",
+        "python-telegram-bot==13.6",
         "amqp==5.0.6",
         # TOTP
         "pyotp==2.6.0",
@@ -70,17 +68,22 @@ setup(
         "html2text",
         # Used by Marshmallow to serialize Decimals
         "simplejson",
+        "orjson",
+        # Temporary fix to silence deprecation warnings, to be fixed on 2.1
+        "marshmallow==3.12.2",
+        # Temporary fix because 5.0.0 requires marshmallow 3.13
+        "apispec==4.7.1",
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.1.0",
-        "sentry-sdk[flask]==1.0.0",
+        "sentry-sdk[flask]==1.1.0",
         # Tests
         "pytest-flask==1.2.0",
-        "pytest-cov==2.11.1",
+        "pytest-cov==2.12.1",
         "pytest-timeout==1.4.2",
-        "schemathesis==3.6.3",
-        "Faker==8.1.1",
-        "Telethon==1.21.1",
+        "schemathesis==3.9.2",
+        "Faker==8.10.3",
+        "Telethon==1.22.0",
     ],
     classifiers=[
         "Programming Language :: Python",

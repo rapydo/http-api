@@ -111,7 +111,7 @@ def wait_socket(
                     service_name,
                     host,
                     port,
-                    math.ceil(time.time() - begin),
+                    math.ceil(1 + time.time() - begin),
                 )
             else:
                 log.debug("{} ({}:{}) not reachable", service_name, host, port)

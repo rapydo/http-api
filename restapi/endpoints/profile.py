@@ -66,7 +66,7 @@ class Profile(EndpointResource):
         password_confirm: str,
         totp_code: Optional[str] = None,
     ) -> Response:
-        """ Update password for current user """
+        """Update password for current user"""
 
         user = self.get_user()
 
@@ -93,11 +93,14 @@ class Profile(EndpointResource):
         responses={204: "Profile updated"},
     )
     def patch(self, **kwargs: Any) -> Response:
-        """ Update profile for current user """
+        """Update profile for current user"""
 
         user = self.get_user()
 
-        self.auth.db.update_properties(user, kwargs)
+        # mypy correctly raises errors because update_properties is not defined
+        # in generic Connector instances, but in this case this is an instance
+        # of an auth db and their implementation always contains this method
+        self.auth.db.update_properties(user, kwargs)  # type: ignore
 
         log.info("Profile updated")
 

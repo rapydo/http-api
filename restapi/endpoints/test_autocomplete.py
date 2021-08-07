@@ -20,7 +20,7 @@ if TESTING:
     class SingleInput(Schema):
         element = fields.Str(
             required=True,
-            autocomplete_endpoint="tests/autocomplete",
+            autocomplete_endpoint="/api/tests/autocomplete",
             autocomplete_id_bind="my_id",
             autocomplete_label_bind="my_label",
             autocomplete_show_id=False,
@@ -32,7 +32,7 @@ if TESTING:
         elements = fields.List(
             fields.Str(),
             required=True,
-            autocomplete_endpoint="tests/autocomplete",
+            autocomplete_endpoint="/api/tests/autocomplete",
             autocomplete_id_bind="my_id",
             autocomplete_label_bind="my_label",
             autocomplete_show_id=True,

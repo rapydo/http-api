@@ -13,7 +13,8 @@ from flask_caching import Cache
 
 class mem:
 
-    cache: Cache
+    # Type of variable becomes "Any" due to an unfollowed import
+    cache: Cache  # type: ignore
     customizer: Any
     initializer: Any
     configuration: Dict[str, Any]

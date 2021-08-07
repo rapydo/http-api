@@ -9,13 +9,14 @@ For future lazy alchemy: http://flask.pocoo.org/snippets/22/
 import re
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 
 import pytz
 import sqlalchemy
 from flask_migrate import Migrate
 from flask_sqlalchemy import Model
 from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
+from psycopg2 import OperationalError as PsycopgOperationalError
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.engine.url import URL
@@ -52,6 +53,8 @@ from restapi.utilities.uuid import getUUID
 
 # all instances have to use the same alchemy object
 db = OriginalAlchemy()
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 def parse_postgres_duplication_error(excpt: List[str]) -> Optional[str]:
@@ -117,9 +120,9 @@ def parse_missing_error(excpt: List[str]) -> Optional[str]:
     return None  # pragma: no cover
 
 
-def catch_db_exceptions(func):
+def catch_db_exceptions(func: F) -> F:
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
 
         try:
             return func(*args, **kwargs)
@@ -168,11 +171,11 @@ def catch_db_exceptions(func):
 
             raise
 
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.critical("Raised unknown exception {}: {}", e.__class__.__name__, e)
             raise
 
-    return wrapper
+    return cast(F, wrapper)
 
 
 class SQLAlchemy(Connector):
@@ -180,11 +183,13 @@ class SQLAlchemy(Connector):
     DB_INITIALIZING = False
 
     def __init__(self) -> None:
-        self.db: OriginalAlchemy = None
+        # Type of variable becomes "Any" due to an unfollowed import
+        self.db: OriginalAlchemy = None  # type: ignore
         super().__init__()
 
     # This is used to return Models in a type-safe way
-    def __getattr__(self, name: str) -> Model:
+    # Return type becomes "Any" due to an unfollowed import
+    def __getattr__(self, name: str) -> Model:  # type: ignore
         if name in self._models:
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
@@ -201,9 +206,13 @@ class SQLAlchemy(Connector):
 
     @staticmethod
     def get_connection_exception() -> ExceptionsList:
-        return (OperationalError,)
+        # type is ignored here due to untyped psycopg2
+        return (
+            OperationalError,
+            PsycopgOperationalError,
+        )  # type: ignore
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: str) -> "SQLAlchemy":
 
         variables = self.variables.copy()
         variables.update(kwargs)
@@ -212,7 +221,7 @@ class SQLAlchemy(Connector):
         if self.is_mysql() and not Connector.is_external(variables.get("host", "")):
             query = {"charset": "utf8mb4"}
 
-        uri = URL.create(
+        uri = URL.create(  # type: ignore
             drivername=variables.get("dbtype", "postgresql"),
             username=variables.get("user"),
             password=variables.get("password"),
@@ -242,15 +251,15 @@ class SQLAlchemy(Connector):
 
         db.engine_bis = create_engine(uri, encoding="utf8")
         db.session = scoped_session(sessionmaker(bind=db.engine_bis))
-        db.session.commit = catch_db_exceptions(db.session.commit)
-        db.session.flush = catch_db_exceptions(db.session.flush)
+        db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore
+        db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore
         # db.update_properties = self.update_properties
         # db.disconnect = self.disconnect
         # db.is_connected = self.is_connected
 
-        Connection.execute = catch_db_exceptions(Connection.execute)
+        Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore
         # Used in case of autoflush
-        Connection._execute_context = catch_db_exceptions(Connection._execute_context)
+        Connection._execute_context = catch_db_exceptions(Connection._execute_context)  # type: ignore
 
         if self.app:
             # This is to prevent multiple app initialization and avoid the error:
@@ -273,7 +282,7 @@ class SQLAlchemy(Connector):
 
     @property
     def session(self) -> Session:
-        return self.db.session
+        return cast(Session, self.db.session)
 
     def disconnect(self) -> None:
         if self.db:
@@ -315,15 +324,17 @@ class SQLAlchemy(Connector):
                 instance.db.drop_all()
 
     @staticmethod
-    def update_properties(instance, properties):
+    # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
+    def update_properties(instance: Model, properties: Dict[str, Any]) -> None:  # type: ignore
 
         for field, value in properties.items():
-            set_attribute(instance, field, value)
+            # Call to untyped function "set_attribute" in typed context
+            set_attribute(instance, field, value)  # type: ignore
 
 
 class Authentication(BaseAuthentication):
     def __init__(self) -> None:
-        self.db = get_instance()
+        self.db: SQLAlchemy = get_instance()
 
     # Also used by POST user
     def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
@@ -412,7 +423,8 @@ class Authentication(BaseAuthentication):
         if not user:
             return False
 
-        self.db.session.delete(user)
+        # Call to untyped function "delete" in typed context
+        self.db.session.delete(user)  # type: ignore
         self.db.session.commit()
         return True
 
@@ -448,7 +460,8 @@ class Authentication(BaseAuthentication):
         if not group:
             return False
 
-        self.db.session.delete(group)
+        # Call to untyped function "delete" in typed context
+        self.db.session.delete(group)  # type: ignore
         self.db.session.commit()
         return True
 
@@ -513,7 +526,7 @@ class Authentication(BaseAuthentication):
             self.db.session.add(user)
             self.db.session.commit()
 
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
 
@@ -541,7 +554,7 @@ class Authentication(BaseAuthentication):
         if token_entry.creation + self.GRACE_PERIOD < now:
             ip = self.get_remote_ip()
             if token_entry.IP != ip:
-                log.error(
+                log.warning(
                     "This token is emitted for IP {}, invalid use from {}",
                     token_entry.IP,
                     ip,
@@ -554,7 +567,7 @@ class Authentication(BaseAuthentication):
             try:
                 self.db.session.add(token_entry)
                 self.db.session.commit()
-            except BaseException as e:  # pragma: no cover
+            except Exception as e:  # pragma: no cover
                 log.error("DB error ({}), rolling back", e)
                 self.db.session.rollback()
 
@@ -604,11 +617,12 @@ class Authentication(BaseAuthentication):
         token_entry = self.db.Token.query.filter_by(token=token).first()
         if token_entry:
             try:
-                self.db.session.delete(token_entry)
+                # Call to untyped function "delete" in typed context
+                self.db.session.delete(token_entry)  # type: ignore
                 self.db.session.commit()
                 self.log_event(Events.delete, target=token_entry)
                 return True
-            except BaseException as e:  # pragma: no cover
+            except Exception as e:  # pragma: no cover
                 log.error("Could not invalidate token ({}), rolling back", e)
                 self.db.session.rollback()
                 return False
@@ -643,7 +657,7 @@ class Authentication(BaseAuthentication):
             self.db.session.add(login)
             self.db.session.commit()
 
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.error("DB error ({}), rolling back", e)
             self.db.session.rollback()
             raise
@@ -676,7 +690,7 @@ instance = SQLAlchemy()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "SQLAlchemy":
 
     return instance.get_instance(

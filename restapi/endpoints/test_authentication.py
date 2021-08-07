@@ -1,7 +1,11 @@
+from typing import Any, Dict
+
 from restapi import decorators
 from restapi.config import TESTING
+from restapi.exceptions import Unauthorized
+from restapi.models import fields
 from restapi.rest.definition import EndpointResource, Response
-from restapi.services.authentication import Role
+from restapi.services.authentication import Role, User
 
 if TESTING:
 
@@ -25,13 +29,10 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def get(self) -> Response:
-            user = self.get_user()
-            email = user.email if user else "N/A"
-            resp = {
-                "token": self.get_token(),
-                "user": email,
-            }
-            return self.response(resp)
+
+            if user := self.get_user():
+                return self.response({"email": user.email})
+            return self.empty_response()  # pragma: no cover
 
     class TestOptionalAuthentication(EndpointResource):
         @decorators.auth.optional()
@@ -39,18 +40,16 @@ if TESTING:
             path="/tests/optionalauthentication",
             summary="Only echos received token and corresponding user, if any",
             description="Only enabled in testing mode",
-            responses={200: "Tests executed"},
+            responses={
+                200: "Tests executed with auth",
+                204: "Tests executed without auth",
+            },
         )
         def get(self) -> Response:
 
-            resp = {}
-            resp["token"] = self.get_token()
             if user := self.get_user():
-                resp["user"] = user.email
-            else:
-                resp["user"] = None
-
-            return self.response(resp)
+                return self.response({"email": user.email})
+            return self.empty_response()
 
     class TestQueryParameterAuthentication(EndpointResource):
         @decorators.auth.require(allow_access_token_parameter=True)
@@ -61,14 +60,10 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def get(self) -> Response:
-            user = self.get_user()
 
-            email = user.email if user else "N/A"
-            resp = {
-                "token": self.get_token(),
-                "user": email,
-            }
-            return self.response(resp)
+            if user := self.get_user():
+                return self.response({"email": user.email})
+            return self.empty_response()  # pragma: no cover
 
     class TestOptionalQueryParameterAuthentication(EndpointResource):
         @decorators.auth.optional(allow_access_token_parameter=True)
@@ -76,17 +71,16 @@ if TESTING:
             path="/tests/optionalqueryauthentication",
             summary="Only echos received token and corresponding user, if any",
             description="Only enabled in testing mode",
-            responses={200: "Tests executed"},
+            responses={
+                200: "Tests executed with auth",
+                204: "Tests executed without auth",
+            },
         )
         def get(self) -> Response:
-            resp = {}
-            resp["token"] = self.get_token()
-            if user := self.get_user():
-                resp["user"] = user.email
-            else:
-                resp["user"] = None
 
-            return self.response(resp)
+            if user := self.get_user():
+                return self.response({"email": user.email})
+            return self.empty_response()
 
     class TestAuthenticationWithMultipleRoles(EndpointResource):
         @decorators.auth.require_any(Role.ADMIN, Role.USER)
@@ -98,15 +92,9 @@ if TESTING:
         )
         def get(self) -> Response:
 
-            user = self.get_user()
-            email = user.email if user else "N/A"
-
-            resp = {
-                "token": self.get_token(),
-                "user": email,
-            }
-
-            return self.response(resp)
+            if user := self.get_user():
+                return self.response({"email": user.email})
+            return self.empty_response()  # pragma: no cover
 
     # Note: this endpoint requires a role that does not exist!
     class TestAuthenticationWithMissingRole(EndpointResource):
@@ -120,11 +108,33 @@ if TESTING:
         # no cover because this endpoint will be never called
         # because it requires an Unknown Role to be accessed
         def get(self) -> Response:  # pragma: no cover
-            resp = {}
-            resp["token"] = self.get_token()
-            if user := self.get_user():
-                resp["user"] = user.email
-            else:
-                resp["user"] = None
 
-            return self.response(resp)
+            if user := self.get_user():
+                return self.response({"email": user.email})
+            return self.empty_response()
+
+    def verify_uuid_value(endpoint: EndpointResource, uuid: str) -> Dict[str, Any]:
+
+        user = endpoint.get_user()
+        if not user or uuid != user.uuid:
+            raise Unauthorized("You are not authorized")
+
+        # Returned values if any will be injected into the endpoint as fn parameters
+        return {"user": user}
+        # Otherwise can simply return None to inject nothing
+        # return None
+
+    # Note: this endpoint has a preload callback to verify the uuid and inject the user
+    class TestPreloadCallback(EndpointResource):
+        @decorators.auth.require()
+        @decorators.preload(callback=verify_uuid_value)
+        @decorators.use_kwargs({"test": fields.Bool(required=True)}, location="query")
+        @decorators.endpoint(
+            path="/tests/preloadcallback/<uuid>",
+            summary="Only authorized if uuid matches the user uuid",
+            description="Only enabled in testing mode",
+            responses={200: "Tests executed"},
+        )
+        # Note: user is injected by the preload decorator
+        def get(self, uuid: str, test: bool, user: User) -> Response:
+            return self.response({"email": user.email})

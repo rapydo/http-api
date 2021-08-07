@@ -9,27 +9,30 @@ from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
 CONNECTOR = "pushpin"
+CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
 
 
+@pytest.mark.skipif(
+    CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
+)
+def test_no_pushpin() -> None:
+
+    with pytest.raises(ServiceUnavailable):
+        connector.get_instance()
+
+    log.warning("Skipping {} tests: service not available", CONNECTOR)
+    return None
+
+
+@pytest.mark.skipif(
+    not CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
+)
 def test_pushpin(app: Flask) -> None:
-
-    if not Connector.check_availability(CONNECTOR):
-
-        try:
-            obj = connector.get_instance()
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ServiceUnavailable:
-            pass
-        log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return None
 
     log.info("Executing {} tests", CONNECTOR)
 
-    try:
-        connector.get_instance(host="invalidhostname", port=123)
-        pytest.fail("No exception raised on unavailable service")  # pragma: no cover
-    except ServiceUnavailable:
-        pass
+    with pytest.raises(ServiceUnavailable):
+        connector.get_instance(host="invalidhostname", port="123")
 
     obj = connector.get_instance()
     assert obj is not None

@@ -61,7 +61,7 @@ class PushpinWebSocket(EndpointResource):
 
         try:
             event_type = in_events.type
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.error(e)
             raise BadRequest("Cannot decode websocket request: invalid type")
 

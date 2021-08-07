@@ -2,7 +2,7 @@ import json
 import socket
 import ssl
 import urllib.parse
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import certifi
 import pika
@@ -44,7 +44,7 @@ class RabbitExt(Connector):
             socket.gaierror,
         )  # type: ignore
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: str) -> "RabbitExt":
 
         variables = self.variables.copy()
         # Beware, if you specify a user different by the default,
@@ -145,7 +145,7 @@ class RabbitExt(Connector):
             return False
 
     @classmethod
-    def get_hostname(cls, host):
+    def get_hostname(cls, host: str) -> str:
         """
         Method used from both RabbitMQ and Celery to guess the host server name
         that matches the SSL certificate.
@@ -270,15 +270,27 @@ class RabbitExt(Connector):
         channel = self.get_channel()
         channel.queue_unbind(queue=queue, exchange=exchange, routing_key=routing_key)
 
-    def send_json(self, message, routing_key="", exchange="", headers=None):
+    def send_json(
+        self,
+        message: Any,
+        routing_key: str = "",
+        exchange: str = "",
+        headers: Optional[Dict[str, Any]] = None,
+    ) -> bool:
         return self.send(
-            body=json.dumps(message),
+            body=json.dumps(message).encode(),
             routing_key=routing_key,
             exchange=exchange,
             headers=headers,
         )
 
-    def send(self, body, routing_key="", exchange="", headers=None):
+    def send(
+        self,
+        body: bytes,
+        routing_key: str = "",
+        exchange: str = "",
+        headers: Optional[Dict[str, Any]] = None,
+    ) -> bool:
         """
         Send a message to the RabbitMQ queue
 
@@ -367,7 +379,7 @@ instance = RabbitExt()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "RabbitExt":
 
     return instance.get_instance(

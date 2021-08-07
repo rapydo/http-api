@@ -5,7 +5,16 @@ from restapi.connectors import Connector
 from restapi.endpoints.schemas import GroupWithMembers, admin_group_input
 from restapi.exceptions import NotFound
 from restapi.rest.definition import EndpointResource, Response
-from restapi.services.authentication import Role
+from restapi.services.authentication import Group, Role
+
+
+def inject_group(endpoint: EndpointResource, group_id: str) -> Dict[str, Any]:
+
+    group = endpoint.auth.get_group(group_id=group_id)
+    if not group:
+        raise NotFound("This group cannot be found")
+
+    return {"group": group}
 
 
 class AdminGroups(EndpointResource):
@@ -31,7 +40,11 @@ class AdminGroups(EndpointResource):
         for g in self.auth.get_groups():
 
             if Connector.authentication_service == "mongo":
-                members = self.auth.db.User.objects.raw({"belongs_to": g.id}).all()
+                # mypy correctly raises errors because User is not defined
+                # in generic Connector instances (as auth.db is)...
+                # but in mongo connector the User model is properly injected
+                User = self.auth.db.User  # type: ignore
+                members = User.objects.raw({"belongs_to": g.id}).all()
             else:
                 members = list(g.members)
             coordinators = [u for u in members if self.auth.is_coordinator(u)]
@@ -69,6 +82,7 @@ class AdminGroups(EndpointResource):
         return self.response(group.uuid)
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.preload(callback=inject_group)
     @decorators.database_transaction
     @decorators.use_kwargs(admin_group_input)
     @decorators.endpoint(
@@ -76,13 +90,12 @@ class AdminGroups(EndpointResource):
         summary="Modify a group",
         responses={204: "Group successfully modified", 404: "Group not found"},
     )
-    def put(self, group_id: str, **kwargs: Any) -> Response:
+    def put(self, group_id: str, group: Group, **kwargs: Any) -> Response:
 
-        group = self.auth.get_group(group_id=group_id)
-        if not group:
-            raise NotFound("This group cannot be found")
-
-        self.auth.db.update_properties(group, kwargs)
+        # mypy correctly raises errors because update_properties is not defined
+        # in generic Connector instances, but in this case this is an instance
+        # of an auth db and their implementation always contains this method
+        self.auth.db.update_properties(group, kwargs)  # type: ignore
 
         self.auth.save_group(group)
 
@@ -91,16 +104,13 @@ class AdminGroups(EndpointResource):
         return self.empty_response()
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.preload(callback=inject_group)
     @decorators.endpoint(
         path="/admin/groups/<group_id>",
         summary="Delete a group",
         responses={204: "Group successfully deleted", 404: "Group not found"},
     )
-    def delete(self, group_id: str) -> Response:
-
-        group = self.auth.get_group(group_id=group_id)
-        if not group:
-            raise NotFound("This group cannot be found")
+    def delete(self, group_id: str, group: Group) -> Response:
 
         self.auth.delete_group(group)
 

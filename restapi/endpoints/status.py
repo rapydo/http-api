@@ -3,7 +3,6 @@ from restapi.rest.definition import EndpointResource, Response
 
 
 class Status(EndpointResource):
-    """ Check if APIs are online """
 
     labels = ["helpers"]
 
@@ -19,7 +18,6 @@ class Status(EndpointResource):
 
 
 class AuthStatus(EndpointResource):
-    """ Check if APIs are online """
 
     depends_on = ["AUTH_ENABLE"]
     labels = ["helpers"]

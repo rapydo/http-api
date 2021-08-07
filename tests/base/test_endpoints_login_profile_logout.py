@@ -11,7 +11,7 @@ from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 
 class TestApp(BaseTests):
     def test_01_login(self, client: FlaskClient, faker: Faker) -> None:
-        """ Check that you can login and receive back your token """
+        """Check that you can login and receive back your token"""
 
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping login tests")
@@ -29,6 +29,7 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.login.value
         assert events[0].user == USER
+        assert events[0].url == "/auth/login"
 
         auth = Connector.get_authentication_instance()
         logins = auth.get_logins(USER)
@@ -42,6 +43,7 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.failed_login.value
         assert events[0].payload["username"] == USER
+        assert events[0].url == "/auth/login"
 
         logins = auth.get_logins(USER)
         login = logins[-1]
@@ -54,6 +56,7 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.login.value
         assert events[0].user == USER
+        assert events[0].url == "/auth/login"
 
         time.sleep(5)
         # Verify MAX_PASSWORD_VALIDITY, if set
@@ -62,6 +65,7 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.login.value
         assert events[0].user == USER
+        assert events[0].url == "/auth/login"
 
         self.save("auth_header", headers)
         self.save("auth_token", token)
@@ -97,9 +101,10 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.failed_login.value
         assert events[0].payload["username"] == random_email
+        assert events[0].url == "/auth/login"
 
     def test_02_GET_profile(self, client: FlaskClient, faker: Faker) -> None:
-        """ Check if you can use your token for protected endpoints """
+        """Check if you can use your token for protected endpoints"""
 
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping profile tests")
@@ -109,7 +114,9 @@ class TestApp(BaseTests):
         log.info("*** VERIFY valid token")
         r = client.get(f"{AUTH_URI}/profile", headers=self.get("auth_header"))
         assert r.status_code == 200
-        uuid = self.get_content(r).get("uuid")
+        content = self.get_content(r)
+        assert isinstance(content, dict)
+        uuid = content.get("uuid")
 
         # Check failure
         log.info("*** VERIFY invalid token")
@@ -228,6 +235,7 @@ class TestApp(BaseTests):
         assert events[0].event == Events.modify.value
         assert events[0].user == BaseAuthentication.default_user
         assert events[0].target_type == "User"
+        assert events[0].url == "/auth/profile"
         # It is true in the core, but projects may introduce additional values
         # and expand the input dictionary even if initially empty
         # e.g. meteohub adds here the requests_expiration_days parameter
@@ -239,6 +247,7 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
         c = self.get_content(r)
+        assert isinstance(c, dict)
         assert c.get("name") is not None
         assert c.get("name") != newname
         assert c.get("uuid") is not None
@@ -257,6 +266,7 @@ class TestApp(BaseTests):
         assert events[0].event == Events.modify.value
         assert events[0].user == BaseAuthentication.default_user
         assert events[0].target_type == "User"
+        assert events[0].url == "/auth/profile"
         # It is true in the core, but projects may introduce additional values
         # and expand the input dictionary even if initially empty
         # e.g. meteohub adds here the requests_expiration_days parameter
@@ -266,6 +276,7 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
         c = self.get_content(r)
+        assert isinstance(c, dict)
         assert c.get("name") == newname
         assert c.get("uuid") != newuuid
 
@@ -370,7 +381,7 @@ class TestApp(BaseTests):
         self.save("auth_header", headers)
 
     def test_04_logout(self, client: FlaskClient) -> None:
-        """ Check that you can logout with a valid token """
+        """Check that you can logout with a valid token"""
 
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping logout tests")
@@ -386,9 +397,11 @@ class TestApp(BaseTests):
         assert events[0].event == Events.delete.value
         assert events[0].user == "-"
         assert events[0].target_type == "Token"
+        assert events[0].url == "/auth/logout"
 
         assert events[1].event == Events.logout.value
         assert events[1].user == BaseAuthentication.default_user
+        assert events[1].url == "/auth/logout"
 
         # Check failure
         log.info("*** VERIFY invalid token")
@@ -414,9 +427,6 @@ class TestApp(BaseTests):
                 r = client.get(f"{AUTH_URI}/status", headers=headers)
                 assert r.status_code == 200
 
-                log.warning(
-                    "Debug code: using token from a new ip during the grace period"
-                )
                 r = client.get(
                     f"{AUTH_URI}/status",
                     headers=headers,
@@ -426,10 +436,6 @@ class TestApp(BaseTests):
 
                 time.sleep(Env.get_int("AUTH_TOKEN_IP_GRACE_PERIOD"))
 
-                log.warning(
-                    "Debug code: using token from a new ip after the grace period"
-                )
-
                 r = client.get(
                     f"{AUTH_URI}/status",
                     headers=headers,
@@ -437,22 +443,17 @@ class TestApp(BaseTests):
                 )
                 assert r.status_code == 401
 
-                log.warning(
-                    "Debug code: using token from the correct ip after the grace period"
-                )
-
                 # After the failure the token is still valid if used from the correct IP
                 r = client.get(f"{AUTH_URI}/status", headers=headers)
                 assert r.status_code == 200
 
-                log.warning(
-                    "Debug code: using token from a new ip after the grace period"
-                )
-
                 # Another option to provide IP is through the header passed by nginx
-                headers["X-Forwarded-For"] = faker.ipv4()  # type: ignore
-                r = client.get(f"{AUTH_URI}/status", headers=headers)
-                assert r.status_code == 401
+                # This only works if PROXIED_CONNECTION is on
+                # (disabled by default, for security purpose)
+                if Env.get_bool("PROXIED_CONNECTION"):
+                    headers["X-Forwarded-For"] = faker.ipv4()  # type: ignore
+                    r = client.get(f"{AUTH_URI}/status", headers=headers)
+                    assert r.status_code == 401
 
     if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
 
@@ -487,6 +488,7 @@ class TestApp(BaseTests):
             r = client.post(f"{AUTH_URI}/login", data=data)
             assert r.status_code == 403
             resp = self.get_content(r)
+            assert isinstance(resp, dict)
 
             assert "actions" in resp
             assert "errors" in resp
@@ -498,6 +500,10 @@ class TestApp(BaseTests):
             # validate that the QR code is a valid PNG image
             # ... not implemented
 
+            events = self.get_last_events(1)
+            assert events[0].event == Events.password_expired.value
+            assert events[0].user == username
+
             data["totp_code"] = "000000"
             r = client.post(f"{AUTH_URI}/login", data=data)
             assert r.status_code == 401
@@ -508,12 +514,14 @@ class TestApp(BaseTests):
             assert events[0].user == username
             assert "totp" in events[0].payload
             assert events[0].payload["totp"] == OBSCURE_VALUE
+            assert events[0].url == "/auth/login"
 
             for totp in invalid_totp:
                 data["totp_code"] = totp
                 r = client.post(f"{AUTH_URI}/login", data=data)
                 assert r.status_code == 400
                 resp = self.get_content(r)
+                assert isinstance(resp, dict)
                 assert "totp_code" in resp
                 assert "Invalid TOTP format" in resp["totp_code"]
 
@@ -524,6 +532,7 @@ class TestApp(BaseTests):
             events = self.get_last_events(1)
             assert events[0].event == Events.login.value
             assert events[0].user == username
+            assert events[0].url == "/auth/login"
 
             password = new_password
 
@@ -538,6 +547,7 @@ class TestApp(BaseTests):
             r = client.post(f"{AUTH_URI}/login", data=data)
             assert r.status_code == 403
             resp = self.get_content(r)
+            assert isinstance(resp, dict)
             assert "actions" in resp
             assert "errors" in resp
             assert "TOTP" in resp["actions"]
@@ -553,12 +563,14 @@ class TestApp(BaseTests):
             assert events[0].user == username
             assert "totp" in events[0].payload
             assert events[0].payload["totp"] == OBSCURE_VALUE
+            assert events[0].url == "/auth/login"
 
             for totp in invalid_totp:
                 data["totp_code"] = totp
                 r = client.post(f"{AUTH_URI}/login", data=data)
                 assert r.status_code == 400
                 resp = self.get_content(r)
+                assert isinstance(resp, dict)
                 assert "totp_code" in resp
                 assert "Invalid TOTP format" in resp["totp_code"]
 
@@ -569,6 +581,7 @@ class TestApp(BaseTests):
             events = self.get_last_events(1)
             assert events[0].event == Events.login.value
             assert events[0].user == username
+            assert events[0].url == "/auth/login"
 
             ###################################
             # Test password change
@@ -596,12 +609,14 @@ class TestApp(BaseTests):
             assert events[0].user == username
             assert "totp" in events[0].payload
             assert events[0].payload["totp"] == OBSCURE_VALUE
+            assert events[0].url == "/auth/profile"
 
             for totp in invalid_totp:
                 data["totp_code"] = totp
                 r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
                 assert r.status_code == 400
                 resp = self.get_content(r)
+                assert isinstance(resp, dict)
                 assert "totp_code" in resp
                 assert "Invalid TOTP format" in resp["totp_code"]
 

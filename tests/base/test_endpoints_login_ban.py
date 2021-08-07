@@ -1,5 +1,6 @@
 import time
 
+import pytest
 from faker import Faker
 
 from restapi.config import PRODUCTION, get_project_configuration
@@ -34,6 +35,7 @@ elif max_login_attempts == 0:
             events = self.get_last_events(1)
             assert events[0].event == Events.failed_login.value
             assert events[0].payload["username"] == data["email"]
+            assert events[0].url == "/auth/login"
 
             # and verify that login is still allowed
             headers, _ = self.do_login(client, data["email"], data["password"])
@@ -42,6 +44,7 @@ elif max_login_attempts == 0:
             events = self.get_last_events(1)
             assert events[0].event == Events.login.value
             assert events[0].user == data["email"]
+            assert events[0].url == "/auth/login"
 
             # Furthermore the login/unlock endpoint is now enabled
             r = client.post(f"{AUTH_URI}/login/unlock/token")
@@ -63,15 +66,15 @@ else:
             # Verify email sent to notify credentials block,
             # + extract and return the unlock url
             mail = self.read_mock_email()
-            body = mail.get("body")
+            body = mail.get("body", "")
             project_tile = get_project_configuration(
                 "project.title", default="YourProject"
             )
 
             assert body is not None
-            assert mail.get("headers") is not None
+            assert mail.get("headers", "") is not None
             title = "Your credentials have been blocked"
-            assert f"Subject: {project_tile}: {title}" in mail.get("headers")
+            assert f"Subject: {project_tile}: {title}" in mail.get("headers", "")
             # Body can't be asserted if can be changed at project level...
             # assert "this email is to inform you that your credentials have been "
             # "temporarily due to the number of failed login attempts" in body
@@ -98,6 +101,7 @@ else:
             events = self.get_last_events(1)
             assert events[0].event == Events.failed_login.value
             assert events[0].payload["username"] == data["email"]
+            assert events[0].url == "/auth/login"
 
             self.verify_credentials_ban_notification()
 
@@ -114,6 +118,7 @@ else:
                 events[0].payload["motivation"]
                 == "account blocked due to too many failed logins"
             )
+            assert events[0].url == "/auth/login"
 
             reset_data = {"reset_email": data["email"]}
             r = client.post(f"{AUTH_URI}/reset", data=reset_data)
@@ -127,6 +132,7 @@ else:
                 events[0].payload["motivation"]
                 == "account blocked due to too many failed logins"
             )
+            assert events[0].url == "/auth/reset"
 
             time.sleep(ban_duration)
 
@@ -136,6 +142,7 @@ else:
             events = self.get_last_events(1)
             assert events[0].event == Events.login.value
             assert events[0].user == data["email"]
+            assert events[0].url == "/auth/login"
 
             # Verify that already emitted tokens are not blocked
             # 1) Block again the account
@@ -191,6 +198,7 @@ else:
             assert events[0].event == Events.login_unlock.value
             assert events[0].user == data["email"]
             assert events[0].target_type == "User"
+            assert events[0].url == f"/auth/login/unlock/{token}"
 
             logins = auth.get_logins(data["email"])
             login = logins[-1]
@@ -280,7 +288,9 @@ else:
             headers, _ = self.do_login(client, None, None)
             r = client.get(f"{AUTH_URI}/profile", headers=headers)
             assert r.status_code == 200
-            uuid = self.get_content(r).get("uuid")
+            response = self.get_content(r)
+            assert isinstance(response, dict)
+            uuid = str(response.get("uuid"))
 
             token = self.get_crafted_token("x", user_id=uuid)
             r = client.post(f"{AUTH_URI}/login/unlock/{token}")
@@ -353,6 +363,7 @@ else:
                 assert events[0].event == Events.refused_login.value
                 assert events[0].payload["username"] == registration_data["email"]
                 assert events[0].payload["motivation"] == "account not active"
+                assert events[0].url == "/auth/login"
 
                 self.delete_mock_email()
 
@@ -368,6 +379,7 @@ else:
                 events = self.get_last_events(1)
                 assert events[0].event == Events.failed_login.value
                 assert events[0].payload["username"] == registration_data["email"]
+                assert events[0].url == "/auth/login"
 
                 self.verify_credentials_ban_notification()
 
@@ -385,6 +397,7 @@ else:
                     events[0].payload["motivation"]
                     == "account blocked due to too many failed logins"
                 )
+                assert events[0].url == f"/auth/profile/activate/{token}"
 
                 # request activation forbidden due to blocked acount
                 r = client.post(
@@ -401,6 +414,7 @@ else:
                     events[0].payload["motivation"]
                     == "account blocked due to too many failed logins"
                 )
+                assert events[0].url == "/auth/profile/activate"
 
                 time.sleep(ban_duration)
 
@@ -463,6 +477,7 @@ else:
                 assert "username" not in events[0].payload
                 assert "totp" in events[0].payload
                 assert events[0].payload["totp"] == OBSCURE_VALUE
+                assert events[0].url == "/auth/login"
 
                 self.verify_credentials_ban_notification()
 
@@ -479,6 +494,7 @@ else:
                     events[0].payload["motivation"]
                     == "account blocked due to too many failed logins"
                 )
+                assert events[0].url == "/auth/login"
 
                 time.sleep(ban_duration)
 
@@ -489,6 +505,7 @@ else:
                 events = self.get_last_events(1)
                 assert events[0].event == Events.login.value
                 assert events[0].user == data["email"]
+                assert events[0].url == "/auth/login"
 
                 # Goodbye temporary user
                 self.delete_user(client, uuid)
@@ -506,8 +523,8 @@ else:
             self.delete_mock_email()
 
             # Just to verify that email is deleted
-            mail = self.read_mock_email()
-            assert mail is None
+            with pytest.raises(FileNotFoundError):
+                self.read_mock_email()
 
             email = faker.ascii_email()
             # Wrong credentials with a non existing email
@@ -520,8 +537,8 @@ else:
             assert headers is None
 
             # Verify that there are no mocked email
-            mail = self.read_mock_email()
-            assert mail is None
+            with pytest.raises(FileNotFoundError):
+                self.read_mock_email()
 
             # Goodbye temporary user
             self.delete_user(client, uuid)

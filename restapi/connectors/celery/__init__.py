@@ -1,13 +1,11 @@
 import ssl
 import traceback
-import warnings
 from datetime import timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union, cast
 
 import certifi
 from celery import Celery
-from celery.app.task import Task
 from celery.exceptions import Ignore
 
 from restapi.config import CUSTOM_PACKAGE, SSL_CERTIFICATE, TESTING
@@ -23,10 +21,11 @@ from restapi.utilities.time import AllowedTimedeltaPeriods, get_timedelta
 
 REDBEAT_KEY_PREFIX: str = "redbeat:"
 
+F = TypeVar("F", bound=Callable[..., Any])
+
 
 class CeleryExt(Connector):
 
-    TaskType = Task
     CELERYBEAT_SCHEDULER: Optional[str] = None
     celery_app: Celery = Celery("RAPyDo")
 
@@ -38,20 +37,20 @@ class CeleryExt(Connector):
     # @CeleryExt.task() [to automatically use function name]
     # or: CeleryExt.task(name="your_custom_name")
     @staticmethod
-    def task(name=None):
-        def decorator(func):
+    def task(name: Optional[str] = None) -> Callable[[F], F]:
+        def decorator(func: F) -> F:
             # This decorated is not covered by tests because can't be tested on backend
             # However it is tested on celery so... even if not covered it is ok
             @CeleryExt.celery_app.task(bind=True, name=name or func.__name__)
             @wraps(func)
-            def wrapper(self, *args, **kwargs):
+            def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
                 try:
                     with CeleryExt.app.app_context():
                         return func(self, *args, **kwargs)
                 except Ignore:
                     raise
-                except BaseException:
+                except Exception:
 
                     if TESTING:
                         self.request.id = "fixed-id"
@@ -76,7 +75,7 @@ class CeleryExt(Connector):
                             task_id, task_name, arguments, clean_error_stack
                         )
 
-            return wrapper
+            return cast(F, wrapper)
 
         return decorator
 
@@ -130,7 +129,7 @@ class CeleryExt(Connector):
 
         return f"{protocol}://{creds}{host}:{port}"
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: str) -> "CeleryExt":
 
         variables = self.variables.copy()
         variables.update(kwargs)
@@ -152,7 +151,7 @@ class CeleryExt(Connector):
                 #   ssl_certfile (optional): path to the client certificate
                 #   ssl_keyfile (optional): path to the client key
 
-                server_hostname = RabbitExt.get_hostname(service_vars.get("host"))
+                server_hostname = RabbitExt.get_hostname(service_vars.get("host", ""))
                 ca_certs = (
                     SSL_CERTIFICATE
                     if server_hostname == "localhost"
@@ -480,33 +479,13 @@ class CeleryExt(Connector):
             )
 
 
-# Deprecated since 1.1
-def send_errors_by_email(func):  # pragma: no cover
-    """
-    Send a notification email to a given recipient to the
-    system administrator with details about failure.
-    """
-
-    warnings.warn(
-        "Deprecated use of send_errors_by_email decorator, you can remove it",
-        DeprecationWarning,
-    )
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-
-        return func(self, *args, **kwargs)
-
-    return wrapper
-
-
 instance = CeleryExt()
 
 
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "CeleryExt":
 
     return instance.get_instance(

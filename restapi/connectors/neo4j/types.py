@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 import pytz
 from neomodel import DateTimeProperty, StringProperty, StructuredNode
@@ -6,7 +7,8 @@ from neomodel import DateTimeProperty, StringProperty, StructuredNode
 from restapi.utilities.uuid import getUUID
 
 
-class IdentifiedNode(StructuredNode):
+# Base type StructuredNode becomes "Any" due to an unfollowed import
+class IdentifiedNode(StructuredNode):  # type: ignore
 
     """
     A StructuredNode identified by an uuid
@@ -32,6 +34,6 @@ class TimestampedNode(IdentifiedNode):
     created = DateTimeProperty(default_now=True, show=True)
     modified = DateTimeProperty(default_now=True, show=True)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> Any:
         self.modified = datetime.now(pytz.utc)
         return super().save(*args, **kwargs)

@@ -26,11 +26,34 @@ class TestApp(BaseTests):
         schema = self.getDynamicInputSchema(client, "admin/users", headers)
         data = self.buildData(schema)
 
+        data["email_notification"] = True
+        data["is_active"] = True
+        data["expiration"] = None
+
+        # Event 1: create
+        r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
+        assert r.status_code == 200
+        uuid = self.get_content(r)
+        assert isinstance(uuid, str)
+
+        mail = self.read_mock_email()
+        body = mail.get("body", "")
+
+        # Subject: is a key in the MIMEText
+        assert body is not None
+        assert mail.get("headers") is not None
+        assert f"Subject: {project_tile}: New credentials" in mail.get("headers", "")
+        assert data.get("email", "MISSING").lower() in body
+        assert (
+            data.get("password", "MISSING") in body
+            or escape(str(data.get("password"))) in body
+        )
+
         # Test the differences between post and put schema
         post_schema = {s["key"]: s for s in schema}
 
         tmp_schema = self.getDynamicInputSchema(
-            client, "admin/users/myuuid", headers, method="put"
+            client, f"admin/users/{uuid}", headers, method="put"
         )
         put_schema = {s["key"]: s for s in tmp_schema}
 
@@ -58,29 +81,11 @@ class TestApp(BaseTests):
         assert "group" in put_schema
         assert not put_schema["group"]["required"]
 
-        data["email_notification"] = True
-        data["is_active"] = True
-        data["expiration"] = None
-
-        # Event 1: create
-        r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
-        assert r.status_code == 200
-        uuid = self.get_content(r)
-
-        mail = self.read_mock_email()
-        body = mail.get("body")
-
-        # Subject: is a key in the MIMEText
-        assert body is not None
-        assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
-        assert data.get("email", "MISSING").lower() in body
-        assert data.get("password") in body or escape(str(data.get("password"))) in body
-
         # Event 2: read
         r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
         assert r.status_code == 200
         users_list = self.get_content(r)
+        assert isinstance(users_list, dict)
         assert len(users_list) > 0
         # email is saved lowercase
         assert users_list.get("email") == data.get("email", "MISSING").lower()
@@ -99,15 +104,16 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/admin/users", data=data2, headers=headers)
         assert r.status_code == 200
         uuid2 = self.get_content(r)
+        assert isinstance(uuid2, str)
 
         mail = self.read_mock_email()
-        body = mail.get("body")
+        body = mail.get("body", "")
         # Subject: is a key in the MIMEText
         assert body is not None
         assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: New credentials" in mail.get("headers")
+        assert f"Subject: {project_tile}: New credentials" in mail.get("headers", "")
         assert data2.get("email", "MISSING").lower() in body
-        pwd = data2.get("password")
+        pwd = data2.get("password", "MISSING")
         assert pwd in body or escape(str(pwd)) in body
 
         # send and invalid user_id
@@ -138,6 +144,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/admin/users/{uuid2}", headers=headers)
         assert r.status_code == 200
         users_list = self.get_content(r)
+        assert isinstance(users_list, dict)
         assert len(users_list) > 0
         # email is not modified -> still equal to data2, not data1
         assert users_list.get("email") != data.get("email", "MISSING").lower()
@@ -162,11 +169,11 @@ class TestApp(BaseTests):
 
         mail = self.read_mock_email()
         # Subject: is a key in the MIMEText
-        assert mail.get("body") is not None
-        assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: Password changed" in mail.get("headers")
-        assert data2.get("email", "MISSING").lower() in mail.get("body")
-        assert newpwd in mail.get("body") or escape(newpwd) in mail.get("body")
+        assert mail.get("body", "") is not None
+        assert mail.get("headers", "") is not None
+        assert f"Subject: {project_tile}: Password changed" in mail.get("headers", "")
+        assert data2.get("email", "MISSING").lower() in mail.get("body", "")
+        assert newpwd in mail.get("body", "") or escape(newpwd) in mail.get("body", "")
 
         # login with a newly created user
         headers2, _ = self.do_login(client, data2.get("email"), newpwd)
@@ -207,7 +214,9 @@ class TestApp(BaseTests):
         # or MAX_PASSWORD_VALIDITY errors
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
-        uuid = self.get_content(r).get("uuid")
+        content = self.get_content(r)
+        assert isinstance(content, dict)
+        uuid = str(content.get("uuid"))
 
         data = {
             "password": BaseAuthentication.default_password,
@@ -234,6 +243,7 @@ class TestApp(BaseTests):
         assert events[INDEX].event == Events.create.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
+        assert events[INDEX].url == "/api/admin/users"
         assert "name" in events[INDEX].payload
         assert "surname" in events[INDEX].payload
         assert "email" in events[INDEX].payload
@@ -244,6 +254,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[0].target_id
+        assert events[INDEX].url == f"/api/admin/users/{events[0].target_id}"
         assert len(events[INDEX].payload) == 0
 
         # Another User is created
@@ -252,6 +263,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id != events[0].target_id
+        assert events[INDEX].url == "/api/admin/users"
         assert "name" in events[INDEX].payload
         assert "surname" in events[INDEX].payload
         assert "email" in events[INDEX].payload
@@ -262,6 +274,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[0].target_id
+        assert events[INDEX].url == f"/api/admin/users/{events[0].target_id}"
         assert "name" in events[INDEX].payload
         assert "surname" not in events[INDEX].payload
         assert "email" not in events[INDEX].payload
@@ -273,14 +286,16 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[2].target_id
+        assert events[INDEX].url == f"/api/admin/users/{events[2].target_id}"
         assert len(events[INDEX].payload) == 0
 
-        # User 2 is deleted (same target_id as above)
+        # User 1 is deleted (same target_id as above)
         INDEX = 5
         assert events[INDEX].event == Events.delete.value
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[0].target_id
+        assert events[INDEX].url == f"/api/admin/users/{events[0].target_id}"
         assert len(events[INDEX].payload) == 0
 
         # User 2 modified (same target_id as above)
@@ -289,6 +304,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[2].target_id
+        assert events[INDEX].url == f"/api/admin/users/{events[2].target_id}"
         assert "name" not in events[INDEX].payload
         assert "surname" not in events[INDEX].payload
         assert "email" not in events[INDEX].payload
@@ -303,6 +319,7 @@ class TestApp(BaseTests):
         assert events[INDEX].user == BaseAuthentication.default_user
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id == events[2].target_id
+        assert events[INDEX].url == f"/api/admin/users/{events[2].target_id}"
         assert len(events[INDEX].payload) == 0
 
         # Default user is modified
@@ -312,6 +329,8 @@ class TestApp(BaseTests):
         assert events[INDEX].target_type == "User"
         assert events[INDEX].target_id != events[0].target_id
         assert events[INDEX].target_id != events[2].target_id
+        assert events[INDEX].url != f"/api/admin/users/{events[0].target_id}"
+        assert events[INDEX].url != f"/api/admin/users/{events[2].target_id}"
         assert "name" not in events[INDEX].payload
         assert "surname" not in events[INDEX].payload
         assert "email" not in events[INDEX].payload

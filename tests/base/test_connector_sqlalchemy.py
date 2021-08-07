@@ -9,48 +9,40 @@ from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
 CONNECTOR = "sqlalchemy"
+CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
 
 
+@pytest.mark.skipif(
+    CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
+)
+def test_no_sqlalchemy() -> None:
+
+    with pytest.raises(ServiceUnavailable):
+        connector.get_instance()
+
+    log.warning("Skipping {} tests: service not available", CONNECTOR)
+    return None
+
+
+@pytest.mark.skipif(
+    not CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
+)
 def test_sqlalchemy(app: Flask) -> None:
-
-    if not Connector.check_availability(CONNECTOR):
-
-        try:
-            obj = connector.get_instance()
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ServiceUnavailable:
-            pass
-
-        log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return None
 
     log.info("Executing {} tests", CONNECTOR)
 
     if not connector.SQLAlchemy.is_mysql():
-        try:
-            connector.get_instance(host="invalidhostname", port=123)
+        with pytest.raises(ServiceUnavailable):
+            connector.get_instance(host="invalidhostname", port="123")
 
-            pytest.fail(
-                "No exception raised on unavailable service"
-            )  # pragma: no cover
-        except ServiceUnavailable:
-            pass
-
-    try:
+    with pytest.raises(ServiceUnavailable):
         connector.get_instance(user="invaliduser")
-
-        pytest.fail("No exception raised on unavailable service")  # pragma: no cover
-    except ServiceUnavailable:
-        pass
 
     obj = connector.get_instance()
     assert obj is not None
 
-    try:
+    with pytest.raises(AttributeError, match=r"Model InvalidModel not found"):
         obj.InvalidModel
-        pytest.fail("No exception raised on InvalidModel")  # pragma: no cover
-    except AttributeError as e:
-        assert str(e) == "Model InvalidModel not found"
 
     obj.disconnect()
 

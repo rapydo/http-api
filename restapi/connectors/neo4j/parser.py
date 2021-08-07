@@ -22,6 +22,7 @@ class DataDump:
         self.filename = filename
         self.cache: Dict[str, bool] = {}
         self.fields = fields
+        self.counter = 0
 
         with open(self.filepath, "w+") as out_handle:
             tsv_node_writer = csv.writer(out_handle, delimiter="\t")
@@ -35,16 +36,29 @@ class DataDump:
 
     @property
     def count(self) -> int:
-        return len(self.cache)
+        return self.counter + len(self.cache)
 
-    def print_line(self, *args: Any) -> None:
+    def flush_cache(self) -> None:
+        self.counter += len(self.cache)
+        self.cache.clear()
+
+    def clean(self) -> None:
+        self.flush_cache()
+        self.close()
+        self.filepath.unlink()
+
+    def print_line(self, args: Any) -> None:
+
+        for a in args:
+            if a is None:
+                raise ValueError(f"Found NULL value in line: {args}")
 
         h = str(args)
         if h in self.cache:
             return
         self.cache[h] = True
 
-        self.writer.writerow(*args)
+        self.writer.writerow(args)
 
     @staticmethod
     def cypher_exec(cypher: str) -> Any:
@@ -122,7 +136,8 @@ class DataDump:
             cls.delete_relationships(label1, relation, label2, limit=limit)
 
     def close(self) -> None:
-        self.handle.close()
+        if self.handle:
+            self.handle.close()
 
     def __del__(self) -> None:
         self.close()
@@ -146,7 +161,7 @@ class NodeDump(DataDump):
             )
         self.print_line(args)
 
-    def store(self, chunk_size: int = 1000) -> None:
+    def store(self, chunk_size: int = 10000) -> None:
 
         self.close()
 
@@ -161,7 +176,7 @@ FROM 'file:///{self.filename}'
 AS line
 FIELDTERMINATOR '\t'
 
-CREATE (:{self.label} {{
+MERGE (:{self.label} {{
     {properties}
 }})"""
 
@@ -174,7 +189,12 @@ class RelationDump(DataDump):
     NODE2_LABEL = "node2"
 
     def __init__(
-        self, label1: str, relation: str, label2: str, fields: List[str]
+        self,
+        label1: str,
+        relation: str,
+        label2: str,
+        fields: List[str],
+        ignore_indexes: bool = False,
     ) -> None:
 
         filename = f"{label1}_{relation}_{label2}.tsv".lower()
@@ -188,6 +208,10 @@ class RelationDump(DataDump):
         self.label1 = label1
         self.relation = relation
         self.label2 = label2
+
+        if not ignore_indexes:
+            self.verify_indexes(self.label1, self.key1)
+            self.verify_indexes(self.label2, self.key2)
 
     # def bulk_delete(self, limit: int = 10000) -> None:
     #     self.delete_relationships(
@@ -226,10 +250,27 @@ FROM 'file:///{self.filename}'
 AS line
 FIELDTERMINATOR '\t'
 
-MATCH
-(node1: {self.label1} {{{self.key1}: line.{field1}}}),
-(node2: {self.label2} {{{self.key2}: line.{field2}}})
-CREATE (node1)-[:{self.relation} {{{properties}}}]->(node2)
+MATCH (node1: {self.label1} {{{self.key1}: line.{field1}}})
+MATCH (node2: {self.label2} {{{self.key2}: line.{field2}}})
+MERGE (node1)-[:{self.relation} {{{properties}}}]->(node2)
 """
 
         self.cypher_exec(cypher)
+
+    @staticmethod
+    def verify_indexes(label: str, key: str) -> None:
+        graph = neo4j.get_instance()
+        indexes = graph.cypher("CALL db.indexes()")
+        for index in indexes:
+            labelsOrTypes = index[7]
+            properties = index[8]
+
+            if len(labelsOrTypes) == 1 and len(properties) == 1:
+                if labelsOrTypes[0] == label and properties[0] == key:
+                    log.debug("Found an index for {}.{}", label, key)
+                    break
+        else:
+            raise ValueError(
+                f"Can't find an index for {label}.{key}: "
+                "add an index or skip this check with ignore_indexes=True"
+            )

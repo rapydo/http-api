@@ -70,6 +70,9 @@ class Uploader:
 
         myfile = request.files["file"]
 
+        if not myfile.filename:  # pragma: no cover
+            raise BadRequest("Invalid filename")
+
         if not self.allowed_file(myfile.filename):
             raise BadRequest("File extension not allowed")
 
@@ -102,7 +105,7 @@ class Uploader:
             raise ServiceUnavailable("Unable to retrieve the uploaded file")
 
         ########################
-        # ## Final response
+        # ## Final response
 
         abs_file.chmod(DEFAULT_PERMISSIONS)
 
@@ -175,23 +178,22 @@ class Uploader:
                 log.error("Invalid Content-Range: {}", range_header)
                 return None, None, None
 
-            total_length = int(tokens[1])
-            start = 0
-            stop = total_length
+            # A pattern like */len is expected
+            # => is returned start == 0 and stop == len
+            tot_len = int(tokens[1])
+            return tot_len, 0, tot_len
 
-            return total_length, start, stop
-
-        total_length = int(content_range.length)
+        total_length = content_range.length
         # es: 'bytes */35738983'
         if content_range.start is None:
             start = 0
         else:
-            start = int(content_range.start)
+            start = content_range.start
 
         if content_range.stop is None:
             stop = total_length
         else:
-            stop = int(content_range.stop)
+            stop = content_range.stop
 
         return total_length, start, stop
 

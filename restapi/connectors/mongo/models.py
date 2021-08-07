@@ -16,7 +16,8 @@ AUTH_DB = os.getenv("MONGO_DATABASE")
 
 ####################
 # Base Models
-class Role(MongoModel):
+# Base type MongoModel becomes "Any" due to an unfollowed import
+class Role(MongoModel):  # type: ignore
     name = fields.CharField()
     description = fields.CharField()
 
@@ -27,7 +28,8 @@ class Role(MongoModel):
         indexes = [IndexModel("name", unique=True)]
 
 
-class User(MongoModel):
+# Base type MongoModel becomes "Any" due to an unfollowed import
+class User(MongoModel):  # type: ignore
     id = fields.CharField(primary_key=True)
     uuid = fields.CharField(required=True)
     email = fields.EmailField(required=True)
@@ -53,7 +55,8 @@ class User(MongoModel):
         indexes = [IndexModel("uuid", unique=True), IndexModel("email", unique=True)]
 
 
-class Token(MongoModel):
+# Base type MongoModel becomes "Any" due to an unfollowed import
+class Token(MongoModel):  # type: ignore
     jti = fields.CharField(required=True)
     token = fields.CharField(required=True)
     token_type = fields.CharField(required=True)
@@ -71,7 +74,8 @@ class Token(MongoModel):
         indexes = [IndexModel("jti", unique=True), IndexModel("token", unique=True)]
 
 
-class Group(MongoModel):
+# Base type MongoModel becomes "Any" due to an unfollowed import
+class Group(MongoModel):  # type: ignore
     # otherwise will raise this error: Object of type UUID is not JSON serializable
     id = fields.CharField(primary_key=True)
     uuid = fields.CharField(required=True)
@@ -88,7 +92,8 @@ class Group(MongoModel):
         ]
 
 
-class Login(MongoModel):
+# Base type MongoModel becomes "Any" due to an unfollowed import
+class Login(MongoModel):  # type: ignore
     date = fields.DateTimeField(required=True)
     username = fields.CharField()
     IP = fields.CharField()

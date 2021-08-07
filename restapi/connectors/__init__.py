@@ -2,7 +2,7 @@ import abc
 import os
 from datetime import datetime, timedelta
 from types import ModuleType, TracebackType
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
 
 # mypy: ignore-errors
 from flask import Flask
@@ -36,7 +36,7 @@ InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 # service-name => dict of variables
 Services = Dict[str, Dict[str, str]]
 
-ExceptionsList = Optional[Tuple[Union[Type[Exception], Type[BaseException]]]]
+ExceptionsList = Optional[Tuple[Type[Exception]]]
 
 
 class Connector(metaclass=abc.ABCMeta):
@@ -112,8 +112,8 @@ class Connector(metaclass=abc.ABCMeta):
 
     def __exit__(
         self,
-        exctype: Optional[Type[BaseException]],
-        excinst: Optional[BaseException],
+        exctype: Optional[Type[Exception]],
+        excinst: Optional[Exception],
         exctb: Optional[TracebackType],
     ) -> bool:
         if not self.disconnected:
@@ -127,8 +127,8 @@ class Connector(metaclass=abc.ABCMeta):
         return None
 
     @abc.abstractmethod
-    def connect(self, **kwargs) -> None:  # pragma: no cover
-        return
+    def connect(self: T, **kwargs: Any) -> Generic[T]:  # pragma: no cover
+        return self
 
     @abc.abstractmethod
     def disconnect(self) -> None:  # pragma: no cover
@@ -326,7 +326,7 @@ class Connector(metaclass=abc.ABCMeta):
             connector.initialize()
 
             if options is None:
-                options = {}
+                options: Dict[str, bool] = {}
 
             with Connector.app.app_context():
                 authentication_instance.init_auth_db(options)
@@ -388,7 +388,7 @@ class Connector(metaclass=abc.ABCMeta):
 
     @classmethod
     def set_object(cls, name: str, obj: T, key: str = "[]") -> None:
-        """ set object into internal array """
+        """set object into internal array"""
 
         tid = os.getpid()
         cls._instances.setdefault(tid, {})
@@ -397,7 +397,7 @@ class Connector(metaclass=abc.ABCMeta):
 
     @classmethod
     def get_object(cls, name: str, key: str = "[]") -> Optional[T]:
-        """ recover object if any """
+        """recover object if any"""
 
         tid = os.getpid()
         cls._instances.setdefault(tid, {})
@@ -421,7 +421,7 @@ class Connector(metaclass=abc.ABCMeta):
         log.info("[{}] All connectors disconnected", os.getpid())
 
     def initialize_connection(
-        self, expiration: int, verification: int, **kwargs: Any
+        self, expiration: int, verification: int, **kwargs: str
     ) -> T:
 
         # Create a new instance of itself
@@ -429,7 +429,7 @@ class Connector(metaclass=abc.ABCMeta):
 
         exceptions = obj.get_connection_exception()
         if exceptions is None:
-            exceptions = (BaseException,)
+            exceptions = (Exception,)
 
         try:
             obj = obj.connect(**kwargs)
@@ -462,7 +462,7 @@ class Connector(metaclass=abc.ABCMeta):
         self: T,
         verification: Optional[int] = None,
         expiration: Optional[int] = None,
-        **kwargs,
+        **kwargs: str,
     ) -> T:
 
         if not Connector.check_availability(self.name):

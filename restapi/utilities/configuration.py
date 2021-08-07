@@ -24,7 +24,9 @@ def read_configuration(
     Read default configuration
     """
 
-    custom_configuration = load_yaml_file(PROJECT_CONF_FILENAME, path=base_project_path)
+    custom_configuration = load_yaml_file(
+        base_project_path.joinpath(PROJECT_CONF_FILENAME)
+    )
 
     # Verify custom project configuration
     project = custom_configuration.get("project")
@@ -32,20 +34,8 @@ def read_configuration(
     if project is None:  # pragma: no cover
         raise AttributeError("Missing project configuration")
 
-    variables = ["title", "description", "version", "rapydo"]
-
-    for key in variables:
-        # Can't be tested because it is included in default configuration
-        if project.get(key) is None:  # pragma: no cover
-            print_and_exit(
-                "Project not configured, missing key '{}' in file {}/{}",
-                key,
-                base_project_path,
-                PROJECT_CONF_FILENAME,
-            )
-
     base_configuration = load_yaml_file(
-        file=PROJECTS_DEFAULTS_FILE, path=default_file_path
+        default_file_path.joinpath(PROJECTS_DEFAULTS_FILE)
     )
 
     extended_project = project.get("extends")
@@ -69,10 +59,10 @@ def read_configuration(
         print_and_exit("Invalid extends-from parameter: {}.\n{}", extends_from, suggest)
 
     if not os.path.exists(extend_path):  # pragma: no cover
-        print_and_exit("From project not found: {}", extend_path)
+        print_and_exit("From project not found: {}", str(extend_path))
 
     extend_file = Path(f"extended_{PROJECT_CONF_FILENAME}")
-    extended_configuration = load_yaml_file(file=extend_file, path=extend_path)
+    extended_configuration = load_yaml_file(extend_path.joinpath(extend_file))
     m1 = mix(base_configuration, extended_configuration)
     return mix(m1, custom_configuration), extended_project, extend_path
 
@@ -102,9 +92,7 @@ def mix(base: ConfigurationType, custom: ConfigurationType) -> ConfigurationType
     return base
 
 
-def load_yaml_file(file: Path, path: Path) -> ConfigurationType:
-
-    filepath = os.path.join(path, file)
+def load_yaml_file(filepath: Path) -> ConfigurationType:
 
     if not os.path.exists(filepath):
         raise AttributeError(f"YAML file does not exist: {filepath}")

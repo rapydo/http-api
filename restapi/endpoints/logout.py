@@ -3,7 +3,7 @@ from restapi.rest.definition import EndpointResource, Response
 
 
 class Logout(EndpointResource):
-    """ Let the logged user escape from here, invalidating current token """
+    """Let the logged user escape from here, invalidating current token"""
 
     depends_on = ["AUTH_ENABLE"]
     labels = ["authentication"]
@@ -17,7 +17,7 @@ class Logout(EndpointResource):
     )
     def get(self) -> Response:
 
-        token = self.get_token()
+        _, token = decorators.auth.get_authorization_token()
         if token:
             self.auth.invalidate_token(token)
         self.log_event(self.events.logout)

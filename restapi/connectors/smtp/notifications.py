@@ -81,7 +81,7 @@ def _get_html_template(template_file: str, replaces: Dict[str, Any]) -> Optional
         replaces.setdefault("host", get_frontend_url())
 
         return template.render(**replaces)
-    except BaseException as e:  # pragma: no cover
+    except Exception as e:  # pragma: no cover
         log.error("Error loading template {}: {}", template_file, e)
         return None
 

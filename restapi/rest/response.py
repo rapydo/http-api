@@ -1,11 +1,16 @@
+import decimal
 import gzip
 import sys
 import time
+from datetime import date, datetime
 from io import BytesIO
-from typing import List
+from typing import Any, Dict, List, Optional, Tuple, cast
 from urllib import parse as urllib_parse
 
+from flask import Response as FlaskResponse
 from flask import jsonify, render_template, request
+from flask.json import JSONEncoder
+from marshmallow import fields as marshmallow_fields
 from marshmallow.utils import _Missing
 
 from restapi import __version__ as version
@@ -15,33 +20,40 @@ from restapi.config import (
     GZIP_THRESHOLD,
     get_project_configuration,
 )
-from restapi.models import GET_SCHEMA_KEY, fields, validate
+from restapi.models import GET_SCHEMA_KEY, Schema, fields, validate
 from restapi.services.authentication import BaseAuthentication
+from restapi.types import Response, ResponseContent
 from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
 
 
-def handle_marshmallow_errors(error):
+def handle_marshmallow_errors(error: Exception) -> Response:
 
     try:
 
         if request.args:
             if request.args.get(GET_SCHEMA_KEY, False):  # pragma: no cover
-                return ResponseMaker.respond_with_schema(error.data.get("schema"))
+                schema = cast(Schema, error.data.get("schema"))  # type: ignore
+                return ResponseMaker.respond_with_schema(schema)
 
         elif j := request.get_json():
             if j.get(GET_SCHEMA_KEY, False):  # pragma: no cover
-                return ResponseMaker.respond_with_schema(error.data.get("schema"))
+                schema = cast(Schema, error.data.get("schema"))  # type: ignore
+                return ResponseMaker.respond_with_schema(schema)
 
         elif request.form:
             if request.form.get(GET_SCHEMA_KEY, False):
-                return ResponseMaker.respond_with_schema(error.data.get("schema"))
+                schema = cast(Schema, error.data.get("schema"))  # type: ignore
+                return ResponseMaker.respond_with_schema(schema)
 
-    except BaseException as e:  # pragma: no cover
+    except Exception as e:  # pragma: no cover
         log.error(e)
 
     errors = {}
 
-    for key, messages in error.data.get("messages").items():
+    error_messages = cast(
+        Dict[str, Dict[str, str]], error.data.get("messages")  # type: ignore
+    )
+    for key, messages in error_messages.items():
         for k, msg in messages.items():
             if not msg:  # pragma: no cover
                 continue
@@ -51,7 +63,7 @@ def handle_marshmallow_errors(error):
     return (errors, 400, {})
 
 
-def obfuscate_query_parameters(raw_url):
+def obfuscate_query_parameters(raw_url: str) -> str:
     url = urllib_parse.urlparse(raw_url)
     try:
         params = urllib_parse.unquote(
@@ -65,7 +77,7 @@ def obfuscate_query_parameters(raw_url):
     except TypeError:  # pragma: no cover
         log.error("Unable to url encode the following parameters:")
         print(url.query)
-        return url
+        return urllib_parse.urlunparse(url)
 
     return urllib_parse.urlunparse(url)
 
@@ -91,11 +103,11 @@ def get_data_from_request() -> str:
     return ""
 
 
-def handle_response(response):
+def handle_response(response: FlaskResponse) -> FlaskResponse:
 
     response.headers["_RV"] = str(version)
 
-    PROJECT_VERSION = get_project_configuration("project.version", default=None)
+    PROJECT_VERSION = get_project_configuration("project.version", default="0")
     if PROJECT_VERSION is not None:
         response.headers["Version"] = str(PROJECT_VERSION)
 
@@ -128,7 +140,7 @@ def handle_response(response):
     resp = str(response).replace("<Response ", "").replace(">", "")
     log.info(
         "{} {} {}{} -> {}",
-        BaseAuthentication.get_remote_ip(),
+        BaseAuthentication.get_remote_ip(raise_warnings=False),
         request.method,
         url,
         data_string,
@@ -136,6 +148,18 @@ def handle_response(response):
     )
 
     return response
+
+
+class ExtendedJSONEncoder(JSONEncoder):
+    def default(self, o: Any) -> Any:
+        if isinstance(o, set):
+            return list(o)
+        if isinstance(o, (datetime, date)):
+            return o.isoformat()
+        if isinstance(o, decimal.Decimal):
+            return str(o)
+        # Otherwise: TypeError: Object of type xxx is not JSON serializable
+        return super().default(o)  # pragma: no cover
 
 
 class ResponseMaker:
@@ -158,7 +182,7 @@ class ResponseMaker:
         return ["*/*"]
 
     @staticmethod
-    def is_binary(content_type: str) -> bool:
+    def is_binary(content_type: Optional[str]) -> bool:
         if not content_type:
             return False
 
@@ -184,7 +208,9 @@ class ResponseMaker:
         return False
 
     @staticmethod
-    def get_html(content, code, headers):
+    def get_html(
+        content: ResponseContent, code: int, headers: Dict[str, str]
+    ) -> Tuple[str, Dict[str, str]]:
 
         if isinstance(content, list):  # pragma: no cover
             content = content.pop()
@@ -197,7 +223,12 @@ class ResponseMaker:
         return html_page, headers
 
     @staticmethod
-    def gzip_response(content, code, content_encoding, content_type):
+    def gzip_response(
+        content: bytes,
+        code: int,
+        content_encoding: Optional[str],
+        content_type: Optional[str],
+    ) -> Tuple[Optional[bytes], Dict[str, str]]:
         if code < 200 or code >= 300 or content_encoding is not None:
             return None, {}
 
@@ -229,7 +260,7 @@ class ResponseMaker:
         headers = {
             "Content-Encoding": "gzip",
             "Vary": "Accept-Encoding",
-            "Content-Length": len(gzipped_content),
+            "Content-Length": str(len(gzipped_content)),
         }
 
         end_time = time.time()
@@ -254,11 +285,11 @@ class ResponseMaker:
         return gzipped_content, headers
 
     @staticmethod
-    def convert_model_to_schema(schema):
+    def convert_model_to_schema(schema: Schema) -> List[Dict[str, Any]]:
         schema_fields = []
         for field, field_def in schema.declared_fields.items():
 
-            f = {}
+            f: Dict[str, Any] = {}
 
             f["key"] = field_def.data_key or field
 
@@ -296,9 +327,9 @@ class ResponseMaker:
             elif not isinstance(field_def.missing, _Missing):  # pragma: no cover
                 f["default"] = field_def.missing
 
-            validators = []
+            validators: List[validate.Validator] = []
             if field_def.validate:
-                validators.append(field_def.validate)
+                validators.append(field_def.validate)  # type: ignore
 
             # activated in case of fields.List(fields.SomeThing) with an inner validator
             if isinstance(field_def, fields.List) and field_def.inner.validate:
@@ -344,24 +375,28 @@ class ResponseMaker:
                     )
 
             if f["type"] == "nested":
-                f["schema"] = ResponseMaker.convert_model_to_schema(field_def.schema)
+                f["schema"] = ResponseMaker.convert_model_to_schema(
+                    field_def.schema  # type: ignore
+                )
 
             schema_fields.append(f)
         return schema_fields
 
     @staticmethod
-    def respond_with_schema(schema):
+    def respond_with_schema(schema: Schema) -> Response:
 
         try:
             fields = ResponseMaker.convert_model_to_schema(schema)
             return (jsonify(fields), 200, {})
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.error(e)
             content = {"Server internal error": "Failed to retrieve input schema"}
             return (jsonify(content), 500, {})
 
     @staticmethod
-    def get_schema_type(field, schema, default=None):
+    def get_schema_type(
+        field: str, schema: marshmallow_fields.Field, default: Optional[Any] = None
+    ) -> str:
 
         if schema.metadata.get("password", False):
             return "password"
@@ -399,7 +434,7 @@ class ResponseMaker:
 
         # Reached with lists of custom types
         if default:
-            return default
+            return str(default)
 
         log.error("Unknown schema type: {}", type(schema))
 

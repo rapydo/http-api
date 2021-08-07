@@ -86,6 +86,7 @@ class TestUploadAndDownload(BaseTests):
         assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
 
         c = self.get_content(r)
+        assert isinstance(c, dict)
         assert c.get("filename") == self.fname
         meta = c.get("meta")
         assert meta is not None
@@ -211,6 +212,7 @@ class TestUploadAndDownload(BaseTests):
             )
         assert r.status_code == 200
         c = self.get_content(r)
+        assert isinstance(c, dict)
         assert c.get("filename") is not None
         uploaded_filename = c.get("filename")
         meta = c.get("meta")

@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from typing import Dict, List, Optional, Tuple
 
 import click
 from flask.cli import FlaskGroup
@@ -22,17 +23,19 @@ def cli() -> None:  # pragma: no cover
 
 
 # Too dangerous to launch it during tests... skipping tests
-def main(args):  # pragma: no cover
+def main(args: List[str]) -> None:  # pragma: no cover
 
     current_app = os.getenv("FLASK_APP")
     if current_app is None or current_app.strip() == "":
         os.environ["FLASK_APP"] = f"{current_package}.__main__"
 
-    fg_cli = FlaskGroup()
+    # Call to untyped function "FlaskGroup" in typed context
+    fg_cli = FlaskGroup()  # type: ignore
     options = {"prog_name": "restapi", "args": args}
 
     # cannot catch for CTRL+c
-    fg_cli.main(**options)
+    # Call to untyped function "main" in typed context
+    fg_cli.main(**options)  # type: ignore
 
 
 def initializing() -> bool:
@@ -52,7 +55,7 @@ def launch() -> None:  # pragma: no cover
         "--host",
         BIND_INTERFACE,
         "--port",
-        os.getenv("FLASK_PORT"),
+        os.getenv("FLASK_PORT", "8080"),
         "--reload",
         "--no-debugger",
         "--eager-loading",
@@ -70,8 +73,8 @@ def launch() -> None:  # pragma: no cover
 
 @cli.command()
 @click.option("--service", "-s")
-def verify(service):
-    """Verify if a service is connecte"""
+def verify(service: str) -> None:
+    """Verify if a service is connected"""
 
     if not Connector.check_availability(service):
         print_and_exit("Service {} not detected", service)
@@ -79,7 +82,8 @@ def verify(service):
     log.info("Verifying service: {}", service)
     variables = Connector.services.get(service, {})
     host, port = get_service_address(variables, "host", "port", service)
-    wait_socket(host, port, service)
+    if host != "nohost":
+        wait_socket(host, port, service)
 
     log.info("Completed successfully")
 
@@ -100,7 +104,7 @@ def verify(service):
     default=False,
     help="Force the creation of default group",
 )
-def init(wait, force_user, force_group):
+def init(wait: bool, force_user: bool, force_group: bool) -> None:
     """Initialize data for connected services"""
     if wait:
         mywait()
@@ -124,7 +128,9 @@ def wait() -> None:
     mywait()
 
 
-def get_service_address(variables, host_var, port_var, service):
+def get_service_address(
+    variables: Dict[str, str], host_var: str, port_var: str, service: str
+) -> Tuple[str, int]:
 
     host = variables.get(host_var)
     if host is None:
@@ -187,7 +193,8 @@ def mywait() -> None:
         else:
             host, port = get_service_address(variables, "host", "port", name)
 
-            wait_socket(host, port, name)
+            if host != "nohost":
+                wait_socket(host, port, name)
 
 
 # Too dangerous to launch it during tests... skipping tests
@@ -228,7 +235,9 @@ def forced_clean() -> None:  # pragma: no cover
 @click.option(
     "--destroy/--no-destroy", default=False, help="Destroy database after tests"
 )
-def tests(wait, core, file, folder, destroy):  # pragma: no cover
+def tests(
+    wait: bool, core: bool, file: Optional[str], folder: Optional[str], destroy: bool
+) -> None:  # pragma: no cover
     """Compute tests and coverage"""
 
     if wait:
@@ -285,8 +294,7 @@ def tests(wait, core, file, folder, destroy):  # pragma: no cover
         sys.exit(0)
 
     except Exception as e:
-        log.error(e)
-        sys.exit(1)
+        print_and_exit(str(e))
 
 
 @cli.command()

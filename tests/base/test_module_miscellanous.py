@@ -10,6 +10,7 @@ import pytest
 from faker import Faker
 from marshmallow.exceptions import ValidationError
 
+from restapi.config import get_host_type
 from restapi.connectors.smtp.notifications import get_html_template
 from restapi.env import Env
 from restapi.exceptions import (
@@ -196,20 +197,12 @@ class TestApp(BaseTests):
         assert not find_process(process.name())
 
         start_timeout(15)
-        try:
+        with pytest.raises(Timeout):
             wait_socket("invalid", 123, service_name="test")
-            pytest.fail("wait_socket should be blocking!")  # pragma: no cover
-        except Timeout:
-            pass
 
         start_timeout(15)
-        try:
+        with pytest.raises(ServiceUnavailable):
             wait_socket("invalid", 123, service_name="test", retries=2)
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ServiceUnavailable:
-            pass
-        except Timeout:  # pragma: no cover
-            pytest.fail("Reached Timeout, max retries not worked?")
 
     # #######################################
     # ####      Meta
@@ -229,16 +222,17 @@ class TestApp(BaseTests):
         assert isinstance(mcls, dict)
         assert len(mcls) == 0
 
+        assert Meta.get_class("this-should-not-exist", "this-should-not-exist") is None
+        assert Meta.get_class("initialization", "this-should-not-exist") is None
+        assert Meta.get_class("initialization", "Initializer") is not None
+
         assert not Meta.get_module_from_string("this-should-not-exist")
 
-        try:
+        with pytest.raises(ModuleNotFoundError):
             Meta.get_module_from_string(
                 "this-should-not-exist",
                 exit_on_fail=True,
             )
-            pytest.fail("ModuleNotFoundError not raised")  # pragma: no cover
-        except ModuleNotFoundError:
-            pass
 
         # This method is not very robust... but... let's test the current implementation
         # It basicaly return the first args if it is an instance of some classes
@@ -250,20 +244,13 @@ class TestApp(BaseTests):
         assert isinstance(models, dict)
         assert len(models) == 0
 
-        try:
+        with pytest.raises(SystemExit):
             Meta.import_models("this-should", "not-exist", mandatory=True)
-            pytest.fail("SystemExit not raised")  # pragma: no cover
-        except SystemExit:
-            pass
 
         # Check exit_on_fail default value
         models = Meta.import_models("this-should", "not-exist")
         assert isinstance(models, dict)
         assert len(models) == 0
-
-        assert Meta.get_instance("invalid.path", "InvalidClass") is None
-        assert Meta.get_instance("customization", "InvalidClass") is None
-        assert Meta.get_instance("customization", "Customizer") is not None
 
     # #######################################
     # ####      Templates
@@ -275,24 +262,34 @@ class TestApp(BaseTests):
         assert p is None
 
     # #######################################
+    # ####      Config Utilities
+    #########################################
+    def test_conf_utilities(self, faker: Faker) -> None:
+
+        assert get_host_type("backend-server") == "backend-server"
+        assert get_host_type("celery") == "celery"
+        assert get_host_type("telegram-bot") == "telegram-bot"
+        assert get_host_type("celery-beat") == "celery-beat"
+        assert get_host_type("flower") == "flower"
+        assert get_host_type("whateverelse") == "celery"
+        assert get_host_type(faker.pystr()) == "celery"
+
+    # #######################################
     # ####      Timeouts
     #########################################
     def test_timeouts(self) -> None:
 
         start_timeout(1)
-        try:
+        with pytest.raises(Timeout, match=r"Operation timeout: interrupted"):
             # This operation will be interrupted because slower than timeout
             time.sleep(2)
-            pytest.fail("Operation not interrupted")  # pragma: no cover
-        except BaseException as e:
-            assert str(e) == "Operation timeout: interrupted"
 
         start_timeout(1)
         try:
             stop_timeout()
             # This operation will not be interrupted
             time.sleep(2)
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
             pytest.fail("Operation interrupted")
 
     # #######################################
@@ -351,32 +348,20 @@ class TestApp(BaseTests):
         assert mix(data1, data2) == expected
 
         # Invalid file / path
-        try:
-            load_yaml_file(Path("invalid"), Path("path"))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except AttributeError:
-            pass
+        with pytest.raises(AttributeError):
+            load_yaml_file(Path("path", "invalid"))
 
-        try:
-            load_yaml_file(Path("invalid"), Path("tests"))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except AttributeError:
-            pass
+        with pytest.raises(AttributeError):
+            load_yaml_file(Path("tests", "invalid"))
 
         # Valid path, but not in yaml format
-        try:
-            load_yaml_file(Path("conftest.py"), Path("tests"))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except AttributeError:
-            pass
+        with pytest.raises(AttributeError):
+            load_yaml_file(Path("tests", "conftest.py"))
 
         # File is empty
         tmpf = tempfile.NamedTemporaryFile()
-        try:
-            load_yaml_file(Path(tmpf.name), Path("."))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except AttributeError:
-            pass
+        with pytest.raises(AttributeError):
+            load_yaml_file(Path(tmpf.name))
         tmpf.close()
 
     # #######################################
@@ -457,23 +442,20 @@ class TestApp(BaseTests):
         assert start == 0
         assert end == 1000
 
-        try:
+        with pytest.raises(
+            BadRequest, match=r"Invalid null byte in subfolder parameter"
+        ):
             Uploader.absolute_upload_file("0", subfolder=Path("\x00"))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except BadRequest as e:
-            assert str(e) == "Invalid null byte in subfolder parameter"
 
-        try:
+        with pytest.raises(
+            BadRequest, match=r"Invalid null byte in subfolder parameter"
+        ):
             Uploader.absolute_upload_file("0", subfolder=Path("/uploads/\x00"))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except BadRequest as e:
-            assert str(e) == "Invalid null byte in subfolder parameter"
 
-        try:
+        with pytest.raises(
+            BadRequest, match=r"Invalid null byte in subfolder parameter"
+        ):
             Uploader.absolute_upload_file("0", subfolder=Path("/uploads/AA\x00BB"))
-            pytest.fail("No exception raised")  # pragma: no cover
-        except BadRequest as e:
-            assert str(e) == "Invalid null byte in subfolder parameter"
 
     # #######################################
     # ####      Time
@@ -526,29 +508,14 @@ class TestApp(BaseTests):
         assert t.seconds == 0
         assert t.microseconds == 0
 
-        try:
+        with pytest.raises(BadRequest):
             get_timedelta(every, "months")  # type: ignore
-            pytest.fail(
-                "No exception raised from get_timedelta with period=months"
-            )  # pragma: no cover
-        except BadRequest:
-            pass
 
-        try:
+        with pytest.raises(BadRequest):
             get_timedelta(every, "years")  # type: ignore
-            pytest.fail(
-                "No exception raised from get_timedelta with period=years"
-            )  # pragma: no cover
-        except BadRequest:
-            pass
 
-        try:
+        with pytest.raises(BadRequest):
             get_timedelta(every, faker.pystr())  # type: ignore
-            pytest.fail(
-                "No exception raised from get_timedelta with period=randomstr"
-            )  # pragma: no cover
-        except BadRequest:
-            pass
 
         assert seconds_to_human(0) == "0 seconds"
         assert seconds_to_human(1) == "1 second"
@@ -599,40 +566,33 @@ class TestApp(BaseTests):
     #########################################
     def test_exceptions(self) -> None:
 
-        try:
+        with pytest.raises(RestApiException) as e:
             raise BadRequest("test")
-        except RestApiException as e:
-            assert e.status_code == 400
+        assert e.value.status_code == 400
 
-        try:
+        with pytest.raises(RestApiException) as e:
             raise Unauthorized("test")
-        except RestApiException as e:
-            assert e.status_code == 401
+        assert e.value.status_code == 401
 
-        try:
+        with pytest.raises(RestApiException) as e:
             raise Forbidden("test")
-        except RestApiException as e:
-            assert e.status_code == 403
+        assert e.value.status_code == 403
 
-        try:
+        with pytest.raises(RestApiException) as e:
             raise NotFound("test")
-        except RestApiException as e:
-            assert e.status_code == 404
+        assert e.value.status_code == 404
 
-        try:
+        with pytest.raises(RestApiException) as e:
             raise Conflict("test")
-        except RestApiException as e:
-            assert e.status_code == 409
+        assert e.value.status_code == 409
 
-        try:
+        with pytest.raises(RestApiException) as e:
             raise ServerError("test")
-        except RestApiException as e:
-            assert e.status_code == 500
+        assert e.value.status_code == 500
 
-        try:
+        with pytest.raises(RestApiException) as e:
             raise ServiceUnavailable("test")
-        except RestApiException as e:
-            assert e.status_code == 503
+        assert e.value.status_code == 503
 
     def test_marshmallow_schemas(self) -> None:
         class Input1(Schema):
@@ -649,74 +609,61 @@ class TestApp(BaseTests):
             )
 
         schema = Input1(strip_required=False)
-        try:
+        with pytest.raises(ValidationError) as e:
             schema.load({})
             pytest.fail("No exception raised")  # pragma: no cover
-        except ValidationError as e:
-            assert isinstance(e.messages, dict)
-            assert "advanced_list" in e.messages
-            err = "Missing data for required field."
-            assert e.messages["advanced_list"][0] == err
-            assert "unique_delimited_list" in e.messages
-            assert e.messages["unique_delimited_list"][0] == err
+        assert isinstance(e.value.messages, dict)
+        assert "advanced_list" in e.value.messages
+        err = "Missing data for required field."
+        assert e.value.messages["advanced_list"][0] == err
+        assert "unique_delimited_list" in e.value.messages
+        assert e.value.messages["unique_delimited_list"][0] == err
 
         schema = Input1(strip_required=True)
         # ValidationError error is not raised because required is stripped of
         assert len(schema.load({})) == 0
 
-        try:
+        with pytest.raises(ValidationError) as e:
             schema.load({"advanced_list": None})
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ValidationError as e:
-            assert isinstance(e.messages, dict)
-            assert "advanced_list" in e.messages
-            assert e.messages["advanced_list"][0] == "Field may not be null."
+        assert isinstance(e.value.messages, dict)
+        assert "advanced_list" in e.value.messages
+        assert e.value.messages["advanced_list"][0] == "Field may not be null."
 
-        try:
+        with pytest.raises(ValidationError) as e:
             schema.load({"advanced_list": ""})
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ValidationError as e:
-            assert isinstance(e.messages, dict)
-            assert "advanced_list" in e.messages
-            assert e.messages["advanced_list"][0] == "Not a valid list."
+        assert isinstance(e.value.messages, dict)
+        assert "advanced_list" in e.value.messages
+        assert e.value.messages["advanced_list"][0] == "Not a valid list."
 
-        try:
+        with pytest.raises(ValidationError) as e:
             schema.load({"advanced_list": [10]})
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ValidationError as e:
-            assert isinstance(e.messages, dict)
-            assert "advanced_list" in e.messages
-            assert 0 in e.messages["advanced_list"]
-            assert e.messages["advanced_list"][0][0] == "Not a valid string."
+        assert isinstance(e.value.messages, dict)
+        assert "advanced_list" in e.value.messages
+        assert 0 in e.value.messages["advanced_list"]
+        assert e.value.messages["advanced_list"][0][0] == "Not a valid string."
 
         min_items_error = "Expected at least 2 items, received 1"
-        try:
+        with pytest.raises(ValidationError) as e:
             schema.load({"advanced_list": ["a"]})
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ValidationError as e:
-            assert isinstance(e.messages, dict)
-            assert "advanced_list" in e.messages
-            assert e.messages["advanced_list"][0] == min_items_error
+        assert isinstance(e.value.messages, dict)
+        assert "advanced_list" in e.value.messages
+        assert e.value.messages["advanced_list"][0] == min_items_error
 
-        try:
+        with pytest.raises(ValidationError) as e:
             schema.load({"advanced_list": ["a", "a"]})
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ValidationError as e:
-            assert isinstance(e.messages, dict)
-            assert "advanced_list" in e.messages
-            assert e.messages["advanced_list"][0] == min_items_error
+        assert isinstance(e.value.messages, dict)
+        assert "advanced_list" in e.value.messages
+        assert e.value.messages["advanced_list"][0] == min_items_error
 
         r = schema.load({"advanced_list": ["a", "a", "b"]})
         assert "advanced_list" in r
         assert len(r["advanced_list"]) == 2
 
-        try:
+        with pytest.raises(ValidationError) as e:
             schema.load({"advanced_list": {"a": "b"}})
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ValidationError as e:
-            assert isinstance(e.messages, dict)
-            assert "advanced_list" in e.messages
-            assert e.messages["advanced_list"][0] == "Not a valid list."
+        assert isinstance(e.value.messages, dict)
+        assert "advanced_list" in e.value.messages
+        assert e.value.messages["advanced_list"][0] == "Not a valid list."
 
         r = schema.load({"unique_delimited_list": ""})
         assert "unique_delimited_list" in r
@@ -743,14 +690,12 @@ class TestApp(BaseTests):
         assert r["unique_delimited_list"][1] == "b"
         assert r["unique_delimited_list"][2] == "c"
 
-        try:
+        with pytest.raises(ValidationError) as e:
             schema.load({"unique_delimited_list": "a,b,b"})
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ValidationError as e:
-            assert isinstance(e.messages, dict)
-            assert "unique_delimited_list" in e.messages
-            err = "Input list contains duplicates"
-            assert e.messages["unique_delimited_list"][0] == err
+        assert isinstance(e.value.messages, dict)
+        assert "unique_delimited_list" in e.value.messages
+        err = "Input list contains duplicates"
+        assert e.value.messages["unique_delimited_list"][0] == err
 
         # No strips on elements
         r = schema.load({"unique_delimited_list": "a,b, c"})
@@ -758,11 +703,15 @@ class TestApp(BaseTests):
         assert len(r["unique_delimited_list"]) == 3
         assert r["unique_delimited_list"][0] == "a"
         assert r["unique_delimited_list"][1] == "b"
-        assert r["unique_delimited_list"][2] == " c"
+        # assert r["unique_delimited_list"][2] == " c"
+        # Now input is trimmed
+        assert r["unique_delimited_list"][2] == "c"
 
         r = schema.load({"unique_delimited_list": "a,b,c "})
         assert "unique_delimited_list" in r
         assert len(r["unique_delimited_list"]) == 3
         assert r["unique_delimited_list"][0] == "a"
         assert r["unique_delimited_list"][1] == "b"
-        assert r["unique_delimited_list"][2] == "c "
+        # assert r["unique_delimited_list"][2] == "c "
+        # Now input is trimmed
+        assert r["unique_delimited_list"][2] == "c"

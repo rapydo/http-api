@@ -9,6 +9,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/pagination")
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) == 20
         assert content[0] == 1
         assert content[19] == 20
@@ -16,6 +17,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/pagination", query_string={"get_total": True})
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, int)
         assert content == 150
 
         # Check precedence: get_total wins
@@ -23,15 +25,18 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/pagination", query_string=data)
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, int)
         assert content == 150
 
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, int)
         assert content == 150
 
         r = client.get(f"{API_URI}/tests/pagination", query_string={"page": 2})
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) == 20
         assert content[0] == 21
         assert content[19] == 40
@@ -40,6 +45,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/pagination", query_string=data)
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) == 10
         assert content[0] == 11
         assert content[9] == 20
@@ -48,6 +54,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/pagination", query_string=data)
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) == 50
         assert content[0] == 101
         assert content[49] == 150
@@ -55,6 +62,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/pagination", query_string={"page": 20})
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) == 0
 
         r = client.get(f"{API_URI}/tests/pagination", query_string={"size": 101})
@@ -73,6 +81,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/pagination")
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) == 20
         assert content[0] == 1
         assert content[19] == 20
@@ -80,6 +89,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/pagination", data={"get_total": True})
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, int)
         assert content == 150
 
         # Check precedence: get_total wins
@@ -87,15 +97,18 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/pagination", data=data)
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, int)
         assert content == 150
 
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, int)
         assert content == 150
 
         r = client.post(f"{API_URI}/tests/pagination", data={"page": 2})
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) == 20
         assert content[0] == 21
         assert content[19] == 40
@@ -103,6 +116,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/pagination", data={"page": 2, "size": 10})
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) == 10
         assert content[0] == 11
         assert content[9] == 20
@@ -110,6 +124,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/pagination", data={"page": 2, "size": 100})
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) == 50
         assert content[0] == 101
         assert content[49] == 150
@@ -117,6 +132,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/pagination", data={"page": 20})
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) == 0
 
         r = client.post(f"{API_URI}/tests/pagination", data={"size": 101})

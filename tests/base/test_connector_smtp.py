@@ -9,37 +9,36 @@ from restapi.tests import BaseTests
 from restapi.utilities.logs import log
 
 CONNECTOR = "smtp"
+CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
 
 
+# mailmock is always enabled during core tests
+@pytest.mark.skipif(
+    CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
+)
+def test_no_smtp() -> None:  # pragma: no cover
+
+    with pytest.raises(ServiceUnavailable):
+        connector.get_instance()
+
+    log.warning("Skipping {} tests: service not available", CONNECTOR)
+    return None
+
+
+@pytest.mark.skipif(
+    not CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
+)
 def test_smtp(app: Flask, faker: Faker) -> None:
-
-    # mailmock is always enabled during core tests
-    if not Connector.check_availability(CONNECTOR):  # pragma: no cover
-
-        try:
-            obj = connector.get_instance()
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ServiceUnavailable:
-            pass
-
-        log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return None
-
-    # try:
-    #     connector.get_instance(host="invalidhostname", port=123)
-    #     pytest.fail("No exception raised on unavailable service")  # pragma: no cover
-    # except ServiceUnavailable:
-    #     pass
 
     obj = connector.get_instance()
     assert obj is not None
     assert obj.smtp is not None
 
-    obj = connector.get_instance(port=465)
+    obj = connector.get_instance(port="465")
     assert obj is not None
     assert obj.smtp is not None
 
-    obj = connector.get_instance(port=587)
+    obj = connector.get_instance(port="587")
     assert obj is not None
     assert obj.smtp is not None
 
@@ -95,12 +94,20 @@ def test_smtp(app: Flask, faker: Faker) -> None:
 
     # This is a special from_address, used to raise SMTPException
     assert not obj.send("body", "subject", "to_addr", "invalid1")
-    # This is a special from_address, used to raise BaseException
+    # This is a special from_address, used to raise Exception
     assert not obj.send("body", "subject", "to_addr", "invalid2")
     # This is NOT a special from_address
     assert obj.send("body", "subject", "to_addr", "invalid3")
 
-    assert obj.send("body", "subject", "to_addr", "from_addr", cc=10, bcc=20)  # type: ignore
+    # Test that cc and bcc with wrong types are ignored
+    assert obj.send(
+        "body",
+        "subject",
+        "to_addr",
+        "from_addr",
+        cc=10,  # type: ignore
+        bcc=20,  # type: ignore
+    )
 
     mail = BaseTests.read_mock_email()
     body = mail.get("body")
@@ -119,7 +126,7 @@ def test_smtp(app: Flask, faker: Faker) -> None:
         assert obj.smtp is not None
     # assert obj.smtp is None
 
-    with connector.get_instance(noreply=None, admin=None) as obj:
+    with connector.get_instance(noreply="", admin="") as obj:
         assert not obj.send("body", "subject")
         assert not obj.send("body", "subject", "to_addr")
         assert obj.send("body", "subject", "to_addr", "from_addr")

@@ -34,7 +34,7 @@ class Mail(Connector):
     def get_connection_exception() -> ExceptionsList:
         return (socket.gaierror, SMTPAuthenticationError)
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: str) -> "Mail":
         self.instance_variables.update(kwargs)
 
         if port := self.instance_variables.get("port"):
@@ -99,8 +99,8 @@ class Mail(Connector):
         subject: str,
         to_address: Optional[str] = None,
         from_address: Optional[str] = None,
-        cc: Optional[Union[str, List[str]]] = None,
-        bcc: Optional[Union[str, List[str]]] = None,
+        cc: Union[None, str, List[str]] = None,
+        bcc: Union[None, str, List[str]] = None,
         plain_body: Optional[str] = None,
     ) -> None:
 
@@ -126,8 +126,8 @@ class Mail(Connector):
         subject: str,
         to_address: Optional[str] = None,
         from_address: Optional[str] = None,
-        cc: Optional[Union[str, List[str]]] = None,
-        bcc: Optional[Union[str, List[str]]] = None,
+        cc: Union[None, str, List[str]] = None,
+        bcc: Union[None, str, List[str]] = None,
         plain_body: Optional[str] = None,
         retry: int = 1,
     ) -> bool:
@@ -158,8 +158,8 @@ class Mail(Connector):
         subject: str,
         to_address: Optional[str] = None,
         from_address: Optional[str] = None,
-        cc: Optional[Union[str, List[str]]] = None,
-        bcc: Optional[Union[str, List[str]]] = None,
+        cc: Union[None, str, List[str]] = None,
+        bcc: Union[None, str, List[str]] = None,
         plain_body: Optional[str] = None,
     ) -> bool:
 
@@ -237,7 +237,7 @@ class Mail(Connector):
         except SMTPException as e:
             log.error("Unable to send email to {} ({})", to_address, e)
             return False
-        except BaseException as e:
+        except Exception as e:
             log.error(str(e))
             return False
 
@@ -248,7 +248,7 @@ instance = Mail()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "Mail":
 
     return instance.get_instance(

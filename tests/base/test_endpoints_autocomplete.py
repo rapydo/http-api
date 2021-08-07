@@ -1,7 +1,7 @@
 import json
 import random
 
-from restapi.tests import API_URI, BaseTests, FlaskClient
+from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
 
 
 class TestApp(BaseTests):
@@ -17,21 +17,23 @@ class TestApp(BaseTests):
         assert "autocomplete_id_bind" in schema[0]
         assert "autocomplete_label_bind" in schema[0]
         assert "autocomplete_show_id" in schema[0]
-        assert schema[0]["autocomplete_endpoint"] == "tests/autocomplete"
+        assert schema[0]["autocomplete_endpoint"] == "/api/tests/autocomplete"
         assert schema[0]["autocomplete_id_bind"] == "my_id"
         assert schema[0]["autocomplete_label_bind"] == "my_label"
         assert schema[0]["autocomplete_show_id"] is True
 
-        autocomplete_endpoint = f"{API_URI}/{schema[0]['autocomplete_endpoint']}"
+        autocomplete_endpoint = f"{SERVER_URI}{schema[0]['autocomplete_endpoint']}"
 
         r = client.get(f"{autocomplete_endpoint}/nobody")
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) == 0
 
         r = client.get(f"{autocomplete_endpoint}/oliver")
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) > 0
         assert schema[0]["autocomplete_id_bind"] in content[0]
         assert schema[0]["autocomplete_label_bind"] in content[0]
@@ -39,6 +41,7 @@ class TestApp(BaseTests):
         r = client.get(f"{autocomplete_endpoint}/s the")
         assert r.status_code == 200
         content = self.get_content(r)
+        assert isinstance(content, list)
         assert len(content) > 0
         assert schema[0]["autocomplete_id_bind"] in content[0]
         assert schema[0]["autocomplete_label_bind"] in content[0]

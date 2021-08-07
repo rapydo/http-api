@@ -62,17 +62,11 @@ def test_cli() -> None:
         "myhost": "myvalue",
         "myport": "111",
     }
-    try:
+    with pytest.raises(SystemExit):
         cli.get_service_address(variables, "host", "port", "myservice")
-        pytest.fail("No exception raised")  # pragma: no cover
-    except SystemExit:
-        pass
 
-    try:
+    with pytest.raises(SystemExit):
         cli.get_service_address(variables, "myhost", "port", "myservice")
-        pytest.fail("No exception raised")  # pragma: no cover
-    except SystemExit:
-        pass
 
     h, p = cli.get_service_address(variables, "myhost", "myport", "myservice")
 

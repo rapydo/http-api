@@ -3,9 +3,20 @@ import re
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 from enum import Enum
+from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    TypedDict,
+    Union,
+    cast,
+)
 
 import jwt
 import pyotp
@@ -13,13 +24,17 @@ import pytz
 import segno
 from cryptography.fernet import Fernet
 from flask import request
+from glom import glom
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 from passlib.context import CryptContext
 
 from restapi.config import (
-    IS_CELERY_CONTAINER,
+    BACKEND_HOSTNAME,
+    BOT_HOSTNAME,
+    HOST_TYPE,
     JWT_SECRET_FILE,
     PRODUCTION,
+    PROXIED_CONNECTION,
     TESTING,
     TOTP_SECRET_FILE,
     get_frontend_url,
@@ -34,42 +49,36 @@ from restapi.exceptions import (
     ServiceUnavailable,
     Unauthorized,
 )
+from restapi.types import Props
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import Events, log, save_event_log
 from restapi.utilities.time import EPOCH, get_now
 from restapi.utilities.uuid import getUUID
 
+# Trick to avoid circular dependencies
+if TYPE_CHECKING:  # pragma: no cover
+    from restapi.connectors import Connector
+User = Any
+Group = Any
+RoleObj = Any
+Login = Any
+
 
 def import_secret(abs_filename: Path) -> bytes:
 
-    if IS_CELERY_CONTAINER:  # pragma: no cover
+    if HOST_TYPE != BACKEND_HOSTNAME and HOST_TYPE != BOT_HOSTNAME:  # pragma: no cover
         return Fernet.generate_key()
 
     try:
         return open(abs_filename, "rb").read()
     # Can't be covered because it is execute once before the tests...
     except OSError:  # pragma: no cover
-        try:
-            key = Fernet.generate_key()
-            with open(abs_filename, "wb") as key_file:
-                key_file.write(key)
-            abs_filename.chmod(0o400)
-            return key
-        # Debug code
-        except PermissionError as e:  # pragma: no cover
-            log.critical("DEBUG CODE: {}", e)
-            from pwd import getpwuid
-
-            stats = abs_filename.parent.stat()
-            log.critical(
-                "Permission mask set to {} is {} (owner {} = {})",
-                abs_filename.parent,
-                str(oct(stats.st_mode))[-3:],
-                stats.st_uid,
-                getpwuid(stats.st_uid).pw_name,
-            )
-            raise e
+        key = Fernet.generate_key()
+        with open(abs_filename, "wb") as key_file:
+            key_file.write(key)
+        abs_filename.chmod(0o400)
+        return key
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -79,11 +88,6 @@ ANY_ROLE = "any"
 ROLE_DISABLED = "disabled"
 DEFAULT_GROUP_NAME = "Default"
 DEFAULT_GROUP_DESCR = "Default group"
-
-User = Any
-Group = Any
-RoleObj = Any
-Login = Any
 
 DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE = 60
 MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE = 60
@@ -130,7 +134,7 @@ class Role(Enum):
     USER = "normal_user"
 
 
-class InvalidToken(BaseException):
+class InvalidToken(Exception):
     pass
 
 
@@ -200,10 +204,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         "AUTH_FORCE_FIRST_PASSWORD_CHANGE", False
     )
 
-    # enabled if explicitly set or for 2FA is enabled
-    VERIFY_PASSWORD_STRENGTH = SECOND_FACTOR_AUTHENTICATION or Env.get_bool(
-        "AUTH_VERIFY_PASSWORD_STRENGTH", False
-    )
     MAX_PASSWORD_VALIDITY: Optional[timedelta] = get_timedelta(
         Env.get_int("AUTH_MAX_PASSWORD_VALIDITY", 0),
         MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE,
@@ -231,7 +231,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     # This is to let inform mypy about the existence of self.db
     def __init__(self) -> None:  # pragma: no cover
-        self.db: Any
+        self.db: "Connector"
 
     # Executed once by Connector in init_app
     @classmethod
@@ -252,23 +252,25 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     @staticmethod
     def load_roles() -> None:
-        BaseAuthentication.roles_data = get_project_configuration(
-            "variables.roles"
+
+        empty_dict: Dict[str, str] = {}
+        BaseAuthentication.roles_data = glom(
+            mem.configuration, "variables.roles", default=empty_dict
         ).copy()
         if not BaseAuthentication.roles_data:  # pragma: no cover
             print_and_exit("No roles configured")
 
-        BaseAuthentication.default_role = BaseAuthentication.roles_data.pop("default")
+        BaseAuthentication.default_role = BaseAuthentication.roles_data.pop(
+            "default", ""
+        )
+
+        if not BaseAuthentication.default_role:  # pragma: no cover
+            print_and_exit("Default role not available!")
 
         BaseAuthentication.roles = []
         for role, description in BaseAuthentication.roles_data.items():
             if description != ROLE_DISABLED:
                 BaseAuthentication.roles.append(role)
-
-        if not BaseAuthentication.default_role:  # pragma: no cover
-            print_and_exit(
-                "Default role {} not available!", BaseAuthentication.default_role
-            )
 
     def make_login(self, username: str, password: str) -> Tuple[str, Payload, User]:
         """The method which will check if credentials are good to go"""
@@ -280,7 +282,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             # A string literal cannot contain NUL (0x00) characters.
             log.error(e)
             raise BadRequest("Invalid input received")
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.error("Unable to connect to auth backend\n[{}] {}", type(e), e)
 
             raise ServiceUnavailable("Unable to connect to auth backend")
@@ -331,21 +333,38 @@ class BaseAuthentication(metaclass=ABCMeta):
             return False
 
     @staticmethod
-    def get_password_hash(password):
+    def get_password_hash(password: Optional[str]) -> str:
         if not password:
             raise Unauthorized("Invalid password")
-        return pwd_context.hash(password)
+        # CryptContext is no typed.. but this is a string!
+        return cast(str, pwd_context.hash(password))
 
     @staticmethod
-    def get_remote_ip() -> str:
+    def get_remote_ip(raise_warnings: bool = True) -> str:
         try:
-            if forwarded_ips := request.headers.getlist("X-Forwarded-For"):
-                # it can be something like: ['IP1, IP2']
-                return str(forwarded_ips[-1].split(",")[0].strip())
 
-            if PRODUCTION and not TESTING:  # pragma: no cover
+            # Syntax: X-Forwarded-For: <client>, <proxy1>, <proxy2>
+            #   <client> The client IP address
+            #   <proxy1>, <proxy2> If a request goes through multiple proxies, the
+            #        IP addresses of each successive proxy is listed. This means, the
+            #        right-most IP address is the IP address of the most recent proxy
+            #        and the left-most IP address is the IP address of the originating
+            #        client.
+            if PROXIED_CONNECTION:
+                header_key = "X-Forwarded-For"
+                if forwarded_ips := request.headers.getlist(header_key):
+                    # it can be something like: ['IP1, IP2']
+                    return str(forwarded_ips[0].split(",")[0].strip())
+            # Standard (and more secure) way to obtain remote IP
+            else:
+                header_key = "X-Real-Ip"
+                # in testing mode X-Forwarded-For is used
+                if real_ip := request.headers.get(header_key):  # pragma: no cover
+                    return real_ip
+
+            if raise_warnings and PRODUCTION and not TESTING:  # pragma: no cover
                 log.warning(
-                    "Production mode is enabled, but X-Forwarded-For header is missing"
+                    "Production mode is enabled, but {} header is missing", header_key
                 )
 
             if request.remote_addr:
@@ -360,7 +379,8 @@ class BaseAuthentication(metaclass=ABCMeta):
         return "0.0.0.0"
 
     @staticmethod
-    def localize_ip(ip: str) -> Any:
+    @lru_cache
+    def localize_ip(ip: str) -> Optional[str]:
 
         try:
             data = mem.geo_reader.get(ip)
@@ -371,20 +391,20 @@ class BaseAuthentication(metaclass=ABCMeta):
             if "country" in data:
                 try:
                     c = data["country"]["names"]["en"]
-                    return c
-                except BaseException:  # pragma: no cover
+                    return c  # type: ignore
+                except Exception:  # pragma: no cover
                     log.error("Missing country.names.en in {}", data)
                     return None
             if "continent" in data:  # pragma: no cover
                 try:
                     c = data["continent"]["names"]["en"]
-                    return c
+                    return c  # type: ignore
 
-                except BaseException:
+                except Exception:
                     log.error("Missing continent.names.en in {}", data)
                     return None
             return None  # pragma: no cover
-        except BaseException as e:
+        except Exception as e:
             log.error("{}. Input was {}", e, ip)
 
         return None
@@ -491,8 +511,9 @@ class BaseAuthentication(metaclass=ABCMeta):
                 raise InvalidToken("Invalid token type")
             return self.unpacked_token(False)
 
+        user_id = payload.get("user_id")
         # Get the user from payload
-        user = self.get_user(user_id=payload.get("user_id"))
+        user = self.get_user(user_id=user_id)
         if user is None:
             if raiseErrors:
                 raise InvalidToken("No user from payload")
@@ -623,7 +644,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             userdata, extradata = mem.customizer.custom_user_properties_pre(userdata)
         except RestApiException:  # pragma: no cover
             raise
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             raise BadRequest(f"Unable to pre-customize user properties: {e}")
 
         if "email" in userdata:
@@ -632,14 +653,16 @@ class BaseAuthentication(metaclass=ABCMeta):
         return userdata, extradata
 
     @staticmethod
-    def custom_user_properties_post(user, userdata, extra_userdata, db):
+    def custom_user_properties_post(
+        user: User, userdata: Props, extra_userdata: Props, db: "Connector"
+    ) -> Props:
         try:
             mem.customizer.custom_user_properties_post(
                 user, userdata, extra_userdata, db
             )
         except RestApiException:  # pragma: no cover
             raise
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             raise BadRequest(f"Unable to post-customize user properties: {e}")
 
         return userdata
@@ -811,18 +834,16 @@ class BaseAuthentication(metaclass=ABCMeta):
         if new_password != password_confirm:
             raise Conflict("Your password doesn't match the confirmation")
 
-        if self.VERIFY_PASSWORD_STRENGTH:
+        check, msg = self.verify_password_strength(
+            pwd=new_password,
+            old_pwd=password,
+            email=user.email,
+            name=user.name,
+            surname=user.surname,
+        )
 
-            check, msg = self.verify_password_strength(
-                pwd=new_password,
-                old_pwd=password,
-                email=user.email,
-                name=user.name,
-                surname=user.surname,
-            )
-
-            if not check:
-                raise Conflict(msg)
+        if not check:
+            raise Conflict(msg)
 
         user.password = BaseAuthentication.get_password_hash(new_password)
         user.last_password_change = datetime.now(pytz.utc)
@@ -833,7 +854,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         for token in self.get_tokens(user=user):
             try:
                 self.invalidate_token(token=token["token"])
-            except BaseException as e:  # pragma: no cover
+            except Exception as e:  # pragma: no cover
                 log.critical("Failed to invalidate token {}", e)
 
         return True
@@ -856,6 +877,8 @@ class BaseAuthentication(metaclass=ABCMeta):
             message["actions"].append("FIRST LOGIN")
             message["errors"].append("Please change your temporary password")
 
+            self.log_event(Events.password_expired, user=user)
+
             if totp_authentication:
 
                 message["qr_code"] = [self.get_qrcode(user)]
@@ -873,6 +896,8 @@ class BaseAuthentication(metaclass=ABCMeta):
 
                 message["actions"].append("PASSWORD EXPIRED")
                 message["errors"].append("Your password is expired, please change it")
+
+                self.log_event(Events.password_expired, user=user)
 
         return message
 
@@ -955,15 +980,21 @@ class BaseAuthentication(metaclass=ABCMeta):
         user: Optional[Any] = None,
     ) -> None:
 
+        try:
+            url_path = request.path
+        except RuntimeError:
+            url_path = "-"
+
         save_event_log(
             event=event,
             payload=payload,
             user=user,
             target=target,
             ip=cls.get_remote_ip(),
+            url=url_path,
         )
 
-    def init_auth_db(self, options):
+    def init_auth_db(self, options: Dict[str, bool]) -> None:
 
         self.init_roles()
 
@@ -975,6 +1006,12 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     def init_roles(self) -> None:
         current_roles = {role.name: role for role in self.get_roles()}
+        role_names = list(self.roles_data.values())
+
+        num_of_roles = len(role_names)
+        num_of_unique_roles = len(list(set(role_names)))
+        if num_of_roles != num_of_unique_roles:
+            print_and_exit("Found duplicated role names: {}", str(sorted(role_names)))
 
         for role_name in self.roles:
             description = self.roles_data.get(role_name, ROLE_DISABLED)
@@ -996,7 +1033,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             if r not in self.roles:
                 log.warning("Unknown role found: {}", r)
 
-    def init_groups(self, force):
+    def init_groups(self, force: bool) -> Group:
 
         create = False
         update = False
@@ -1036,7 +1073,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
         return default_group
 
-    def init_users(self, default_group, roles, force):
+    def init_users(self, default_group: Group, roles: List[str], force: bool) -> User:
 
         create = False
         update = False

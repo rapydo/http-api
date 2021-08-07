@@ -5,9 +5,8 @@ Customization based on configuration 'blueprint' files
 import glob
 import os
 import re
-import warnings
 from pathlib import Path
-from typing import Any, Dict, List, Set, Type
+from typing import Any, Dict, List, Optional, Set, Tuple, Type
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
@@ -32,11 +31,13 @@ uri_pattern = re.compile(r"\<([^\>]+)\>")
 
 
 @ClassOfAttributes
-class EndpointElements:
-    # type of endpoint from flask_restful
-    cls: Type[Resource] = attribute(default=None)
+# Argument 2 to "__init__" becomes "Type[Any]" due to an unfollowed import
+class EndpointElements:  # type: ignore
+    # Type of variable becomes "Type[Any]" due to an unfollowed import
+    cls: Type[Resource] = attribute(default=None)  # type: ignore
     uris: List[str] = attribute(default=[])
-    methods: Dict[str, List[str]] = attribute(default={})
+    # {'method': path, 'get': path, 'post': path}
+    methods: Dict[str, str] = attribute(default={})
     tags: List[str] = attribute(default=[])
     private: bool = attribute(default=False)
 
@@ -60,7 +61,7 @@ class EndpointsLoader:
 
     def load_configuration(self) -> Dict[str, Any]:
         # Reading configuration
-        confs_path = Path(os.curdir).joinpath(CONF_PATH)
+        confs_path = Path(os.curdir, CONF_PATH)
 
         CONF_FOLDERS = Env.load_variables_group(prefix="project_confs")
         defaults_path = Path(CONF_FOLDERS.get("defaults_path", confs_path))
@@ -76,7 +77,7 @@ class EndpointsLoader:
                 submodules_path=submodules_path,
             )
         except AttributeError as e:  # pragma: no cover
-            print_and_exit(e)
+            print_and_exit(str(e))
 
         return configuration
 
@@ -100,7 +101,7 @@ class EndpointsLoader:
         self.detect_endpoints_shadowing()
 
     @staticmethod
-    def skip_endpoint(depends_on):
+    def skip_endpoint(depends_on: List[str]) -> Tuple[bool, Optional[str]]:
         for var in depends_on:
             pieces = var.strip().split(" ")
             pieces_num = len(pieces)
@@ -123,7 +124,8 @@ class EndpointsLoader:
 
         return False, None
 
-    def extract_endpoints(self, base_dir: str) -> List[Type[Resource]]:
+    # Return type becomes "List[Type[Any]]" due to an unfollowed import
+    def extract_endpoints(self, base_dir: str) -> List[Type[Resource]]:  # type: ignore
 
         endpoints_classes = []
         # get last item of the path
@@ -205,70 +207,57 @@ class EndpointsLoader:
                 # auth.optional injected by the optional decorator in bearer.py
                 auth_optional = fn.__dict__.get("auth.optional", False)
 
-                if not hasattr(fn, "uris"):  # pragma: no cover
+                if not hasattr(fn, "uri"):  # pragma: no cover
                     print_and_exit(
                         "Invalid {} endpoint in {}: missing endpoint decorator",
                         method_fn,
                         epclss.__name__,
                     )
-                    continue
 
-                # Once dropped change uris: List into uri: str in decorators.endpoint
-                # Deprecated since 1.1
-                if len(fn.uris) > 1:  # pragma: no cover
-                    warnings.warn(
-                        "Deprecated multiple URI mapping set on "
-                        f"{epclss.__name__}.{method_fn}",
-                        DeprecationWarning,
+                endpoint.methods[method_fn] = fn.uri
+
+                if fn.uri.startswith("/api/public/") or fn.uri.startswith(
+                    "/api/app/"
+                ):  # pragma: no cover
+                    log.critical(
+                        "Due to a BUG on the proxy configuration, "
+                        "the {} URL will not work in production mode",
+                        fn.uri,
                     )
 
-                endpoint.methods[method_fn] = fn.uris
-                for uri in fn.uris:
+                self.authenticated_endpoints.setdefault(fn.uri, {})
+                # method_fn is equivalent to m.lower()
+                self.authenticated_endpoints[fn.uri].setdefault(
+                    method_fn, auth_required
+                )
 
-                    if uri.startswith("/api/public/") or uri.startswith(
-                        "/api/app/"
-                    ):  # pragma: no cover
-                        log.critical(
-                            "Due to a BUG on the proxy configuration, "
-                            "the {} URL will not work in production mode",
-                            uri,
-                        )
+                # Set default responses
+                responses: Dict[str, Dict[str, str]] = {}
 
-                    self.authenticated_endpoints.setdefault(uri, {})
-                    # method_fn is equivalent to m.lower()
-                    self.authenticated_endpoints[uri].setdefault(
-                        method_fn, auth_required
-                    )
+                responses.setdefault("400", ERR400)
+                if auth_required:
+                    responses.setdefault("401", ERR401)
+                    responses.setdefault("404", ERR404_AUTH)
+                elif auth_optional:
+                    responses.setdefault("401", ERR401)
+                    responses.setdefault("404", ERR404)
+                else:
+                    responses.setdefault("404", ERR404)
+                # inject _METHOD dictionaries into __apispec__ attribute
+                # __apispec__ is normally populated by using @docs decorator
+                inject_apispec_docs(fn, {"responses": responses}, epclss.labels)
 
-                    # Set default responses
-                    responses: Dict[str, Dict[str, str]] = {}
+                # This will be used by server.py.add
+                endpoint.uris.append(fn.uri)
 
-                    responses.setdefault("400", ERR400)
-                    if auth_required:
-                        responses.setdefault("401", ERR401)
-                        responses.setdefault("404", ERR404_AUTH)
-                    elif auth_optional:
-                        responses.setdefault("401", ERR401)
-                        responses.setdefault("404", ERR404)
-                    else:
-                        responses.setdefault("404", ERR404)
-                    # inject _METHOD dictionaries into __apispec__ attribute
-                    # __apispec__ is normally populated by using @docs decorator
-                    inject_apispec_docs(fn, {"responses": responses}, epclss.labels)
+                self.private_endpoints.setdefault(fn.uri, {})
+                self.private_endpoints[fn.uri].setdefault(method_fn, endpoint.private)
 
-                    # This will be used by server.py.add
-                    endpoint.uris.append(uri)
+                # Used by server.py to remove unmapped methods
+                self.uri2methods.setdefault(fn.uri, [])
+                self.uri2methods[fn.uri].append(method_fn)
 
-                    self.private_endpoints.setdefault(uri, {})
-                    self.private_endpoints[uri].setdefault(method_fn, endpoint.private)
-
-                    # Used by server.py to remove unmapped methods
-                    self.uri2methods.setdefault(uri, [])
-                    self.uri2methods[uri].append(method_fn)
-
-                    # log.debug("Built definition '{}:{}'", m, uri)
-
-                    self._used_tags.update(endpoint.tags)
+                self._used_tags.update(endpoint.tags)
             self.endpoints.append(endpoint)
 
     @staticmethod
@@ -290,25 +279,26 @@ class EndpointsLoader:
         # /xyz/abc
         # The second endpoint is shadowed by the first one
         mappings: Dict[str, Set[str]] = {}
-        classes: Dict[str, Dict[str, Type[Resource]]] = {}
+        # Type of variable becomes "Dict[str, Dict[str, Type[Any]]]"
+        #   due to an unfollowed import
+        classes: Dict[str, Dict[str, Type[Resource]]] = {}  # type: ignore
         # duplicates are found while filling the dictionaries
         for endpoint in self.endpoints:
-            for method, tmp_uris1 in endpoint.methods.items():
+            for method, uri in endpoint.methods.items():
                 mappings.setdefault(method, set())
                 classes.setdefault(method, {})
 
-                for uri in tmp_uris1:
-                    if uri in mappings[method]:  # pragma: no cover
-                        log.warning(
-                            "Endpoint redefinition: {} {} used from both {} and {}",
-                            method.upper(),
-                            uri,
-                            endpoint.cls.__name__,
-                            classes[method][uri].__name__,
-                        )
-                    else:
-                        mappings[method].add(uri)
-                        classes[method][uri] = endpoint.cls
+                if uri in mappings[method]:  # pragma: no cover
+                    log.warning(
+                        "Endpoint redefinition: {} {} used from both {} and {}",
+                        method.upper(),
+                        uri,
+                        endpoint.cls.__name__,
+                        classes[method][uri].__name__,
+                    )
+                else:
+                    mappings[method].add(uri)
+                    classes[method][uri] = endpoint.cls
 
         # Detect endpoints swadowing
         for method, tmp_uris2 in mappings.items():

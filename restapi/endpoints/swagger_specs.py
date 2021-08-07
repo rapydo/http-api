@@ -143,7 +143,13 @@ class NewSwaggerSpecifications(EndpointResource):
 
         return self.response(filtered_specs)
 
-    def is_definition_private(self, schema_name, privatedefs, parentdefs, recursion=0):
+    def is_definition_private(
+        self,
+        schema_name: str,
+        privatedefs: Dict[str, bool],
+        parentdefs: Dict[str, Any],
+        recursion: int = 0,
+    ) -> bool:
 
         # can be True|False|None
         from_private_endpoint = privatedefs.get(schema_name, None)

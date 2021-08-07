@@ -10,28 +10,30 @@ from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
 CONNECTOR = "rabbitmq"
+CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
 
 
+@pytest.mark.skipif(
+    CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
+)
+def test_no_rabbit() -> None:
+
+    with pytest.raises(ServiceUnavailable):
+        connector.get_instance()
+
+    log.warning("Skipping {} tests: service not available", CONNECTOR)
+    return None
+
+
+@pytest.mark.skipif(
+    not CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
+)
 def test_rabbit(app: Flask, faker: Faker) -> None:
-
-    if not Connector.check_availability(CONNECTOR):
-
-        try:
-            obj = connector.get_instance()
-            pytest.fail("No exception raised")  # pragma: no cover
-        except ServiceUnavailable:
-            pass
-
-        log.warning("Skipping {} tests: service not available", CONNECTOR)
-        return None
 
     log.info("Executing {} tests", CONNECTOR)
 
-    try:
-        connector.get_instance(host="invalidhostname", port=123)
-        pytest.fail("No exception raised on unavailable service")  # pragma: no cover
-    except ServiceUnavailable:
-        pass
+    with pytest.raises(ServiceUnavailable):
+        connector.get_instance(host="invalidhostname", port="123")
 
     obj = connector.get_instance()
     assert obj is not None
@@ -47,20 +49,20 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
         obj.delete_queue(queue)
 
     assert not obj.queue_exists(queue)
-    assert not obj.send("test", routing_key=queue)
+    assert not obj.send(b"test", routing_key=queue)
     assert not obj.send_json("test", routing_key=queue)
     obj.create_queue(queue)
     assert obj.queue_exists(queue)
     obj.create_queue(queue)
 
     # Now send works because queue exists
-    assert obj.send("test", routing_key=queue)
+    assert obj.send(b"test", routing_key=queue)
     assert obj.send_json("test", routing_key=queue)
 
     assert not obj.exchange_exists(exchange)
     assert obj.get_bindings(exchange) is None
     # This send does not work because exchange does not exist
-    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send(b"test", routing_key=queue, exchange=exchange)
     assert not obj.send_json("test", routing_key=queue, exchange=exchange)
 
     obj.create_exchange(exchange)
@@ -71,7 +73,7 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
     bindings = obj.get_bindings(exchange)
     assert isinstance(bindings, list)
     assert len(bindings) == 0
-    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send(b"test", routing_key=queue, exchange=exchange)
     assert not obj.send_json("test", routing_key=queue, exchange=exchange)
 
     obj.queue_bind(queue, exchange, queue)
@@ -82,7 +84,7 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
     assert bindings[0]["routing_key"] == queue
     assert bindings[0]["queue"] == queue
 
-    assert obj.send("test", routing_key=queue, exchange=exchange)
+    assert obj.send(b"test", routing_key=queue, exchange=exchange)
     assert obj.send_json("test", routing_key=queue, exchange=exchange)
 
     obj.queue_unbind(queue, exchange, queue)
@@ -90,7 +92,7 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
     assert isinstance(bindings, list)
     assert len(bindings) == 0
 
-    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send(b"test", routing_key=queue, exchange=exchange)
     assert not obj.send_json("test", routing_key=queue, exchange=exchange)
 
     obj.queue_bind(queue, exchange, queue)
@@ -105,18 +107,18 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
         obj.channel.close()
 
     # Channel is automatically opened, if found closed
-    assert obj.send("test", queue)
+    assert obj.send(b"test", queue)
 
     obj.delete_exchange(exchange)
-    assert not obj.send("test", routing_key=queue, exchange=exchange)
+    assert not obj.send(b"test", routing_key=queue, exchange=exchange)
     assert not obj.send_json("test", routing_key=queue, exchange=exchange)
 
-    assert obj.send("test", routing_key=queue)
+    assert obj.send(b"test", routing_key=queue)
     assert obj.send_json("test", routing_key=queue)
 
     obj.delete_queue(queue)
 
-    assert not obj.send("test", routing_key=queue)
+    assert not obj.send(b"test", routing_key=queue)
     assert not obj.send_json("test", routing_key=queue)
 
     obj.disconnect()

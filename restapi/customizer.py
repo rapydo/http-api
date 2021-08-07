@@ -1,13 +1,13 @@
 import abc
-from typing import Any, Dict, Tuple
+from typing import Tuple
 
 from flask import Flask
 
+from restapi.connectors import Connector
 from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import User
+from restapi.types import FlaskRequest, Props
 
-Props = Dict[str, Any]
-FlaskRequest = Any
 FlaskApp = Flask
 
 
@@ -33,7 +33,7 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
     @staticmethod
     @abc.abstractmethod
     def custom_user_properties_post(
-        user: User, properties: Props, extra_properties: Props, db: Any
+        user: User, properties: Props, extra_properties: Props, db: Connector
     ) -> None:  # pragma: no cover
         """
         executed just after user creation

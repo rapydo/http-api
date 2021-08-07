@@ -6,10 +6,11 @@ import urllib.parse
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
 
 import jwt
 import pyotp
+import pytest
 import pytz
 from faker import Faker
 from flask import Flask
@@ -25,9 +26,19 @@ from restapi.config import (
 )
 from restapi.connectors import Connector, celery
 from restapi.env import Env
-from restapi.services.authentication import BaseAuthentication, Payload, Role
+from restapi.services.authentication import BaseAuthentication, Role
 from restapi.utilities.faker import get_faker
-from restapi.utilities.logs import LOGS_FOLDER, log
+from restapi.utilities.logs import LOGS_FOLDER, Events, log
+
+
+class MockedEmail(TypedDict):
+    # from: str
+    cc: List[str]
+    msg: str
+    # body and headers are added by read_mock_email function
+    body: str
+    headers: str
+
 
 SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
 API_URI = f"{SERVER_URI}{API_URL}"
@@ -40,7 +51,8 @@ AUTH_URI = f"{SERVER_URI}{AUTH_URL}"
 FlaskClient = Any
 
 Event = namedtuple(
-    "Event", ["date", "ip", "user", "event", "target_type", "target_id", "payload"]
+    "Event",
+    ["date", "ip", "user", "event", "target_type", "target_id", "url", "payload"],
 )
 
 
@@ -75,7 +87,7 @@ class BaseTests:
         endpoint: str,
         headers: Optional[Dict[str, str]],
         method: str = "post",
-    ) -> Any:
+    ) -> List[Dict[str, Any]]:
         """
         Retrieve a dynamic data schema associated with a endpoint
         """
@@ -93,18 +105,38 @@ class BaseTests:
 
         assert r.status_code == 200
 
-        return json.loads(r.data.decode("utf-8"))
+        schema = json.loads(r.data.decode("utf-8"))
+        assert isinstance(schema, list)
+        for f in schema:
+            assert isinstance(f, dict)
+        return schema
 
     @staticmethod
-    def get_content(http_out: Response) -> Any:
+    def get_content(
+        http_out: Response,
+    ) -> Union[str, float, int, bool, List[Any], Dict[str, Any]]:
 
         try:
             response = json.loads(http_out.get_data().decode())
+            if isinstance(
+                response,
+                (
+                    str,
+                    bool,
+                    float,
+                    int,
+                    list,
+                    dict,
+                ),
+            ):
+                return response
+
+            raise ValueError(  # pragma: no cover
+                f"Unknown response type: {type(response)}"
+            )
         except Exception as e:  # pragma: no cover
             log.error("Failed to load response:\n{}", e)
             raise ValueError(f"Malformed response: {http_out}")
-
-        return response
 
     @staticmethod
     def generate_totp(email: Optional[str]) -> str:
@@ -130,6 +162,9 @@ class BaseTests:
         """
         Make login and return both token and authorization header
         """
+
+        if not Connector.check_availability("authentication"):  # pragma: no cover
+            pytest.fail("Authentication is not enabled")
 
         if USER is None or PWD is None:
             BaseAuthentication.load_default_user()
@@ -171,6 +206,11 @@ class BaseTests:
                 data = {}
 
                 if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
+
+                    events = cls.get_last_events(1)
+                    assert events[0].event == Events.password_expired.value
+                    # assert events[0].user == USER
+
                     newpwd = cls.faker.password(strong=True)
                     if test_failures:
                         data["new_password"] = newpwd
@@ -306,6 +346,7 @@ class BaseTests:
         r = client.post(f"{API_URI}/admin/users", data=user_data, headers=admin_headers)
         assert r.status_code == 200
         uuid = cls.get_content(r)
+        assert isinstance(uuid, str)
 
         return uuid, user_data
 
@@ -337,6 +378,7 @@ class BaseTests:
         )
         assert r.status_code == 200
         uuid = cls.get_content(r)
+        assert isinstance(uuid, str)
 
         return uuid, group_data
 
@@ -402,7 +444,7 @@ class BaseTests:
         )
 
     @classmethod
-    def buildData(cls, schema: Any) -> Dict[str, Any]:
+    def buildData(cls, schema: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Input: a Marshmallow schema
         Output: a dictionary of random data
@@ -410,8 +452,14 @@ class BaseTests:
         data: Dict[str, Any] = {}
         for d in schema:
 
+            assert "key" in d
+            assert "type" in d
+
             key = d.get("key")
             field_type = d.get("type")
+
+            assert key is not None
+            assert field_type is not None
 
             if is_array := field_type.endswith("[]"):
                 # py39:
@@ -419,6 +467,7 @@ class BaseTests:
                 field_type = field_type[0:-2]
 
             if "options" in d:
+                assert isinstance(d["options"], dict)
                 if len(d["options"]) > 0:
                     keys = list(d["options"].keys())
                     if is_array:
@@ -433,24 +482,19 @@ class BaseTests:
                 data[key] = cls.faker.pyint(min_value=min_value, max_value=max_value)
             elif field_type == "date":
 
-                # Fri, 26 Feb 2021 23:59:59 GMT
-                fmt = "%a, %d %b %Y %H:%M:%S %Z"
-                # d = cls.faker.date(pattern="%Y-%m-%d")
-                # data[key] = f"{d}T00:00:00.000Z"
-
                 min_date = None
                 max_date = None
 
                 if min_value := d.get("min"):
-                    min_date = datetime.strptime(min_value, fmt)
+                    min_date = datetime.fromisoformat(min_value)
 
                 if max_value := d.get("max"):
-                    max_date = datetime.strptime(max_value, fmt)
+                    max_date = datetime.fromisoformat(max_value)
 
-                d = cls.faker.date_time_between_dates(
+                random_date = cls.faker.date_time_between_dates(
                     datetime_start=min_date, datetime_end=max_date
                 )
-                data[key] = f"{d.isoformat()}.000Z"
+                data[key] = f"{random_date.isoformat()}.000Z"
             elif field_type == "email":
                 data[key] = cls.faker.ascii_email()
             elif field_type == "boolean":
@@ -498,20 +542,20 @@ class BaseTests:
         return data
 
     @staticmethod
-    def delete_mock_email(previous: bool = False) -> Any:
+    def delete_mock_email(previous: bool = False) -> None:
         target = "prevsent" if previous else "lastsent"
         fpath = LOGS_FOLDER.joinpath(f"mock.mail.{target}.json")
         fpath.unlink(missing_ok=True)
 
     @staticmethod
-    def read_mock_email(previous: bool = False) -> Any:
+    def read_mock_email(previous: bool = False) -> MockedEmail:
         target = "prevsent" if previous else "lastsent"
         fpath = LOGS_FOLDER.joinpath(f"mock.mail.{target}.json")
         if not fpath.exists():
-            return None
+            raise FileNotFoundError(fpath)
 
         with open(fpath) as file:
-            data = json.load(file)
+            data = cast(MockedEmail, json.load(file))
 
         if "msg" in data:
             tokens = data["msg"].split("\n\n")
@@ -644,7 +688,7 @@ class BaseTests:
 
                 tokens = line.strip().split(" ")
 
-                payload = json.loads(" ".join(tokens[7:])) if len(tokens) >= 8 else {}
+                payload = json.loads(" ".join(tokens[8:])) if len(tokens) >= 9 else {}
 
                 event = Event(
                     # datetime
@@ -659,6 +703,8 @@ class BaseTests:
                     tokens[5] if len(tokens) >= 6 else "",
                     # Target ID or empty
                     tokens[6] if len(tokens) >= 7 else "",
+                    # Target ID or empty
+                    tokens[7] if len(tokens) >= 8 else "",
                     # Payload dictionary
                     payload,
                 )
@@ -681,7 +727,7 @@ class BaseTests:
         # Mypy complains about: error: "Callable[[], Any]" has no attribute "get"
         # But .tasks is a TaskRegistry and it is child of dict...
         # so that .get is totally legit!
-        task = c.celery_app.tasks.get(task_name)  # type: ignore
+        task = c.celery_app.tasks.get(task_name)
 
         if not task:
             raise AttributeError("Task not found")

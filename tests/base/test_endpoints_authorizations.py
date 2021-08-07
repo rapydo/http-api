@@ -31,15 +31,12 @@ class TestApp1(BaseTests):
 
         paths: List[str] = []
         for endpoint_class in loader.endpoints:
-            for method, paths_list in endpoint_class.methods.items():
-                for path in paths_list:
+            for method, path in endpoint_class.methods.items():
 
-                    if path.startswith("/api/tests/"):
-                        continue
+                if path.startswith("/api/tests/"):
+                    continue
 
-                    p = self.get_path(method, path)
-                    log.warning("DEBUG CODE: Loaded endpoint {}", p)
-                    paths.append(p)
+                paths.append(self.get_path(method, path))
 
         return paths
 

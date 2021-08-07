@@ -1,5 +1,5 @@
 import inspect
-from typing import Dict, Union
+from typing import Any, Dict, Optional, Type, Union
 
 import simplejson
 from marshmallow import EXCLUDE
@@ -14,7 +14,7 @@ GET_SCHEMA_KEY = "get_schema"
 
 
 class Schema(MarshmallowSchema):
-    def __init__(self, strip_required=False, *args, **kwargs):
+    def __init__(self, strip_required: bool = False, *args: Any, **kwargs: Any) -> None:
 
         super().__init__(**kwargs)
         if strip_required:
@@ -37,11 +37,11 @@ class Schema(MarshmallowSchema):
 
     # NOTE: self is not used, but @pre_load cannot be static
     @pre_load
-    def raise_get_schema(self, data, **kwargs):
+    def raise_get_schema(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
 
         if "access_token" in data:
             # valid for ImmutableMultiDict:
-            data = data.to_dict()
+            data = data.to_dict()  # type: ignore
             data.pop("access_token")
 
         if GET_SCHEMA_KEY in data:
@@ -56,7 +56,9 @@ class PartialSchema(Schema):
 
 
 class Neo4jSchema(Schema):
-    def __init__(self, model, fields, *args, **kwargs):
+    def __init__(
+        self, model: Type[Any], fields: Optional[Any], *args: Any, **kwargs: Any
+    ) -> None:
         super().__init__(**kwargs)
 
         if not fields:
@@ -73,12 +75,12 @@ class Neo4jSchema(Schema):
             log.error("Invalid fields: {}", fields)
             fields = ()
 
-        self.fields = fields
+        self.fields = fields  # type: ignore
         # Leave the constructor to avoid variable shadowing between
         # this fields and the from marshmallow import fields above
         self.build_schema(model)
 
-    def build_schema(self, model):
+    def build_schema(self, model: Type[Any]) -> None:
 
         # Get the full list of parent classes from model to object
         classes = inspect.getmro(model)

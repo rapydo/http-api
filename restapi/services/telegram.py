@@ -1,23 +1,25 @@
 import json
 import threading
 from functools import wraps
-from typing import Dict
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import requests
-from marshmallow import ValidationError
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
+from marshmallow import Schema, ValidationError, fields
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Update
 from telegram.error import Conflict as TelegramConflict
 from telegram.ext import (
+    CallbackContext,
     CallbackQueryHandler,
     CommandHandler,
     Filters,
     MessageHandler,
     Updater,
 )
+from telegram.ext.utils.types import BD, CD, UD
 
 from restapi.config import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
 from restapi.env import Env
-from restapi.exceptions import RestApiException, ServiceUnavailable
+from restapi.exceptions import RestApiException, ServerError, ServiceUnavailable
 from restapi.models import validate
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
@@ -26,6 +28,9 @@ from restapi.utilities.uuid import getUUID
 
 # it is used to pass data to inline button callbacks
 data_cache = {}
+
+CommandFunction = Callable[[Update, CallbackContext[Any, Any, Any]], None]
+DecoratedCommandFunction = Callable[..., Any]
 
 
 class TooManyInputs(ValidationError):
@@ -102,8 +107,10 @@ class Bot:
     #    DECORATORS
     ##################
 
-    def command(self, cmd, help="N/A", run_async=False):
-        def decorator(func):
+    def command(
+        self, cmd: str, help: str = "N/A", run_async: bool = False
+    ) -> Callable[[CommandFunction], CommandFunction]:
+        def decorator(func: CommandFunction) -> CommandFunction:
             log.info("Registering {}", cmd)
             self.updater.dispatcher.add_handler(
                 CommandHandler(cmd, func, pass_args=True, run_async=run_async)
@@ -114,27 +121,54 @@ class Bot:
 
         return decorator
 
-    def restricted_to_admins(self, func):
+    def restricted_to_admins(
+        self, func: DecoratedCommandFunction
+    ) -> DecoratedCommandFunction:
         @wraps(func)
-        def wrapper(update, context, *args, **kwargs):
+        def wrapper(
+            update: Update,
+            context: CallbackContext[UD, CD, BD],
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
             if self.check_authorized(update, context, required_admin=True):
                 return func(update, context, *args, **kwargs)
 
-        return wrapper
+        return cast(DecoratedCommandFunction, wrapper)
 
-    def restricted_to_users(self, func):
+    def restricted_to_users(
+        self, func: DecoratedCommandFunction
+    ) -> DecoratedCommandFunction:
         @wraps(func)
-        def wrapper(update, context, *args, **kwargs):
+        def wrapper(
+            update: Update,
+            context: CallbackContext[UD, CD, BD],
+            *args: Any,
+            **kwargs: Any,
+        ) -> Any:
             if self.check_authorized(update, context):
                 return func(update, context, *args, **kwargs)
 
-        return wrapper
+        return cast(DecoratedCommandFunction, wrapper)
 
-    def parameters(self, schema):
-        def decorator(func):
+    def parameters(
+        self, schema: Schema
+    ) -> Callable[[DecoratedCommandFunction], DecoratedCommandFunction]:
+        def decorator(func: DecoratedCommandFunction) -> DecoratedCommandFunction:
             @wraps(func)
-            def wrapper(update, context, *args, **kwargs):
-                inputs = context.args
+            def wrapper(
+                update: Update,
+                context: CallbackContext[UD, CD, BD],
+                *args: Any,
+                **kwargs: Any,
+            ) -> Any:
+                # context.args == Optional[List[str]]
+                # => inputs == List[str]
+                inputs: List[str] = context.args or []
+
+                # if not inputs:
+                #     log.critical("Debug code: missing inputs")
+                #     return None
 
                 data = {}
                 keys = list(schema.declared_fields.keys())
@@ -175,7 +209,7 @@ class Bot:
                             definition,
                             update,
                             context,
-                            e.messages[param],
+                            e.messages[param],  # type: ignore
                         )
                         break
 
@@ -183,7 +217,7 @@ class Bot:
 
                 return func(update, context, *args, **val, **kwargs)
 
-            return wrapper
+            return cast(DecoratedCommandFunction, wrapper)
 
         return decorator
 
@@ -191,17 +225,20 @@ class Bot:
     #    MESSAGES
     ##################
 
-    def send_markdown(self, msg, update):
+    def send_markdown(self, msg: str, update: Update) -> None:
         if not msg.strip():  # pragma: no cover
             return
 
-        self.updater.bot.send_message(
-            chat_id=update.message.chat_id,
-            text=msg.replace("_", "-"),
-            parse_mode=ParseMode.MARKDOWN,
-        )
+        if update.message:
+            self.updater.bot.send_message(
+                chat_id=update.message.chat_id,
+                text=msg.replace("_", "-"),
+                parse_mode=ParseMode.MARKDOWN,
+            )
+        else:  # pragma: no cover
+            log.critical("Debug code: update.message in missing in send_markdown")
 
-    def admins_broadcast(self, msg):
+    def admins_broadcast(self, msg: str) -> None:
         for admin in self.admins:
             self.updater.bot.send_message(chat_id=admin, text=msg)
 
@@ -210,7 +247,8 @@ class Bot:
     #          mostly private methods
     ##########################################
 
-    def error_callback(self, update, context):
+    # Strange, but update is expected to be object, not : Update
+    def error_callback(self, update: Any, context: CallbackContext[UD, CD, BD]) -> None:
         # https://github.com/python-telegram-bot/python-telegram-bot/wiki/Exception-Handling
         if isinstance(context.error, TooManyInputs):
             update.message.reply_text("Too many inputs", parse_mode=ParseMode.MARKDOWN)
@@ -224,18 +262,38 @@ class Bot:
             log.error(context.error)
             self.admins_broadcast(str(context.error))
 
-    def invalid_message(self, update, context):
-        log.info(
-            "Received invalid message from {}: {}",
-            update.message.from_user.id,
-            update.message.text,
-        )
-        if self.check_authorized(update, context):
-            self.updater.bot.send_message(
-                chat_id=update.message.chat_id, text="Invalid command, ask for /help"
-            )
+    def invalid_message(
+        self, update: Update, context: CallbackContext[UD, CD, BD]
+    ) -> None:
 
-    def manage_missing_parameter(self, func, param, definition, update, context, error):
+        if update.message:
+            user = update.message.from_user.id if update.message.from_user else "N/A"
+            log.info(
+                "Received invalid message from {}: {}",
+                user,
+                update.message.text,
+            )
+            if self.check_authorized(update, context):
+                self.updater.bot.send_message(
+                    chat_id=update.message.chat_id,
+                    text="Invalid command, ask for /help",
+                )
+        else:  # pragma: no cover
+            log.critical("Debug code: update.message in missing in invalid_message")
+
+    def manage_missing_parameter(
+        self,
+        func: Any,
+        param: str,
+        definition: fields.Field,
+        update: Update,
+        context: CallbackContext[UD, CD, BD],
+        error: List[str],
+    ) -> None:
+
+        if not update.message:  # pragma
+            log.critical("Debug code: missing message in manage_missing_parameter")
+            return None
 
         # Parameters without description should raise some kind of errors/warnings?
         if "description" in definition.metadata:
@@ -280,8 +338,14 @@ class Bot:
     # Callback used by ALL inline keyboard button. It will received a data_key
     # as callback_data to access to data from the specific commands
     # Not called during tests... how to test it?
-    def inline_keyboard_button(self, update, context):  # pragma: no cover
+    def inline_keyboard_button(
+        self, update: Update, context: CallbackContext[UD, CD, BD]
+    ) -> None:  # pragma: no cover
         query = update.callback_query
+
+        if not query:
+            log.critical("Debug code: query is empty in inline_keyboard_button")
+            return None
 
         # Callback queries need to be answered, even if no notification to the user
         # is needed. Some clients may have trouble otherwise.
@@ -291,6 +355,11 @@ class Bot:
         # The data cache contains the parameters wrapper of the command function. This
         # wrapper will be invoked by augmenting the original list of parameters with
         # the choice obtained from the inline keyboard argument
+
+        if not query.data:
+            log.critical("Debug code: query.data is empty in inline_keyboard_button")
+            return None
+
         data = data_cache.pop(query.data)
         query.edit_message_text(text=f"Selected option: {data['parameter']}")
         # func is the parameters wrapper of the command function
@@ -301,14 +370,24 @@ class Bot:
         # Let's invoke the parameters wrapper with the new additional parameter
         func(data["update"], data["context"])
 
-    def is_authorized(self, user_id, required_admin):
+    def is_authorized(self, user_id: int, required_admin: bool) -> bool:
 
         if required_admin:
             return user_id in self.admins
 
         return user_id in self.admins + self.users
 
-    def check_authorized(self, update, context, required_admin=False):
+    def check_authorized(
+        self,
+        update: Update,
+        context: CallbackContext[UD, CD, BD],
+        required_admin: bool = False,
+    ) -> bool:
+
+        if not update.message or not update.message.from_user:
+            log.critical("Debug code: missing user in check_authorized")
+            return False
+
         user = update.message.from_user
         user_id = user.id
         text = update.message.text
@@ -338,7 +417,7 @@ class Bot:
         return False
 
     @staticmethod
-    def get_ids(ids_list):
+    def get_ids(ids_list: Optional[str]) -> List[int]:
         if not ids_list:
             return []
 
@@ -353,37 +432,42 @@ class BotApiClient:
 
     variables: Dict[str, str] = {}
 
-    def __init__(self, variables):
+    def __init__(self, variables: Dict[str, str]) -> None:
         BotApiClient.variables = variables
 
     @staticmethod
-    def get(path, base="api"):
+    def get(path: str, base: str = "api") -> Any:
         return BotApiClient.api(path, "GET", base=base)
 
     # Not executed during tests... no command implemented on that api method
     @staticmethod
-    def put(path, base="api"):  # pragma: no cover
+    def put(path: str, base: str = "api") -> Any:  # pragma: no cover
         return BotApiClient.api(path, "PUT", base=base)
 
     # Not executed during tests... no command implemented on that api method
     @staticmethod
-    def patch(path, base="api"):  # pragma: no cover
+    def patch(path: str, base: str = "api") -> Any:  # pragma: no cover
         return BotApiClient.api(path, "PATCH", base=base)
 
     # Not executed during tests... no command implemented on that api method
     @staticmethod
-    def post(path, base="api", payload=None):  # pragma: no cover
-        if payload:
-            payload = json.dumps(payload)
+    def post(
+        path: str, base: str = "api", payload: Optional[Dict[str, Any]] = None
+    ) -> Any:  # pragma: no cover
         return BotApiClient.api(path, "POST", base=base, payload=payload)
 
     # Not executed during tests... no command implemented on that api method
     @staticmethod
-    def delete(path, base="api"):  # pragma: no cover
+    def delete(path: str, base: str = "api") -> Any:  # pragma: no cover
         return BotApiClient.api(path, "DELETE", base=base)
 
     @staticmethod
-    def api(path, method, base="api", payload=None):
+    def api(
+        path: str,
+        method: str,
+        base: str = "api",
+        payload: Optional[Dict[str, Any]] = None,
+    ) -> Any:
         host = BotApiClient.variables.get("backend_host")
         port = Env.get("FLASK_PORT")
         url = f"http://{host}:{port}/{base}/{path}"
@@ -391,13 +475,17 @@ class BotApiClient:
         log.debug("Calling {} on {}", method, url)
 
         try:
-            response = requests.request(method, url=url, data=payload)
+            data: Optional[str] = None
+            if payload:
+                data = json.dumps(payload)
+
+            response = requests.request(method, url=url, data=data)
 
             out = response.json()
         # Never raised during tests: how to test it?
         except Exception as e:  # pragma: no cover
             log.error(f"API call failed: {e}")
-            raise RestApiException(str(e), status_code=500)
+            raise ServerError(str(e))
 
         if response.status_code >= 300:
             raise RestApiException(out, status_code=response.status_code)

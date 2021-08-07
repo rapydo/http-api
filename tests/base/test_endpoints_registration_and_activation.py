@@ -144,7 +144,9 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get("headers") is not None
         # Subject: is a key in the MIMEText
-        assert f"Subject: {project_tile}: New user registered" in mail.get("headers")
+        assert f"Subject: {project_tile}: New user registered" in mail.get(
+            "headers", ""
+        )
         assert registration_data["email"] in body
 
         # Previous sent email is the activation link sent to the user
@@ -153,7 +155,7 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get("headers") is not None
         # Subject: is a key in the MIMEText
-        assert f"Subject: {project_tile}: Account activation" in mail.get("headers")
+        assert f"Subject: {project_tile}: Account activation" in mail.get("headers", "")
         assert f"{proto}://localhost/public/register/" in body
 
         # This will fail because the user is not active
@@ -205,8 +207,10 @@ class TestApp(BaseTests):
 
         events = self.get_last_events(1)
         assert events[0].event != Events.activation.value
+        assert events[0].url == "/auth/login"
 
-        assert self.read_mock_email() is None
+        with pytest.raises(FileNotFoundError):
+            self.read_mock_email()
 
         # request activation, correct username
         r = client.post(
@@ -221,7 +225,7 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get("headers") is not None
         # Subject: is a key in the MIMEText
-        assert f"Subject: {project_tile}: Account activation" in mail.get("headers")
+        assert f"Subject: {project_tile}: Account activation" in mail.get("headers", "")
         assert f"{proto}://localhost/public/register/" in body
 
         token = self.get_token_from_body(body)
@@ -241,6 +245,7 @@ class TestApp(BaseTests):
         assert events[0].event == Events.activation.value
         assert events[0].user == registration_data["email"]
         assert events[0].target_type == "User"
+        assert events[0].url == f"/auth/profile/activate/{token}"
 
         # Activation token is no longer valid
         r = client.put(f"{AUTH_URI}/profile/activate/{token}")
@@ -271,7 +276,9 @@ class TestApp(BaseTests):
         headers, _ = self.do_login(client, None, None)
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
-        uuid = self.get_content(r).get("uuid")
+        content = self.get_content(r)
+        assert isinstance(content, dict)
+        uuid = content.get("uuid")
 
         token = self.get_crafted_token("x", user_id=uuid)
         r = client.put(f"{AUTH_URI}/profile/activate/{token}")
@@ -326,6 +333,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/admin/users", headers=headers)
         assert r.status_code == 200
         users = self.get_content(r)
+        assert isinstance(users, list)
         uuid = None
         for u in users:
             if u.get("email") == registration_data["email"]:
@@ -345,6 +353,7 @@ class TestApp(BaseTests):
 
         r = client.get(f"{API_URI}/admin/tokens", headers=headers)
         content = self.get_content(r)
+        assert isinstance(content, list)
 
         for t in content:
             if t.get("token") == token:  # pragma: no cover

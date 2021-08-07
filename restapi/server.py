@@ -10,14 +10,14 @@ import time
 import warnings
 from enum import Enum
 from threading import Lock
-from typing import Any, Dict, Optional
+from types import FrameType
+from typing import Dict, Optional
 
 import sentry_sdk
 import werkzeug.exceptions
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
-from flask import Flask  # , request
-from flask.json import JSONEncoder
+from flask import Flask
 from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
 from flask_restful import Api
@@ -39,7 +39,11 @@ from restapi.connectors import Connector
 from restapi.customizer import BaseCustomizer
 from restapi.env import Env
 from restapi.rest.loader import EndpointsLoader
-from restapi.rest.response import handle_marshmallow_errors, handle_response
+from restapi.rest.response import (
+    ExtendedJSONEncoder,
+    handle_marshmallow_errors,
+    handle_response,
+)
 from restapi.services.cache import Cache
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
@@ -47,17 +51,6 @@ from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
 lock = Lock()
-
-
-# From Flask 2.0 simplejson will no longer be used
-# See here: https://github.com/pallets/flask/issues/3555
-class ExtendedJSONEncoder(JSONEncoder):
-    def default(self, o: Any) -> Any:
-        # Added support for set serialization
-        # Otherwise: TypeError: Object of type set is not JSON serializable
-        if isinstance(o, set):
-            return list(o)
-        return super().default(o)
 
 
 class ServerModes(int, Enum):
@@ -71,7 +64,8 @@ class ServerModes(int, Enum):
 #     log.critical(request.headers)
 
 
-def teardown_handler(signal, frame):  # pragma: no cover
+def teardown_handler(signal: int, frame: FrameType) -> None:  # pragma: no cover
+
     with lock:
 
         Connector.disconnect_all()
@@ -110,7 +104,12 @@ def create_app(
     # CORS
     if not PRODUCTION:
 
-        cors_origin = get_frontend_url() if not TESTING else "*"
+        if TESTING:
+            cors_origin = "*"
+        else:  # pragma: no cover
+            cors_origin = get_frontend_url()
+            # Beware, this only works because get_frontend_url never append a port
+            cors_origin += ":*"
 
         CORS(
             microservice,
@@ -132,6 +131,11 @@ def create_app(
     # Flask configuration from config file
     microservice.config.from_object(config)
     microservice.json_encoder = ExtendedJSONEncoder
+
+    # Used to force flask to avoid json sorting and ensure that
+    # the output to reflect the order of field in the Marshmallow schema
+    microservice.config["JSON_SORT_KEYS"] = False
+
     log.debug("Flask app configured")
 
     if PRODUCTION:
@@ -144,9 +148,10 @@ def create_app(
     if not mem.initializer:  # pragma: no cover
         print_and_exit("Invalid Initializer class")
 
-    mem.customizer = Meta.get_instance("customization", "Customizer")
-    if not mem.customizer:  # pragma: no cover
+    customizer = Meta.get_class("customization", "Customizer")
+    if not customizer:  # pragma: no cover
         print_and_exit("Invalid Customizer class")
+    mem.customizer = customizer()
 
     if not isinstance(mem.customizer, BaseCustomizer):  # pragma: no cover
         print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
@@ -237,19 +242,20 @@ def create_app(
 
         for rule in microservice.url_map.iter_rules():
 
-            endpoint = microservice.view_functions[rule.endpoint]
-            if not hasattr(endpoint, "view_class"):
+            view_function = microservice.view_functions[rule.endpoint]
+            if not hasattr(view_function, "view_class"):
                 continue
 
             newmethods = ignore_verbs.copy()
             rulename = str(rule)
 
-            for verb in rule.methods - ignore_verbs:
-                method = verb.lower()
-                if method in endpoints_loader.uri2methods[rulename]:
-                    # remove from flask mapping
-                    # to allow 405 response
-                    newmethods.add(verb)
+            if rule.methods:
+                for verb in rule.methods - ignore_verbs:
+                    method = verb.lower()
+                    if method in endpoints_loader.uri2methods[rulename]:
+                        # remove from flask mapping
+                        # to allow 405 response
+                        newmethods.add(verb)
 
             rule.methods = newmethods
 

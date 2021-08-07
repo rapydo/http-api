@@ -1,7 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 
 import pytz
 from pymodm import MongoModel
@@ -28,10 +28,12 @@ from restapi.services.authentication import (
 from restapi.utilities.logs import Events, log
 from restapi.utilities.uuid import getUUID
 
+F = TypeVar("F", bound=Callable[..., Any])
 
-def catch_db_exceptions(func):
+
+def catch_db_exceptions(func: F) -> F:
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
 
         try:
             return func(*args, **kwargs)
@@ -79,11 +81,11 @@ def catch_db_exceptions(func):
             # but the cause is still unknown...
             raise BadRequest(str(e))
 
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.critical("Raised unknown exception: {}", type(e))
             raise e
 
-    return wrapper
+    return cast(F, wrapper)
 
 
 class MongoExt(Connector):
@@ -91,7 +93,8 @@ class MongoExt(Connector):
     DATABASE: str = "rapydo"
 
     # This is used to return Models in a type-safe way
-    def __getattr__(self, name: str) -> MongoModel:
+    # Return type becomes "Any" due to an unfollowed import
+    def __getattr__(self, name: str) -> MongoModel:  # type: ignore
         if name in self._models:
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
@@ -101,7 +104,7 @@ class MongoExt(Connector):
         return (ServerSelectionTimeoutError,)
 
     @staticmethod
-    def _get_uri(variables):
+    def _get_uri(variables: Dict[str, str]) -> str:
         HOST = variables.get("host")
         PORT = variables.get("port")
         USER = variables.get("user")
@@ -112,7 +115,7 @@ class MongoExt(Connector):
 
         return f"mongodb://{credentials}{HOST}:{PORT}/{MongoExt.DATABASE}"
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: str) -> "MongoExt":
 
         variables = self.variables.copy()
         variables.update(kwargs)
@@ -157,7 +160,8 @@ class MongoExt(Connector):
                 log.critical("Dropped db '{}'", db)
 
     @staticmethod
-    def update_properties(instance, properties):
+    # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
+    def update_properties(instance: MongoModel, properties: Dict[str, Any]) -> None:  # type: ignore
 
         for field, value in properties.items():
             setattr(instance, field, value)
@@ -165,7 +169,7 @@ class MongoExt(Connector):
 
 class Authentication(BaseAuthentication):
     def __init__(self) -> None:
-        self.db = get_instance()
+        self.db: MongoExt = get_instance()
 
     # Also used by POST user
     def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
@@ -381,7 +385,7 @@ class Authentication(BaseAuthentication):
         if token_entry.creation + self.GRACE_PERIOD < now:
             ip = self.get_remote_ip()
             if token_entry.IP != ip:
-                log.error(
+                log.warning(
                     "This token is emitted for IP {}, invalid use from {}",
                     token_entry.IP,
                     ip,
@@ -492,7 +496,7 @@ instance = MongoExt()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "MongoExt":
 
     return instance.get_instance(

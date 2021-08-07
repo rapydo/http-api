@@ -18,16 +18,31 @@ jobs:
       - name: Install MyPy
         run: |
           python -m pip install --upgrade pip
-          pip install mypy lxml html5lib pymongo-stubs pika-stubs celery-stubs pytest-stub
+          pip install \
+            mypy \
+            lxml \
+            html5lib \
+            types-requests \
+            types-pytz \
+            types-certifi \
+            types-click \
+            types-PyYAML \
+            types-simplejson \
+            types-redis \
+            pika-stubs \
+            celery-types \
+            mongo-types \
+            sqlalchemy-stubs \
+            pytest-stub
           pip install --upgrade --no-cache-dir --editable .
 
       - name: Run MyPy
         run: |
 
           echo "[mypy]" > mypy.ini
+          echo "mypy_path = ./stubs" >> mypy.ini
 
           for lib in \
-            celery \
             flask_apispec \
             apispec \
             flask_caching \
@@ -38,16 +53,13 @@ jobs:
             neo4j \
             neobolt \
             neomodel \
-            sqlalchemy \
+            psycopg2 \
             pymodm \
-            mongoengine \
             celerybeatmongo \
             redbeat \
             geolite2 \
             plumbum \
-            faker \
             psutil \
-            amqp.exceptions \
             passlib \
             gripcontrol \
             pubcontrol \
@@ -57,9 +69,7 @@ jobs:
             
           done
 
-          export MYPYPATH='./stubs'
-          # --disallow-any-unimported
-          mypy --disallow-incomplete-defs --disallow-any-generics --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-unused-configs --warn-return-any --warn-unreachable --txt-report report --html-report report restapi/
+          mypy --disallow-untyped-defs --disallow-incomplete-defs --disallow-any-unimported --disallow-any-generics --check-untyped-defs --disallow-untyped-calls --warn-redundant-casts --warn-unused-ignores --warn-unused-configs --warn-return-any --warn-unreachable --txt-report report --html-report report restapi/
           cat report/index.txt
 
       - name: Save Report

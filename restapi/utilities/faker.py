@@ -85,7 +85,7 @@ class PasswordProvider(BaseProvider):
             s in randstr for s in string.ascii_lowercase
         ):  # pragma: no cover
             log.warning(
-                f"{randstr} is not strong enough: missing lower case. Sampling again..."
+                "Password is not strong enough: missing lower case. Sampling again..."
             )
             return self.password(
                 length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
@@ -95,7 +95,7 @@ class PasswordProvider(BaseProvider):
             s in randstr for s in string.ascii_uppercase
         ):  # pragma: no cover
             log.warning(
-                f"{randstr} is not strong enough: missing upper case. Sampling again..."
+                "Password is not strong enough: missing upper case. Sampling again..."
             )
             return self.password(
                 length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
@@ -103,7 +103,7 @@ class PasswordProvider(BaseProvider):
         # Password is randomly resampled, can't be sure that will be covered by tests
         if digits and not any(s in randstr for s in string.digits):  # pragma: no cover
             log.warning(
-                f"{randstr} is not strong enough: missing digits. Sampling again..."
+                "Password is not strong enough: missing digits. Sampling again..."
             )
             return self.password(
                 length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
@@ -113,7 +113,7 @@ class PasswordProvider(BaseProvider):
             s in randstr for s in string.punctuation
         ):  # pragma: no cover
             log.warning(
-                f"{randstr} is not strong enough: missing symbols. Sampling again..."
+                "Password is not strong enough: missing symbols. Sampling again..."
             )
             return self.password(
                 length, strong=strong, low=low, up=up, digits=digits, symbols=symbols
@@ -126,7 +126,8 @@ def get_faker() -> Faker:
 
     loc = secrets.choice(list(FAKER_LOCALES.keys()))
     log.warning(f"Today I'm {FAKER_LOCALES.get(loc)}")
-    faker = Faker(loc)
+    # Call to untyped function "Faker" in typed context
+    faker = Faker(loc)  # type: ignore
 
     faker.add_provider(PasswordProvider)
 

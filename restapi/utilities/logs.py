@@ -9,37 +9,16 @@ from typing import Any, Dict, Optional, Tuple
 
 from loguru import logger as log
 
-from restapi.config import (
-    CONTAINER_ID,
-    HOSTNAME,
-    IS_CELERY_CONTAINER,
-    PRODUCTION,
-    TESTING,
-)
+from restapi.config import HOST_TYPE, PRODUCTION
 from restapi.env import Env
 
 log_level = os.getenv("LOGURU_LEVEL", "DEBUG")
+LOG_RETENTION = os.getenv("LOG_RETENTION", "180")
+FILE_LOGLEVEL = os.getenv("FILE_LOGLEVEL", "WARNING")
+# FILE_LOGLEVEL = "WARNING" if not TESTING else "INFO"
 LOGS_FOLDER = Path("/logs")
 
-
-# BACKEND-SERVER
-if not IS_CELERY_CONTAINER:
-    LOGS_FILE = HOSTNAME
-# Flower or Celery-Beat
-elif HOSTNAME != CONTAINER_ID:  # pragma: no cover
-    LOGS_FILE = HOSTNAME
-    LOGS_FOLDER = LOGS_FOLDER.joinpath("celery")
-    if not LOGS_FOLDER.is_dir():
-        LOGS_FOLDER.mkdir(exist_ok=True)
-# Celery (variables name due to scaling)
-else:  # pragma: no cover
-    LOGS_FILE = f"celery_{HOSTNAME}"
-    LOGS_FOLDER = LOGS_FOLDER.joinpath("celery")
-    if not LOGS_FOLDER.is_dir():
-        LOGS_FOLDER.mkdir(exist_ok=True)
-
-
-LOGS_PATH: Optional[str] = LOGS_FOLDER.joinpath(f"{LOGS_FILE}.log")
+LOGS_PATH: Optional[str] = LOGS_FOLDER.joinpath(f"{HOST_TYPE}.log")
 EVENTS_PATH: Optional[str] = LOGS_FOLDER.joinpath("security-events.log")
 
 
@@ -54,6 +33,7 @@ class Events(str, Enum):
     refused_login = "refused_login"
     activation = "activation"
     login_unlock = "login_unlock"
+    password_expired = "password_expired"
     change_password = "change_password"
     reset_password_request = "reset_password_request"
 
@@ -71,13 +51,12 @@ def print_message_on_stderr(record):
 
 
 if LOGS_PATH is not None:
-    FILE_LOGLEVEL = "WARNING" if not TESTING else "INFO"
     try:
         log.add(
             LOGS_PATH,
             level=FILE_LOGLEVEL,
             rotation="1 week",
-            retention="4 weeks",
+            retention=f"{LOG_RETENTION} days",
             # If True the exception trace is extended upward, beyond the catching point
             # to show the full stacktrace which generated the error.
             backtrace=False,
@@ -103,11 +82,13 @@ if LOGS_PATH is not None:
         fmt += "{extra[event]} "
         fmt += "{extra[target_type]} "
         fmt += "{extra[target_id]} "
+        fmt += "{extra[url]} "
         fmt += "{extra[payload]} "
         log.add(
             EVENTS_PATH,
             level=0,
             rotation="1 month",
+            retention=f"{LOG_RETENTION} days",
             filter=lambda record: "event" in record["extra"],
             format=fmt,
             # Otherwise in case of missing extra fields the event will be simply ignored
@@ -176,7 +157,7 @@ OBSCURED_FIELDS = [
 
 
 def handle_log_output(original_parameters_string: Optional[Any]) -> Dict[str, Any]:
-    """ Avoid printing passwords! """
+    """Avoid printing passwords!"""
     if original_parameters_string is None:
         return {}
 
@@ -197,7 +178,7 @@ def handle_log_output(original_parameters_string: Optional[Any]) -> Dict[str, An
         try:
             parameters = urllib.parse.parse_qs(mystr)
             urlencoded = True
-        except BaseException:  # pragma: no cover
+        except Exception:  # pragma: no cover
 
             return original_parameters_string
 
@@ -260,6 +241,7 @@ def save_event_log(
     payload: Optional[Dict[str, Any]] = None,
     user: Optional[Any] = None,
     ip: str = "-",
+    url: str = "",
 ) -> None:
 
     target_type, target_id = parse_event_target(target)
@@ -278,4 +260,5 @@ def save_event_log(
         target_id=target_id,
         target_type=target_type,
         payload=p,
+        url=url,
     )

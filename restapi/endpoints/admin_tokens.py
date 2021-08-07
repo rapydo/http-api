@@ -1,15 +1,27 @@
+from typing import Any, Dict
+
 from glom import glom
 
 from restapi import decorators
 from restapi.endpoints.schemas import TokenAdminSchema, TotalSchema
 from restapi.exceptions import BadRequest, NotFound
 from restapi.rest.definition import EndpointResource, Response
-from restapi.services.authentication import Role
+from restapi.services.authentication import Role, Token
 from restapi.utilities.logs import log
 
 
+def inject_token(endpoint: EndpointResource, token_id: str) -> Dict[str, Any]:
+
+    tokens = endpoint.auth.get_tokens(token_jti=token_id)
+
+    if not tokens:
+        raise NotFound("This token does not exist")
+
+    return {"token": tokens[0]["token"]}
+
+
 class AdminTokens(EndpointResource):
-    """ List all tokens for all users """
+    """List all tokens for all users"""
 
     labels = ["authentication"]
     depends_on = ["AUTH_ENABLE"]
@@ -62,8 +74,8 @@ class AdminTokens(EndpointResource):
 
         if sort_by:
 
-            def sorter(t):
-                return glom(t, sort_by, default="")
+            def sorter(t: Token) -> str:
+                return glom(t, sort_by, default="")  # type: ignore
 
             tokens = sorted(
                 tokens,
@@ -86,6 +98,7 @@ class AdminTokens(EndpointResource):
         return self.response(response)
 
     @decorators.auth.require_all(Role.ADMIN)
+    @decorators.preload(callback=inject_token)
     @decorators.endpoint(
         path="/admin/tokens/<token_id>",
         summary="Remove specified token and make it invalid from now on",
@@ -95,16 +108,9 @@ class AdminTokens(EndpointResource):
             400: "Token invalidation is failed",
         },
     )
-    def delete(self, token_id: str) -> Response:
+    def delete(self, token_id: str, token: str) -> Response:
 
-        tokens = self.auth.get_tokens(token_jti=token_id)
+        if not self.auth.invalidate_token(token=token):
+            raise BadRequest(f"Failed token invalidation: {token}")  # pragma: no cover
 
-        if not tokens:
-            raise NotFound("This token does not exist")
-        token = tokens[0]
-
-        if not self.auth.invalidate_token(token=token["token"]):
-            raise BadRequest(
-                f"Failed token invalidation: '{token}'"
-            )  # pragma: no cover
         return self.empty_response()

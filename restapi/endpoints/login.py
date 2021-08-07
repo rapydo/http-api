@@ -9,7 +9,7 @@ from restapi.rest.definition import EndpointResource, Response
 
 
 class Login(EndpointResource):
-    """ Let a user login by using the configured method """
+    """Let a user login by using the configured method"""
 
     depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
     labels = ["authentication"]

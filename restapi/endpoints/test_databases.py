@@ -73,5 +73,5 @@ if TESTING:
                 return self.response("1")
             except DatabaseDuplicatedEntry:
                 raise
-            except BaseException:  # pragma: no cover
+            except Exception:  # pragma: no cover
                 return self.response("0")

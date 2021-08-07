@@ -12,12 +12,14 @@ there is no client id nor is client authentication required.
 
 import sys
 from functools import wraps
-from typing import Optional, Tuple
+from typing import Any, Callable, Iterable, Optional, Tuple, Union, cast
 
 from flask import request
 
 from restapi.env import Env
-from restapi.services.authentication import ALL_ROLES, ANY_ROLE
+from restapi.services.authentication import ALL_ROLES, ANY_ROLE, Role
+from restapi.types import EndpointFunction
+from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
@@ -71,14 +73,16 @@ class HTTPTokenAuth:
         return None, None
 
     @staticmethod
-    def optional(allow_access_token_parameter=False):
-        def decorator(func):
+    def optional(
+        allow_access_token_parameter: bool = False,
+    ) -> Callable[[EndpointFunction], EndpointFunction]:
+        def decorator(func: EndpointFunction) -> EndpointFunction:
             # it is used in Loader to verify if an endpoint is requiring
             # authentication and inject 401 errors
             func.__dict__["auth.optional"] = True
 
             @wraps(func)
-            def wrapper(*args, **kwargs):
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
                 # Recover the auth object
                 auth_type, token = HTTPTokenAuth.get_authorization_token(
                     allow_access_token_parameter=allow_access_token_parameter
@@ -91,12 +95,9 @@ class HTTPTokenAuth:
                     # An exit here is really really dangerous, but even if
                     # get_self_reference_from_args can return None, this case is quite
                     # impossible... however with None the server can't continue!
-                    log.critical(
+                    print_and_exit(
                         "Server misconfiguration, self reference can't be None!"
                     )
-                    # with print_and_exit my-py does not understand that the execute
-                    # halts here... let's use an explicit exit
-                    sys.exit(1)
 
                 if (
                     auth_type is not None
@@ -125,18 +126,21 @@ class HTTPTokenAuth:
                             allow_html=True,
                         )
 
-                    caller._unpacked_user = user
-                    caller._unpacked_token = token
+                    caller.authorized_user = user.uuid
                     request.environ[TOKEN_VALIDATED_KEY] = True
 
                 return func(*args, **kwargs)
 
-            return wrapper
+            return cast(EndpointFunction, wrapper)
 
         return decorator
 
     @classmethod
-    def require_all(cls, *roles, allow_access_token_parameter=False):
+    def require_all(
+        cls,
+        *roles: Union[str, Role],
+        allow_access_token_parameter: bool = False,
+    ) -> Callable[[EndpointFunction], EndpointFunction]:
         return cls.require(
             roles=roles,
             required_roles=ALL_ROLES,
@@ -144,7 +148,11 @@ class HTTPTokenAuth:
         )
 
     @classmethod
-    def require_any(cls, *roles, allow_access_token_parameter=False):
+    def require_any(
+        cls,
+        *roles: Union[str, Role],
+        allow_access_token_parameter: bool = False,
+    ) -> Callable[[EndpointFunction], EndpointFunction]:
         return cls.require(
             roles=roles,
             required_roles=ANY_ROLE,
@@ -153,15 +161,18 @@ class HTTPTokenAuth:
 
     @classmethod
     def require(
-        cls, roles=None, required_roles=ALL_ROLES, allow_access_token_parameter=False
-    ):
-        def decorator(func):
+        cls,
+        roles: Optional[Iterable[Union[str, Role]]] = None,
+        required_roles: str = ALL_ROLES,
+        allow_access_token_parameter: bool = False,
+    ) -> Callable[[EndpointFunction], EndpointFunction]:
+        def decorator(func: EndpointFunction) -> EndpointFunction:
             # it is used in Loader to verify if an endpoint is requiring
             # authentication and inject 401 errors
             func.__dict__["auth.required"] = True
 
             @wraps(func)
-            def wrapper(*args, **kwargs):
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
                 # Recover the auth object
                 auth_type, token = HTTPTokenAuth.get_authorization_token(
                     allow_access_token_parameter=allow_access_token_parameter
@@ -174,12 +185,9 @@ class HTTPTokenAuth:
                     # An exit here is really really dangerous, but even if
                     # get_self_reference_from_args can return None, this case is quite
                     # impossible... however with None the server can't continue!
-                    log.critical(
+                    print_and_exit(
                         "Server misconfiguration, self reference can't be None!"
                     )
-                    # with print_and_exit my-py does not understand that the execute
-                    # halts here... let's use an explicit exit
-                    sys.exit(1)
 
                 if auth_type is None or auth_type != HTTPAUTH_SCHEME:
                     # Wrong authentication string
@@ -225,10 +233,9 @@ class HTTPTokenAuth:
                         allow_html=True,
                     )
 
-                caller._unpacked_user = user
-                caller._unpacked_token = token
+                caller.authorized_user = user.uuid
                 return func(*args, **kwargs)
 
-            return wrapper
+            return cast(EndpointFunction, wrapper)
 
         return decorator

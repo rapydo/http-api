@@ -20,6 +20,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/admin/stats", headers=headers)
         assert r.status_code == 200
         stats = self.get_content(r)
+        assert isinstance(stats, dict)
 
         # ### BOOT TIME ###
         assert "system" in stats

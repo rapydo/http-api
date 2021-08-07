@@ -1,7 +1,8 @@
 import os
 import tempfile
-from typing import Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
+from flask import Flask
 from flask_caching import Cache as FlaskCache
 
 from restapi.connectors import Connector
@@ -33,7 +34,8 @@ class Cache:
         }
 
     @staticmethod
-    def get_instance(app):
+    # Return type becomes "Any" due to an unfollowed import
+    def get_instance(app: Flask) -> FlaskCache:  # type: ignore
 
         # This check prevent KeyError raised during tests
         # Exactly as reported here:
@@ -63,5 +65,5 @@ class Cache:
     # c = Meta.get_class("endpoints.mymodule", "MyEndpoint")
     # Cache.invalidate(c.get)
     @staticmethod
-    def invalidate(func, *args, **kwargs):
+    def invalidate(func: Callable[[Any], Any], *args: Any, **kwargs: Any) -> None:
         mem.cache.delete_memoized(func, *args, **kwargs)

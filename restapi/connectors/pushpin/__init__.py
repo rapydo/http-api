@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional
 
 from gripcontrol import GripPubControl, WebSocketMessageFormat
 from pubcontrol import Item
@@ -7,7 +7,7 @@ from restapi.connectors import Connector, ExceptionsList
 from restapi.utilities.logs import log
 
 
-class ServiceUnavailable(BaseException):
+class ServiceUnavailable(Exception):
     pass
 
 
@@ -16,7 +16,7 @@ class PushpinExt(Connector):
     def get_connection_exception() -> ExceptionsList:
         return (ServiceUnavailable,)
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: str) -> "PushpinExt":
 
         variables = self.variables.copy()
         variables.update(kwargs)
@@ -41,13 +41,13 @@ class PushpinExt(Connector):
         return not self.disconnected
 
     @staticmethod
-    def callback(result, message):
+    def callback(result: str, message: str) -> None:
         if result:
             log.debug("Message successfully published on pushpin")
         else:  # pragma: no cover
             log.error("Publish failed on pushpin: {}", message)
 
-    def publish_on_stream(self, channel, message, sync=False):
+    def publish_on_stream(self, channel: str, message: str, sync: bool = False) -> bool:
         if not sync:
             self.pubctrl.publish_http_stream(
                 channel, message, callback=PushpinExt.callback
@@ -58,12 +58,12 @@ class PushpinExt(Connector):
             self.pubctrl.publish_http_stream(channel, message, blocking=True)
             log.debug("Message successfully published on pushpin")
             return True
-        except BaseException as e:
+        except Exception as e:
             log.error("Publish failed on pushpin: {}", message)
             log.error(e)
             return False
 
-    def publish_on_socket(self, channel, message, sync=False):
+    def publish_on_socket(self, channel: str, message: str, sync: bool = False) -> bool:
         item = Item(WebSocketMessageFormat(message, binary=False))
         if not sync:
             self.pubctrl.publish(channel, item, callback=self.callback)
@@ -73,7 +73,7 @@ class PushpinExt(Connector):
             self.pubctrl.publish(channel, item, blocking=True)
             log.debug("Message successfully published on pushpin")
             return True
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             log.error("Publish failed on pushpin: {}", message)
             log.error(e)
             return False
@@ -85,7 +85,7 @@ instance = PushpinExt()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "PushpinExt":
 
     return instance.get_instance(

@@ -42,6 +42,7 @@ class TestApp(BaseTests):
         events = self.get_last_events(1)
         assert events[0].event == Events.reset_password_request.value
         assert events[0].user == data["reset_email"]
+        assert events[0].url == "/auth/reset"
 
         resetmsg = "We'll send instructions to the email provided "
         resetmsg += "if it's associated with an account. "
@@ -54,7 +55,7 @@ class TestApp(BaseTests):
         assert body is not None
         assert mail.get("headers") is not None
         # Subject: is a key in the MIMEText
-        assert f"Subject: {project_tile}: Password Reset" in mail.get("headers")
+        assert f"Subject: {project_tile}: Password Reset" in mail.get("headers", "")
         assert f"{proto}://localhost/public/reset/" in body
 
         token = self.get_token_from_body(body)
@@ -193,7 +194,9 @@ class TestApp(BaseTests):
         headers, _ = self.do_login(client, None, None)
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
-        uuid = self.get_content(r).get("uuid")
+        response = self.get_content(r)
+        assert isinstance(response, dict)
+        uuid = response.get("uuid")
 
         token = self.get_crafted_token("x", user_id=uuid)
         r = client.put(f"{AUTH_URI}/reset/{token}")

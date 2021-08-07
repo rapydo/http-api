@@ -4,13 +4,13 @@ import re
 import socket
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 
 import pytz
 from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
 from neobolt.addressing import AddressError as neobolt_AddressError
 from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
-from neomodel import (  # install_all_labels,
+from neomodel import (
     StructuredNode,
     clear_neo4j_database,
     config,
@@ -43,10 +43,12 @@ from restapi.services.authentication import (
 )
 from restapi.utilities.logs import Events, log
 
+F = TypeVar("F", bound=Callable[..., Any])
 
-def catch_db_exceptions(func):
+
+def catch_db_exceptions(func: F) -> F:
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
 
         try:
             return func(*args, **kwargs)
@@ -102,13 +104,14 @@ def catch_db_exceptions(func):
             log.critical("Raised unknown exception: {}", type(e))
             raise e
 
-    return wrapper
+    return cast(F, wrapper)
 
 
 class NeoModel(Connector):
 
     # This is used to return Models in a type-safe way
-    def __getattr__(self, name: str) -> StructuredNode:
+    # Return type becomes "Any" due to an unfollowed import
+    def __getattr__(self, name: str) -> StructuredNode:  # type: ignore
         if name in self._models:
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
@@ -119,6 +122,7 @@ class NeoModel(Connector):
         return (
             neobolt_ServiceUnavailable,
             neobolt_AddressError,
+            ServiceUnavailable,
             AuthError,
             socket.gaierror,
             # REALLY?? A ValueError!? :-(
@@ -127,7 +131,7 @@ class NeoModel(Connector):
             ValueError,
         )  # type: ignore
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs: str) -> "NeoModel":
 
         variables = self.variables.copy()
         variables.update(kwargs)
@@ -136,13 +140,17 @@ class NeoModel(Connector):
         PWD = variables.get("password")
         HOST = variables.get("host")
         PORT = variables.get("port")
-        URI = f"bolt://{USER}:{PWD}@{HOST}:{PORT}"
+        # Fixed... to be configured?
+        DATABASE = "neo4j"
+        URI = f"bolt://{USER}:{PWD}@{HOST}:{PORT}/{DATABASE}"
         config.DATABASE_URL = URI
         # Ensure all DateTimes are provided with a timezone
         # before being serialised to UTC epoch
         config.FORCE_TIMEZONE = True  # default False
         db.url = URI
         db.set_connection(URI)
+
+        # db.driver.verify_connectivity()
 
         StructuredNode.save = catch_db_exceptions(StructuredNode.save)
         NodeSet.get = catch_db_exceptions(NodeSet.get)
@@ -154,15 +162,37 @@ class NeoModel(Connector):
         self.disconnected = True
 
     def is_connected(self) -> bool:
-        log.warning("neo4j.is_connected method is not implemented")
+
         return not self.disconnected
+        # if self.disconnected:
+        #     return False
+
+        # from neo4j.exceptions import TransientError
+        # try:
+        #     self.db.driver.verify_connectivity()
+        #     return True
+        # except (ServiceUnavailable, TransientError) as e:
+        #     log.error(e)
+        #     return False
 
     def initialize(self) -> None:
 
         if self.app:
             with self.app.app_context():
-                remove_all_labels()
-                # install_all_labels()
+                try:
+                    remove_all_labels()
+                # With Neo4j 4.3 remove all labels on empty DB started to fail with:
+                # [...]
+                #   File "/usr/local/lib/python3.9/dist-packages/neomodel/core.py", ...
+                #                                           ... line 62, in drop_indexes
+                #     index[7][0], index[8][0]))
+                # IndexError: list index out of range
+                # Maybe that a future release of neomdel will fix the issue
+                # and the try/except will be no longer needed
+                # It maily fails on NIG when executing init_hpo.sh
+                except IndexError as e:  # pragma: no cover
+                    log.warning("Can't remove label, is database empty?")
+                    log.error(e)
 
                 # install_all_labels can fail when models are cross-referenced between
                 # core and custom. For example:
@@ -194,17 +224,19 @@ class NeoModel(Connector):
     #     return True
 
     @staticmethod
-    def update_properties(instance, properties):
+    # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
+    def update_properties(instance: StructuredNode, properties: Dict[str, Any]) -> None:  # type: ignore
 
         for field, value in properties.items():
             instance.__dict__[field] = value
 
     @catch_db_exceptions
-    def cypher(self, query):
-        """Execute normal neo4j queries"""
+    def cypher(self, query: str, **parameters: str) -> Any:
+        """Execute raw cypher queries"""
+
         try:
-            # results, meta = db.cypher_query(query)
-            results, _ = db.cypher_query(query)
+            # results, meta = db.cypher_query(query, parameters)
+            results, _ = db.cypher_query(query, parameters)
         except CypherSyntaxError as e:
             log.warning(query)
             log.error(f"Failed to execute Cypher Query\n{e}")
@@ -212,14 +244,14 @@ class NeoModel(Connector):
         return results
 
     @staticmethod
-    def sanitize_input(term):
+    def sanitize_input(term: str) -> str:
         """
-        Strip and clean up term from special characters.
+        Strip and clean up terms from special characters. To be used in fuzzy search
         """
         return term.strip().replace("*", "").replace("'", "\\'").replace("~", "")
 
     @staticmethod
-    def fuzzy_tokenize(term):
+    def fuzzy_tokenize(term: str) -> str:
         tokens = re.findall(r'[^"\s]\S*|".+?"', term)
         for index, t in enumerate(tokens):
 
@@ -242,7 +274,7 @@ class NeoModel(Connector):
 
 class Authentication(BaseAuthentication):
     def __init__(self) -> None:
-        self.db = get_instance()
+        self.db: NeoModel = get_instance()
 
     def get_user(
         self, username: Optional[str] = None, user_id: Optional[str] = None
@@ -437,7 +469,7 @@ class Authentication(BaseAuthentication):
         if token_node.creation + self.GRACE_PERIOD < now:
             ip = self.get_remote_ip()
             if token_node.IP != ip:
-                log.error(
+                log.warning(
                     "This token is emitted for IP {}, invalid use from {}",
                     token_node.IP,
                     ip,
@@ -545,7 +577,7 @@ instance = NeoModel()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
-    **kwargs: Union[Optional[str], int],
+    **kwargs: str,
 ) -> "NeoModel":
 
     return instance.get_instance(

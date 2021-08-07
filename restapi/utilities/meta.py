@@ -64,7 +64,7 @@ class Meta:
             if exit_on_fail:
                 raise e
             return None
-        except BaseException as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover
             if exit_on_fail:
                 raise e
             log.error("Module {} not found.\nError: {}", modulestring, e)
@@ -99,7 +99,7 @@ class Meta:
 
         try:
             module = Meta.get_module_from_string(module_name, exit_on_fail=True)
-        except BaseException as e:
+        except Exception as e:
             module = None
             if mandatory:
                 log.critical(e)
@@ -174,17 +174,3 @@ class Meta:
             return None
 
         return getattr(module, class_name)
-
-    @staticmethod
-    def get_instance(module_relpath: str, class_name: str, **kwargs: Any) -> Any:
-
-        MyClass = Meta.get_class(module_relpath, class_name)
-
-        if MyClass is None:
-            return None
-
-        try:
-            return MyClass(**kwargs)
-        except BaseException as e:  # pragma: no cover
-            log.error("Errors loading {}.{}: {}", module_relpath, class_name, e)
-            return None

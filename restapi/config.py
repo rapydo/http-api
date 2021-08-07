@@ -18,12 +18,36 @@ PRODUCTION: bool = APP_MODE == "production"
 STACKTRACE: bool = False
 REMOVE_DATA_AT_INIT_TIME: bool = False
 
-HOSTNAME: str = os.getenv("HOSTNAME", "backend")
-CONTAINER_ID: str = os.getenv("CONTAINER_ID", "")
-IS_CELERY_CONTAINER: bool = os.getenv("IS_CELERY_CONTAINER", "0") == "1"
+HOSTNAME: str = os.getenv("HOSTNAME", "backend-server")
+# hostnames as defined in backend.yml
 
-#################
-# THE APP
+BACKEND_HOSTNAME = "backend-server"
+FLOWER_HOSTNAME = "flower"
+CELERYBEAT_HOSTNAME = "celery-beat"
+BOT_HOSTNAME = "telegram-bot"
+CELERY_HOSTNAME = "celery"
+
+
+def get_host_type(HOSTNAME: str) -> str:
+
+    if HOSTNAME == BACKEND_HOSTNAME:
+        return BACKEND_HOSTNAME
+
+    if HOSTNAME == FLOWER_HOSTNAME:
+        return FLOWER_HOSTNAME
+
+    if HOSTNAME == CELERYBEAT_HOSTNAME:
+        return CELERYBEAT_HOSTNAME
+
+    if HOSTNAME == BOT_HOSTNAME:
+        return BOT_HOSTNAME
+
+    # Celery has not a fixed hostname
+    return CELERY_HOSTNAME
+
+
+HOST_TYPE = get_host_type(HOSTNAME)
+
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8080"
 USER_HOME = os.environ["HOME"]
@@ -34,8 +58,8 @@ APP_SECRETS = Path(os.getenv("APP_SECRETS", "/secrets"))
 JWT_SECRET_FILE = APP_SECRETS.joinpath("jwt_secret.key")
 TOTP_SECRET_FILE = APP_SECRETS.joinpath("totp_secret.key")
 SSL_CERTIFICATE = "/etc/letsencrypt/real/fullchain1.pem"
-DOMAIN = os.getenv("DOMAIN")
-#################
+DOMAIN = os.getenv("DOMAIN", "")
+PROXIED_CONNECTION: bool = Env.get_bool("PROXIED_CONNECTION")
 
 MODELS_DIR = "models"
 CONF_PATH = Path("confs")
@@ -43,14 +67,8 @@ CONF_PATH = Path("confs")
 EXTENDED_PROJECT_DISABLED = "no_extended_project"
 BACKEND_PACKAGE = "restapi"  # package inside rapydo-http
 
-CUSTOM_PACKAGE = os.getenv("VANILLA_PACKAGE", "custom")
+CUSTOM_PACKAGE = os.getenv("PROJECT_NAME", "custom")
 EXTENDED_PACKAGE = os.getenv("EXTENDED_PACKAGE", EXTENDED_PROJECT_DISABLED)
-#################
-# SQLALCHEMY
-BASE_DB_DIR = "/dbs"
-SQLLITE_DBFILE = "backend.db"
-dbfile = os.path.join(BASE_DB_DIR, SQLLITE_DBFILE)
-SQLALCHEMY_DATABASE_URI = f"sqlite:///{dbfile}"
 
 SENTRY_URL = os.getenv("SENTRY_URL")
 if SENTRY_URL is not None and SENTRY_URL.strip() == "":
@@ -64,7 +82,7 @@ GZIP_LEVEL = max(1, min(9, Env.get_int("GZIP_COMPRESSION_LEVEL")))
 
 
 @lru_cache
-def get_project_configuration(key, default=None):
+def get_project_configuration(key: str, default: str) -> str:
     return glom(mem.configuration, key, default=default)
 
 

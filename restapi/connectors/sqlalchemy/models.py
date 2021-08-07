@@ -16,14 +16,16 @@ roles_users = db.Table(
 
 
 ####################################
-# Define models
-class Role(db.Model):
+
+# Base type Model becomes "Any" due to an unfollowed import# Define models
+class Role(db.Model):  # type: ignore
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
     description = db.Column(db.String(255), nullable=False)
 
 
-class User(db.Model):
+# Base type Model becomes "Any" due to an unfollowed import
+class User(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(db.String(36), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
@@ -51,7 +53,8 @@ class User(db.Model):
     # + has `logins` backref from Login
 
 
-class Token(db.Model):
+# Base type Model becomes "Any" due to an unfollowed import
+class Token(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String(36), unique=True, nullable=False)
     # token = db.Column(db.String(360), unique=True)
@@ -66,7 +69,8 @@ class Token(db.Model):
     emitted_for = db.relationship("User", backref=db.backref("tokens", lazy="dynamic"))
 
 
-class Group(db.Model):
+# Base type Model becomes "Any" due to an unfollowed import
+class Group(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(db.String(36), unique=True, nullable=False)
     shortname = db.Column(db.String(64), unique=True, nullable=False)
@@ -75,7 +79,8 @@ class Group(db.Model):
     # + has `members` backref from User
 
 
-class Login(db.Model):
+# Base type Model becomes "Any" due to an unfollowed import
+class Login(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime(timezone=True), nullable=False)
     # same length of User.email

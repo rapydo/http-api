@@ -3,15 +3,16 @@ import pytest
 from restapi.env import Env
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
+    @pytest.mark.skipif(
+        not Env.get_bool("AUTH_ENABLE")
+        or not Env.get_bool("MAIN_LOGIN_ENABLE")
+        or not Env.get_bool("ALLOW_REGISTRATION"),
+        reason="This test needs authentication and registration to be available",
+    )
     def test_users_custom_fields(self, client: FlaskClient) -> None:
-
-        if not Env.get_bool("AUTH_ENABLE"):
-            log.warning("Skipping users custom fields tests")
-            return
 
         output_fields = mem.customizer.get_custom_output_fields(None)
 
@@ -31,6 +32,7 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/profile", headers=headers)
         assert r.status_code == 200
         response = self.get_content(r)
+        assert isinstance(response, dict)
 
         for field in output_fields:
             assert field in response
@@ -38,6 +40,7 @@ class TestApp(BaseTests):
         # Verify custom input fields (if defined) included in the profile input schema
         r = client.patch(f"{AUTH_URI}/profile", data={"get_schema": 1}, headers=headers)
         response = self.get_content(r)
+        assert isinstance(response, list)
         for field in profile_inputs.keys():
             for expected in response:
                 if expected["key"] == field:
@@ -48,6 +51,7 @@ class TestApp(BaseTests):
         # Verify custom registration fields (if defined) included in the reg. schema
         r = client.post(f"{AUTH_URI}/profile", data={"get_schema": 1})
         response = self.get_content(r)
+        assert isinstance(response, list)
         for field in registration_inputs.keys():
             for expected in response:
                 if expected["key"] == field:
@@ -63,6 +67,7 @@ class TestApp(BaseTests):
             f"{API_URI}/admin/users", data={"get_schema": 1}, headers=headers
         )
         response = self.get_content(r)
+        assert isinstance(response, list)
         for field in admin_inputs.keys():
             for expected in response:
                 if expected["key"] == field:
@@ -75,6 +80,7 @@ class TestApp(BaseTests):
         # Verify custom admin output fields (if defined) included in admin users output
         r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
         response = self.get_content(r)
+        assert isinstance(response, dict)
         for field in output_fields:
             # This will fail
             assert field in response

@@ -1,9 +1,10 @@
 import json
 
+import pytest
+
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.tests import API_URI, BaseTests, FlaskClient
-from restapi.utilities.logs import log
 
 
 class TestApp(BaseTests):
@@ -210,11 +211,11 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/inputs", data=data)
         assert r.status_code == 400
 
+    @pytest.mark.skipif(
+        not Connector.check_availability("neo4j"),
+        reason="This test needs neo4j to be available",
+    )
     def test_neo4j_inputs(self, client: FlaskClient) -> None:
-
-        if not Connector.check_availability("neo4j"):
-            log.warning("Skipping tests on neo4j input models")
-            return None
 
         headers, _ = self.do_login(client, None, None)
         schema = self.getDynamicInputSchema(client, "tests/neo4jinputs", headers)
@@ -232,6 +233,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         response = self.get_content(r)
+        assert isinstance(response, dict)
         assert "choice" in response
         assert "key" in response["choice"]
         assert "description" in response["choice"]
@@ -257,6 +259,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         response = self.get_content(r)
+        assert isinstance(response, dict)
         assert "choice" in response
         assert "key" in response["choice"]
         assert "description" in response["choice"]
@@ -268,6 +271,7 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 200
         response = self.get_content(r)
+        assert isinstance(response, dict)
         assert "choice" in response
         assert "key" in response["choice"]
         assert "description" in response["choice"]
@@ -283,6 +287,7 @@ class TestApp(BaseTests):
         # not included in the choice, the description will simply match the key
         assert r.status_code == 200
         response = self.get_content(r)
+        assert isinstance(response, dict)
         assert "choice" in response
         assert "key" in response["choice"]
         assert "description" in response["choice"]
