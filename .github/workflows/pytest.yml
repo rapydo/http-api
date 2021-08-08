@@ -101,10 +101,10 @@ jobs:
           rapydo logs
           curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
           if [[ "${{ matrix.template }}" == "extra" ]]; then
-            rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests";
-            rapydo -s bot remove;
+            rapydo logs --tail 1 bot | grep "Bot is ready to accept requests";
+            rapydo remove bot;
           fi
-          rapydo -s proxy,backend logs --tail 20
+          rapydo logs --tail 20 proxy backend
 
           # Tests in production mode
           rapydo shell --no-tty backend 'restapi tests --core --wait'
