@@ -1,5 +1,6 @@
 import json
 import re
+import warnings
 from typing import Any, Mapping, Optional, Union
 
 from marshmallow import ValidationError, types
@@ -28,25 +29,51 @@ class Field(webargs_fields.Field):
         kwargs.setdefault("metadata", {})
 
         if label is not None:
+            # Deprecated since 2.1
+            warnings.warn("Deprecated use of field label, replace with metadata={...}")
             kwargs["metadata"].setdefault("label", label)
 
         if description is not None:
+            # Deprecated since 2.1
+            warnings.warn(
+                "Deprecated use of field description, replace with metadata={...}"
+            )
             kwargs["metadata"].setdefault("description", description)
 
         if autocomplete_endpoint is not None:
+            # Deprecated since 2.1
+            warnings.warn(
+                "Deprecated use of field autocomplete_endpoint, "
+                "replace with metadata={...}"
+            )
             kwargs["metadata"].setdefault(
                 "autocomplete_endpoint", autocomplete_endpoint
             )
             kwargs["metadata"].setdefault("autocomplete_show_id", autocomplete_show_id)
 
         if autocomplete_id_bind is not None:
+            # Deprecated since 2.1
+            warnings.warn(
+                "Deprecated use of field autocomplete_id_bind, "
+                "replace with metadata={...}"
+            )
             kwargs["metadata"].setdefault("autocomplete_id_bind", autocomplete_id_bind)
 
         if autocomplete_label_bind is not None:
+            # Deprecated since 2.1
+            warnings.warn(
+                "Deprecated use of field autocomplete_label_bind, "
+                "replace with metadata={...}"
+            )
             kwargs["metadata"].setdefault(
                 "autocomplete_label_bind", autocomplete_label_bind
             )
 
+        if password:
+            # Deprecated since 2.1
+            warnings.warn(
+                "Deprecated use of field password, replace with metadata={...}"
+            )
         kwargs["metadata"].setdefault("password", password)
 
         super().__init__(required=required, **kwargs)
