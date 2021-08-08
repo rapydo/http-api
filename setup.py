@@ -69,6 +69,9 @@ setup(
         # Used by Marshmallow to serialize Decimals
         "simplejson",
         "orjson",
+        "marshmallow==3.13.0",
+        "webargs==8.0.0",
+        "apispec==5.0.0",
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.1.0",
