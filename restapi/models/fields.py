@@ -30,21 +30,28 @@ class Field(webargs_fields.Field):
 
         if label is not None:
             # Deprecated since 2.1
-            warnings.warn("Deprecated use of field label, replace with metadata={...}")
+            warnings.warn(
+                "Deprecated use of field label, "
+                f'replace label="{label}" '
+                f'with metadata={{"label": "{label}"}}',
+            )
             kwargs["metadata"].setdefault("label", label)
 
         if description is not None:
             # Deprecated since 2.1
             warnings.warn(
-                "Deprecated use of field description, replace with metadata={...}"
+                "Deprecated use of field description, "
+                f'replace description="{description}" '
+                f'with metadata={{"description": "{description}"}}',
             )
             kwargs["metadata"].setdefault("description", description)
 
         if autocomplete_endpoint is not None:
             # Deprecated since 2.1
             warnings.warn(
-                "Deprecated use of field autocomplete_endpoint, "
-                "replace with metadata={...}"
+                f"Deprecated use of field autocomplete_endpoint, "
+                f'replace autocomplete_endpoint="{autocomplete_endpoint}" '
+                f'with metadata={{"autocomplete_endpoint": "{autocomplete_endpoint}"}}',
             )
             kwargs["metadata"].setdefault(
                 "autocomplete_endpoint", autocomplete_endpoint
@@ -54,16 +61,19 @@ class Field(webargs_fields.Field):
         if autocomplete_id_bind is not None:
             # Deprecated since 2.1
             warnings.warn(
-                "Deprecated use of field autocomplete_id_bind, "
-                "replace with metadata={...}"
+                f"Deprecated use of field autocomplete_id_bind, "
+                f'replace autocomplete_id_bind="{autocomplete_id_bind}" '
+                f'with metadata={{"autocomplete_id_bind": "{autocomplete_id_bind}"}}',
             )
             kwargs["metadata"].setdefault("autocomplete_id_bind", autocomplete_id_bind)
 
         if autocomplete_label_bind is not None:
             # Deprecated since 2.1
+            albtmp = autocomplete_label_bind
             warnings.warn(
-                "Deprecated use of field autocomplete_label_bind, "
-                "replace with metadata={...}"
+                f"Deprecated use of field autocomplete_label_bind, "
+                f'replace autocomplete_label_bind="{autocomplete_label_bind}" '
+                f'with metadata={{"autocomplete_label_bind": "{albtmp}"}}',
             )
             kwargs["metadata"].setdefault(
                 "autocomplete_label_bind", autocomplete_label_bind
@@ -72,7 +82,9 @@ class Field(webargs_fields.Field):
         if password:
             # Deprecated since 2.1
             warnings.warn(
-                "Deprecated use of field password, replace with metadata={...}"
+                f"Deprecated use of field password, "
+                f"replace password={password} "
+                f'with metadata={{"password": "{password}"}}',
             )
         kwargs["metadata"].setdefault("password", password)
 

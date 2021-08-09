@@ -108,7 +108,10 @@ class TestApp(BaseTests):
             name = fields.Str()
 
         f = "myfield"
-        assert ResponseMaker.get_schema_type(f, fields.Str(password=True)) == "password"
+        assert (
+            ResponseMaker.get_schema_type(f, fields.Str(metadata={"password": True}))
+            == "password"
+        )
         assert ResponseMaker.get_schema_type(f, fields.Bool()) == "boolean"
         assert ResponseMaker.get_schema_type(f, fields.Boolean()) == "boolean"
         assert ResponseMaker.get_schema_type(f, fields.Date()) == "date"
