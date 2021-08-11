@@ -201,7 +201,7 @@ class TestUploadAndDownload(BaseTests):
 
         destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
         assert destination_path.exists()
-        # The file is still writeable because the upload is in progress
+        # The file is not yet read only because the upload is in progress
         assert oct(os.stat(destination_path).st_mode & 0o777) != "0o440"
 
         with io.StringIO(up_data[5:]) as f:

@@ -255,18 +255,17 @@ def database_transaction(func: EndpointFunction) -> EndpointFunction:
 
 class Pagination(PartialSchema):
     get_total = fields.Boolean(
-        required=False,
-        metadata={"description": "Request the total number of elements"},
+        required=False, description="Request the total number of elements"
     )
     page = fields.Int(
         required=False,
+        description="Current page number",
         validate=validate.Range(min=1),
-        metadata={"description": "Current page number"},
     )
     size = fields.Int(
         required=False,
+        description="Number of elements to retrieve",
         validate=validate.Range(min=1, max=100),
-        metadata={"description": "Number of elements to retrieve"},
     )
     sort_order = fields.Str(
         validate=validate.OneOf(["asc", "desc"]), required=False, missing="asc"

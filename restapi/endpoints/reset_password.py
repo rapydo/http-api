@@ -82,12 +82,12 @@ if Connector.check_availability("smtp"):
                 "new_password": fields.Str(
                     required=False,
                     validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-                    metadata={"password": True},
+                    password=True,
                 ),
                 "password_confirm": fields.Str(
                     required=False,
                     validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-                    metadata={"password": True},
+                    password=True,
                 ),
             }
         )
@@ -120,7 +120,7 @@ if Connector.check_availability("smtp"):
             except jwt.exceptions.ExpiredSignatureError:
                 raise BadRequest("Invalid reset token: this request is expired")
 
-            # if token is not active yet
+            # if token is not yet active
             except jwt.exceptions.ImmatureSignatureError as e:
                 log.info(e)
                 raise BadRequest("Invalid reset token")

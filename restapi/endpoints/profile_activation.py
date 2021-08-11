@@ -37,7 +37,7 @@ class ProfileActivation(EndpointResource):
                 "Invalid activation token: this request is expired",
             )
 
-        # if token is not active yet
+        # if token is not yet active
         except ImmatureSignatureError:
             raise BadRequest("Invalid activation token")
 

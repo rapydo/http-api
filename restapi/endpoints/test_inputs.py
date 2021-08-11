@@ -42,18 +42,14 @@ if TESTING:
             validate=validate.Range(
                 min=1, max=10, min_inclusive=False, max_inclusive=False
             ),
-            metadata={
-                "label": "Int exclusive field",
-            },
+            label="Int exclusive field",
         )
         myint_inclusive = fields.Int(
             required=True,
             # Both label and description explicit definition
             validate=validate.Range(min=1, max=10),
-            metadata={
-                "label": "Int inclusive field",
-                "description": "This field accepts values in a defined range",
-            },
+            label="Int inclusive field",
+            description="This field accepts values in a defined range",
         )
 
         myselect = fields.Str(

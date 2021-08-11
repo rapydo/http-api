@@ -63,7 +63,6 @@ jobs:
           mkdir ${{ matrix.template }}.${{ matrix.mode }}
           cd ${{ matrix.template }}.${{ matrix.mode }}
           bash ../tests/create_template.sh ${{ matrix.template }} ${RANDOM_AUTH}
-          rapydo install compose
 
       - name: DEV Tests
         if: ${{ matrix.mode == 'dev' }}
@@ -102,10 +101,10 @@ jobs:
           rapydo logs
           curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
           if [[ "${{ matrix.template }}" == "extra" ]]; then
-            rapydo logs --tail 1 bot | grep "Bot is ready to accept requests";
-            rapydo remove bot;
+            rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests";
+            rapydo -s bot remove;
           fi
-          rapydo logs --tail 20 proxy backend
+          rapydo -s proxy,backend logs --tail 20
 
           # Tests in production mode
           rapydo shell --no-tty backend 'restapi tests --core --wait'
