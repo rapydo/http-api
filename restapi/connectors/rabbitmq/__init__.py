@@ -1,10 +1,10 @@
-import json
 import socket
 import ssl
 import urllib.parse
 from typing import Any, Dict, List, Optional
 
 import certifi
+import orjson
 import pika
 import requests
 from pika.exceptions import (
@@ -278,7 +278,7 @@ class RabbitExt(Connector):
         headers: Optional[Dict[str, Any]] = None,
     ) -> bool:
         return self.send(
-            body=json.dumps(message).encode(),
+            body=orjson.dumps(message),
             routing_key=routing_key,
             exchange=exchange,
             headers=headers,
