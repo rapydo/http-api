@@ -37,6 +37,7 @@ repos:
             "types-click",
             "types-PyYAML",
             "types-simplejson",
+            "types-orjson",
             "pymongo-stubs",
             "types-redis",
             "pika-stubs",

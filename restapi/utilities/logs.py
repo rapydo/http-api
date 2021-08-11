@@ -7,6 +7,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
+import orjson
 from loguru import logger as log
 
 from restapi.config import HOST_TYPE, PRODUCTION
@@ -173,8 +174,8 @@ def handle_log_output(original_parameters_string: Optional[Any]) -> Dict[str, An
 
     urlencoded = False
     try:
-        parameters = json.loads(mystr)
-    except json.decoder.JSONDecodeError:
+        parameters = orjson.loads(mystr)
+    except orjson.JSONDecodeError:
         try:
             parameters = urllib.parse.parse_qs(mystr)
             urlencoded = True

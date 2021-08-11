@@ -42,14 +42,18 @@ if TESTING:
             validate=validate.Range(
                 min=1, max=10, min_inclusive=False, max_inclusive=False
             ),
-            label="Int exclusive field",
+            metadata={
+                "label": "Int exclusive field",
+            },
         )
         myint_inclusive = fields.Int(
             required=True,
             # Both label and description explicit definition
             validate=validate.Range(min=1, max=10),
-            label="Int inclusive field",
-            description="This field accepts values in a defined range",
+            metadata={
+                "label": "Int inclusive field",
+                "description": "This field accepts values in a defined range",
+            },
         )
 
         myselect = fields.Str(
@@ -72,13 +76,13 @@ if TESTING:
         # but the normal Marshmallow fields does not json-load the inputs
 
         # fields.Nested is a replacement of the default Nested field with the ability
-        # to received json.dumped data from requests or pytest
+        # to receive json dumped data from requests or pytest
         mynested = fields.Nested(Nested, required=True)
 
         mynullablenested = fields.Nested(Nested, required=True, allow_none=True)
 
         # fields.List is a replacement of the default List field with the ability
-        # to received json.dumped data from requests or pytest
+        # to receive json dumped data from requests or pytest
 
         # In json model the type of this field will be resolved as string[]
         mylist = fields.List(fields.Str(), required=True)

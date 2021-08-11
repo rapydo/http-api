@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
 
 import jwt
+import orjson
 import pyotp
 import pytest
 import pytz
@@ -105,7 +106,7 @@ class BaseTests:
 
         assert r.status_code == 200
 
-        schema = json.loads(r.data.decode("utf-8"))
+        schema = orjson.loads(r.data.decode("utf-8"))
         assert isinstance(schema, list)
         for f in schema:
             assert isinstance(f, dict)
@@ -117,7 +118,7 @@ class BaseTests:
     ) -> Union[str, float, int, bool, List[Any], Dict[str, Any]]:
 
         try:
-            response = json.loads(http_out.get_data().decode())
+            response = orjson.loads(http_out.get_data().decode())
             if isinstance(
                 response,
                 (
@@ -184,7 +185,7 @@ class BaseTests:
         data["password"] = PWD
 
         r = client.post(f"{AUTH_URI}/login", data=data)
-        content = json.loads(r.data.decode("utf-8"))
+        content = orjson.loads(r.data.decode("utf-8"))
 
         if r.status_code == 403:
 
@@ -305,7 +306,7 @@ class BaseTests:
 
         # FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
         # if r.status_code != 200:
-        #     c = json.loads(r.data.decode("utf-8"))
+        #     c = orjson.loads(r.data.decode("utf-8"))
         #     log.error(c)
 
         assert r.status_code == status_code
@@ -555,7 +556,7 @@ class BaseTests:
             raise FileNotFoundError(fpath)
 
         with open(fpath) as file:
-            data = cast(MockedEmail, json.load(file))
+            data = cast(MockedEmail, orjson.loads(file.read()))
 
         if "msg" in data:
             tokens = data["msg"].split("\n\n")
@@ -688,7 +689,7 @@ class BaseTests:
 
                 tokens = line.strip().split(" ")
 
-                payload = json.loads(" ".join(tokens[8:])) if len(tokens) >= 9 else {}
+                payload = orjson.loads(" ".join(tokens[8:])) if len(tokens) >= 9 else {}
 
                 event = Event(
                     # datetime

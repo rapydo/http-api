@@ -20,10 +20,12 @@ if TESTING:
     class SingleInput(Schema):
         element = fields.Str(
             required=True,
-            autocomplete_endpoint="/api/tests/autocomplete",
-            autocomplete_id_bind="my_id",
-            autocomplete_label_bind="my_label",
-            autocomplete_show_id=False,
+            metadata={
+                "autocomplete_endpoint": "/api/tests/autocomplete",
+                "autocomplete_id_bind": "my_id",
+                "autocomplete_label_bind": "my_label",
+                "autocomplete_show_id": False,
+            },
         )
 
     # This will accept a list of elements provided by the autocomplete endpoint.
@@ -32,10 +34,12 @@ if TESTING:
         elements = fields.List(
             fields.Str(),
             required=True,
-            autocomplete_endpoint="/api/tests/autocomplete",
-            autocomplete_id_bind="my_id",
-            autocomplete_label_bind="my_label",
-            autocomplete_show_id=True,
+            metadata={
+                "autocomplete_endpoint": "/api/tests/autocomplete",
+                "autocomplete_id_bind": "my_id",
+                "autocomplete_label_bind": "my_label",
+                "autocomplete_show_id": True,
+            },
         )
 
     class TestAutocomplete(EndpointResource):
