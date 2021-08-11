@@ -1,8 +1,8 @@
-import json
 import threading
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, cast
 
+import orjson
 import requests
 from marshmallow import Schema, ValidationError, fields
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Update
@@ -477,7 +477,7 @@ class BotApiClient:
         try:
             data: Optional[str] = None
             if payload:
-                data = json.dumps(payload)
+                data = orjson.dumps(payload).decode("UTF8")
 
             response = requests.request(method, url=url, data=data)
 

@@ -1,5 +1,4 @@
-import json
-
+import orjson
 from faker import Faker
 from flask import escape
 
@@ -221,7 +220,7 @@ class TestApp(BaseTests):
         data = {
             "password": BaseAuthentication.default_password,
             # very important, otherwise the default user will lose its admin role
-            "roles": json.dumps(["admin_root"]),
+            "roles": orjson.dumps(["admin_root"]).decode("UTF8"),
         }
         # Event 9: modify
         r = client.put(f"{API_URI}/admin/users/{uuid}", data=data, headers=headers)

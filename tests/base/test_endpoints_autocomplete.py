@@ -1,5 +1,6 @@
-import json
 import random
+
+import orjson
 
 from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
 
@@ -59,6 +60,7 @@ class TestApp(BaseTests):
 
         # post accepts a list of ids provided by the autocomplete endpoint
         r = client.post(
-            f"{API_URI}/tests/autocomplete", data={"elements": json.dumps(data)}
+            f"{API_URI}/tests/autocomplete",
+            data={"elements": orjson.dumps(data).decode("UTF8")},
         )
         assert r.status_code == 204

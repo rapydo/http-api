@@ -1,5 +1,4 @@
-import json
-
+import orjson
 import pytest
 
 from restapi.connectors import Connector
@@ -192,7 +191,7 @@ class TestApp(BaseTests):
 
         # mylist3 is a list of custom field, buildData can't automatically set a value
         assert "mylist3" not in data
-        data["mylist3"] = json.dumps(["mycustominputvalue"])
+        data["mylist3"] = orjson.dumps(["mycustominputvalue"]).decode("UTF8")
 
         r = client.post(f"{API_URI}/tests/inputs", data=data)
         assert r.status_code == 204

@@ -340,7 +340,7 @@ class BaseTests:
                 if isinstance(role, Role):
                     roles[idx] = role.value
 
-            user_data["roles"] = json.dumps(roles)
+            user_data["roles"] = orjson.dumps(roles).decode("UTF8")
 
         if data:
             user_data.update(data)
@@ -526,7 +526,7 @@ class BaseTests:
                 assert "schema" in d
                 # build a sub-schema based on d["schema"]
                 nested_data = cls.buildData(d["schema"])
-                data[key] = json.dumps(nested_data)
+                data[key] = orjson.dumps(nested_data).decode("UTF8")
             else:
                 # Reached for example with lists of custom fields. In this case
                 # the input can't be automatically set and here is simply ignored
@@ -538,7 +538,7 @@ class BaseTests:
                     data[key] = [data[key]]
 
                 # requests is unable to send lists, if not json-dumped
-                data[key] = json.dumps(data[key])
+                data[key] = orjson.dumps(data[key]).decode("UTF8")
 
         return data
 

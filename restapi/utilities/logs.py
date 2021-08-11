@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import sys
@@ -248,7 +247,7 @@ def save_event_log(
     target_type, target_id = parse_event_target(target)
 
     if payload:
-        p = json.dumps(obfuscate_dict(payload, max_len=999))
+        p = orjson.dumps(obfuscate_dict(payload, max_len=999)).decode("UTF8")
     else:
         p = ""
 
