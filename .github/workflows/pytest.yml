@@ -62,8 +62,8 @@ jobs:
 
           mkdir ${{ matrix.template }}.${{ matrix.mode }}
           cd ${{ matrix.template }}.${{ matrix.mode }}
-          bash ../tests/create_template.sh ${{ matrix.template }} ${RANDOM_AUTH}
           rapydo install compose
+          bash ../tests/create_template.sh ${{ matrix.template }} ${RANDOM_AUTH}
 
       - name: DEV Tests
         if: ${{ matrix.mode == 'dev' }}
