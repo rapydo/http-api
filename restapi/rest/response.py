@@ -323,12 +323,10 @@ class ResponseMaker:
             ):
                 f["autocomplete_label_bind"] = autocomplete_label_bind
 
-            if not isinstance(field_def.dump_default, _Missing):  # type: ignore
-                f["default"] = field_def.dump_default  # type: ignore
-            elif not isinstance(
-                field_def.load_default, _Missing  # type: ignore
-            ):  # pragma: no cover
-                f["default"] = field_def.load_default  # type: ignore
+            if not isinstance(field_def.dump_default, _Missing):
+                f["default"] = field_def.dump_default
+            elif not isinstance(field_def.load_default, _Missing):  # pragma: no cover
+                f["default"] = field_def.load_default
 
             validators: List[validate.Validator] = []
             if field_def.validate:
