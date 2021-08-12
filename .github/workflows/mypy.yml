@@ -27,7 +27,6 @@ jobs:
             types-certifi \
             types-click \
             types-PyYAML \
-            types-simplejson \
             types-orjson \
             types-redis \
             pika-stubs \

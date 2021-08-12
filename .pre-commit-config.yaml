@@ -36,7 +36,6 @@ repos:
             "types-certifi",
             "types-click",
             "types-PyYAML",
-            "types-simplejson",
             "types-orjson",
             "pymongo-stubs",
             "types-redis",

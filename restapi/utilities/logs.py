@@ -108,7 +108,7 @@ fmt += "<fg #FFF>{message}</fg #FFF>"
 
 # Set the default logger with the given log level and save the log_id as static variable
 # Further call to this function will remove the previous logger (based on saved log_id)
-def set_logger(level: int) -> None:
+def set_logger(level: str) -> None:
 
     if hasattr(set_logger, "log_id"):
         log_id = getattr(set_logger, "log_id")

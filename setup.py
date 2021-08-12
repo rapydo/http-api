@@ -66,8 +66,6 @@ setup(
         "plumbum",
         "maxminddb-geolite2",
         "html2text",
-        # Used by Marshmallow to serialize Decimals
-        "simplejson",
         "orjson",
         "marshmallow==3.13.0",
         "webargs==8.0.0",
