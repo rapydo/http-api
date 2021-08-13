@@ -3,6 +3,7 @@ Customization based on configuration 'blueprint' files
 """
 
 import glob
+import inspect
 import os
 import re
 from pathlib import Path
@@ -16,6 +17,7 @@ from restapi import decorators
 from restapi.config import ABS_RESTAPI_PATH, CONF_PATH, CUSTOM_PACKAGE
 from restapi.env import Env
 from restapi.rest.annotations import inject_apispec_docs
+from restapi.services.authentication import User
 from restapi.utilities import print_and_exit
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.globals import mem
@@ -206,6 +208,36 @@ class EndpointsLoader:
 
                 # auth.optional injected by the optional decorator in bearer.py
                 auth_optional = fn.__dict__.get("auth.optional", False)
+
+                if auth_required or auth_optional:
+                    parameters = inspect.signature(fn).parameters
+
+                    if auth_required:
+                        expected_annotation = User
+                    else:
+                        expected_annotation = Optional[User]
+
+                    if (
+                        "user" not in parameters
+                        or parameters["user"].annotation != expected_annotation
+                    ):  # pragma: no cover
+
+                        if "user" in parameters:
+                            log.critical(
+                                "Wrong user parameter in {}.{}, "
+                                "expected {} but found {}",
+                                epclss.__name__,
+                                method_fn,
+                                expected_annotation,
+                                parameters["user"].annotation,
+                            )
+                        else:
+                            log.critical(
+                                "Missing user: {} parameter in {}.{}",
+                                expected_annotation,
+                                epclss.__name__,
+                                method_fn,
+                            )
 
                 if not hasattr(fn, "uri"):  # pragma: no cover
                     print_and_exit(

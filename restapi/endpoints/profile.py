@@ -4,6 +4,7 @@ from restapi import decorators
 from restapi.endpoints.schemas import NewPassword, profile_output, profile_patch_input
 from restapi.exceptions import ServiceUnavailable
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import User
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
@@ -20,7 +21,7 @@ class Profile(EndpointResource):
         summary="List profile attributes",
         responses={200: "User profile is returned"},
     )
-    def get(self) -> Response:
+    def get(self, user: User) -> Response:
 
         user = self.get_user()
 

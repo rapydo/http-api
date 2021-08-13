@@ -1,5 +1,6 @@
 from restapi import decorators
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import User
 
 
 class Status(EndpointResource):
@@ -29,6 +30,6 @@ class AuthStatus(EndpointResource):
         description="Use this endpoint to verify if an auth token is valid",
         responses={200: "Auth token is valid"},
     )
-    def get(self) -> Response:
+    def get(self, user: User) -> Response:
 
         return self.response(True)
