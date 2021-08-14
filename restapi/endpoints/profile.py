@@ -2,7 +2,6 @@ from typing import Any, Optional
 
 from restapi import decorators
 from restapi.endpoints.schemas import NewPassword, profile_output, profile_patch_input
-from restapi.exceptions import ServiceUnavailable
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import User
 from restapi.utilities.globals import mem
@@ -22,12 +21,6 @@ class Profile(EndpointResource):
         responses={200: "User profile is returned"},
     )
     def get(self, user: User) -> Response:
-
-        user = self.get_user()
-
-        # Can't happen since auth is required
-        if user is None:  # pragma: no cover
-            raise ServiceUnavailable("Unexpected internal error")
 
         data = {
             "uuid": user.uuid,
@@ -69,13 +62,6 @@ class Profile(EndpointResource):
         totp_code: Optional[str] = None,
     ) -> Response:
         """Update password for current user"""
-
-        user = self.get_user()
-
-        # Can't happen since auth is required
-        if user is None:  # pragma: no cover
-            raise ServiceUnavailable("Unexpected internal error")
-
         if self.auth.SECOND_FACTOR_AUTHENTICATION:
             self.auth.verify_totp(user, totp_code)
 
@@ -96,8 +82,6 @@ class Profile(EndpointResource):
     )
     def patch(self, user: User, **kwargs: Any) -> Response:
         """Update profile for current user"""
-
-        user = self.get_user()
 
         # mypy correctly raises errors because update_properties is not defined
         # in generic Connector instances, but in this case this is an instance

@@ -6,9 +6,9 @@ import pytz
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.connectors import Connector
-from restapi.exceptions import ServerError
 from restapi.models import ISO8601UTC, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import User
 
 if TESTING:
 
@@ -136,12 +136,7 @@ if TESTING and Connector.check_availability("neo4j"):
             summary="Accept inputs based on a neo4j-related schema",
             responses={204: "Tests executed"},
         )
-        def post(self, choice: str) -> Response:
-
-            user = self.get_user()
-            # Can't happen since auth is required
-            if not user:  # pragma: no cover
-                raise ServerError("User misconfiguration")
+        def post(self, choice: str, user: User) -> Response:
 
             data = {
                 "choice": choice,

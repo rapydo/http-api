@@ -26,7 +26,7 @@ class NewSwaggerSpecifications(EndpointResource):
 
         specs = mem.docs.spec.to_dict()
 
-        if self.get_user():
+        if user:
             # Set security requirements for endpoint
             for key, data in specs.items():
 

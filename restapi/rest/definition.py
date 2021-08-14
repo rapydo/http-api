@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Dict, List, Optional
 
 from flask import Response as FlaskResponse
@@ -45,7 +46,11 @@ class EndpointResource(MethodResource, Resource):  # type: ignore
 
         return self.__auth
 
-    def get_user(self) -> Optional[User]:
+    # Deprecated since 2.1
+    def get_user(self) -> Optional[User]:  # pragma: no cover
+        warnings.warn(
+            "Deprecated use of self.get_user(), user is now injected in the endpoint"
+        )
         return self.auth.get_user(user_id=self.authorized_user)
 
     @staticmethod

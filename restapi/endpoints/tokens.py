@@ -36,8 +36,6 @@ class Tokens(EndpointResource):
     )
     def get(self, user: User) -> Response:
 
-        user = self.get_user()
-
         tokens = self.auth.get_tokens(user=user)
 
         return self.response(tokens)

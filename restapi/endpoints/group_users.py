@@ -1,6 +1,5 @@
 from restapi import decorators
 from restapi.endpoints.schemas import group_users_output
-from restapi.exceptions import ServerError
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Role, User
 
@@ -20,12 +19,6 @@ class GroupUsers(EndpointResource):
         },
     )
     def get(self, user: User) -> Response:
-
-        user = self.get_user()
-
-        # Can't happen since auth is required
-        if not user:  # pragma: no cover
-            raise ServerError("User misconfiguration")
 
         group = self.auth.get_user_group(user)
 
