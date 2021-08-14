@@ -8,7 +8,7 @@ from plumbum import local
 from restapi import decorators
 from restapi.endpoints.schemas import StatsSchema, StatsType
 from restapi.rest.definition import EndpointResource, Response
-from restapi.services.authentication import Role
+from restapi.services.authentication import Role, User
 
 
 class AdminStats(EndpointResource):
@@ -24,7 +24,7 @@ class AdminStats(EndpointResource):
         summary="Retrieve stats from the server",
         responses={"200": "Stats retrieved"},
     )
-    def get(self) -> Response:
+    def get(self, user: User) -> Response:
 
         # This is the average system load calculated over a given period of time
         # of 1, 5 and 15 minutes.

@@ -2,7 +2,7 @@ from restapi import decorators
 from restapi.endpoints.schemas import group_users_output
 from restapi.exceptions import ServerError
 from restapi.rest.definition import EndpointResource, Response
-from restapi.services.authentication import Role
+from restapi.services.authentication import Role, User
 
 
 class GroupUsers(EndpointResource):
@@ -19,7 +19,7 @@ class GroupUsers(EndpointResource):
             200: "List of users successfully retrieved",
         },
     )
-    def get(self) -> Response:
+    def get(self, user: User) -> Response:
 
         user = self.get_user()
 

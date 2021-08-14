@@ -1,5 +1,6 @@
 from restapi import decorators
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import User
 
 
 class Logout(EndpointResource):
@@ -15,7 +16,7 @@ class Logout(EndpointResource):
         description="Invalidate current registered token",
         responses={204: "Token correctly removed"},
     )
-    def get(self) -> Response:
+    def get(self, user: User) -> Response:
 
         _, token = decorators.auth.get_authorization_token()
         if token:

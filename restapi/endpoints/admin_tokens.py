@@ -6,7 +6,7 @@ from restapi import decorators
 from restapi.endpoints.schemas import TokenAdminSchema, TotalSchema
 from restapi.exceptions import BadRequest, NotFound
 from restapi.rest.definition import EndpointResource, Response
-from restapi.services.authentication import Role, Token
+from restapi.services.authentication import Role, Token, User
 from restapi.utilities.logs import log
 
 
@@ -47,6 +47,7 @@ class AdminTokens(EndpointResource):
         sort_by: str,
         sort_order: str,
         input_filter: str,
+        user: User,
     ) -> Response:
 
         tokens = self.auth.get_tokens(get_all=True)
@@ -108,7 +109,7 @@ class AdminTokens(EndpointResource):
             400: "Token invalidation is failed",
         },
     )
-    def delete(self, token_id: str, token: str) -> Response:
+    def delete(self, token_id: str, token: str, user: User) -> Response:
 
         if not self.auth.invalidate_token(token=token):
             raise BadRequest(f"Failed token invalidation: {token}")  # pragma: no cover

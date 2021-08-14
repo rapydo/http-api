@@ -5,7 +5,7 @@ from restapi.connectors import Connector
 from restapi.endpoints.schemas import GroupWithMembers, admin_group_input
 from restapi.exceptions import NotFound
 from restapi.rest.definition import EndpointResource, Response
-from restapi.services.authentication import Group, Role
+from restapi.services.authentication import Group, Role, User
 
 
 def inject_group(endpoint: EndpointResource, group_id: str) -> Dict[str, Any]:
@@ -33,7 +33,7 @@ class AdminGroups(EndpointResource):
             409: "Request is invalid due to conflicts",
         },
     )
-    def get(self) -> Response:
+    def get(self, user: User) -> Response:
 
         groups: List[Dict[str, Any]] = []
 
@@ -72,7 +72,7 @@ class AdminGroups(EndpointResource):
             409: "Request is invalid due to conflicts",
         },
     )
-    def post(self, **kwargs: Any) -> Response:
+    def post(self, user: User, **kwargs: Any) -> Response:
 
         group = self.auth.create_group(kwargs)
 
@@ -90,7 +90,7 @@ class AdminGroups(EndpointResource):
         summary="Modify a group",
         responses={204: "Group successfully modified", 404: "Group not found"},
     )
-    def put(self, group_id: str, group: Group, **kwargs: Any) -> Response:
+    def put(self, group_id: str, group: Group, user: User, **kwargs: Any) -> Response:
 
         # mypy correctly raises errors because update_properties is not defined
         # in generic Connector instances, but in this case this is an instance
@@ -110,7 +110,7 @@ class AdminGroups(EndpointResource):
         summary="Delete a group",
         responses={204: "Group successfully deleted", 404: "Group not found"},
     )
-    def delete(self, group_id: str, group: Group) -> Response:
+    def delete(self, group_id: str, group: Group, user: User) -> Response:
 
         self.auth.delete_group(group)
 

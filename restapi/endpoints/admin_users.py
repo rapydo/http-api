@@ -40,7 +40,7 @@ class AdminSingleUser(EndpointResource):
         summary="Return information on a single user",
         responses={200: "User information successfully retrieved"},
     )
-    def get(self, user_id: str, target_user: User) -> Response:
+    def get(self, user_id: str, target_user: User, user: User) -> Response:
 
         self.log_event(self.events.access, target_user)
 
@@ -60,7 +60,7 @@ class AdminUsers(EndpointResource):
         summary="Return the list of all defined users",
         responses={200: "List of users successfully retrieved"},
     )
-    def get(self) -> Response:
+    def get(self, user: User) -> Response:
 
         users = self.auth.get_users()
 
@@ -77,7 +77,7 @@ class AdminUsers(EndpointResource):
             409: "This user already exists",
         },
     )
-    def post(self, **kwargs: Any) -> Response:
+    def post(self, user: User, **kwargs: Any) -> Response:
 
         roles: List[str] = kwargs.pop("roles", [])
         payload = kwargs.copy()
@@ -116,7 +116,9 @@ class AdminUsers(EndpointResource):
         summary="Modify a user",
         responses={200: "User successfully modified"},
     )
-    def put(self, user_id: str, target_user: User, **kwargs: Any) -> Response:
+    def put(
+        self, user_id: str, target_user: User, user: User, **kwargs: Any
+    ) -> Response:
 
         if "password" in kwargs:
             unhashed_password = kwargs["password"]
@@ -185,7 +187,7 @@ class AdminUsers(EndpointResource):
         summary="Delete a user",
         responses={200: "User successfully deleted"},
     )
-    def delete(self, user_id: str, target_user: User) -> Response:
+    def delete(self, user_id: str, target_user: User, user: User) -> Response:
 
         self.auth.delete_user(target_user)
 
