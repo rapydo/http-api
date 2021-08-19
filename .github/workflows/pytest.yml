@@ -97,8 +97,8 @@ jobs:
           bash ../tests/customize_template.sh ${{ matrix.template }}
           rapydo ssl --volatile
           rapydo start
-          # wait for all services to start (35 failed sometimes, in particular with rabbit)
-          sleep 45
+          # wait for all services to start (30 failed sometimes, in particular with rabbit)
+          sleep 35
           rapydo logs
           curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
           if [[ "${{ matrix.template }}" == "extra" ]]; then
