@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 import pytz
 
@@ -101,7 +101,7 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={204: "Tests executed"},
         )
-        def post(self, **kwargs: Any) -> Response:
+        def post(self, user: Optional[User], **kwargs: Any) -> Response:
 
             return self.empty_response()
 
