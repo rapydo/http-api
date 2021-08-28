@@ -269,10 +269,10 @@ class Pagination(PartialSchema):
         metadata={"description": "Number of elements to retrieve"},
     )
     sort_order = fields.Str(
-        validate=validate.OneOf(["asc", "desc"]), required=False, missing="asc"
+        validate=validate.OneOf(["asc", "desc"]), required=False, load_default="asc"
     )
-    sort_by = fields.Str(required=False, missing=None)
-    input_filter = fields.Str(required=False, missing=None)
+    sort_by = fields.Str(required=False, load_default=None)
+    input_filter = fields.Str(required=False, load_default=None)
 
     @post_load
     def verify_parameters(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
