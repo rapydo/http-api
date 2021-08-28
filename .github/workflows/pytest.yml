@@ -82,9 +82,7 @@ jobs:
           [[ ! $(LOGURU_LEVEL=WARNING rapydo list services | grep -E "Exit|Restarting|Created") ]]
 
           # Send coverage
-          rapydo dump
-          backend_container=$(docker-compose ps -q backend)
-          docker cp ${backend_container}:/code/coverage.xml coverage.xml
+          docker cp prj_backend_1:/code/coverage.xml coverage.xml
           bash <(curl -s https://codecov.io/bash) -R submodules/http-api
 
       - name: PROD Tests
@@ -116,9 +114,7 @@ jobs:
           [[ ! $(LOGURU_LEVEL=WARNING rapydo list services | grep -v frontend | grep -E "Exit|Restarting|Created") ]]
 
           # Send coverage
-          rapydo dump
-          backend_container=$(docker-compose ps -q backend)
-          docker cp ${backend_container}:/code/coverage.xml coverage.xml
+          docker cp prj_backend_1:/code/coverage.xml coverage.xml
           bash <(curl -s https://codecov.io/bash) -R submodules/http-api
 
       - name: Print Logs
