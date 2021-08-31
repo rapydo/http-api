@@ -188,7 +188,7 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 400
         assert self.get_content(r) == "Invalid request"
 
-        up_data = faker.pystr(min_chars=24, max_chars=48)
+        up_data = faker.pystr(min_chars=24, max_chars=48).lower()
         STR_LEN = len(up_data)
         with io.StringIO(up_data[0:5]) as f:
             r = client.put(
