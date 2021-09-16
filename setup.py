@@ -79,7 +79,7 @@ setup(
         "pytest-cov==2.12.1",
         "pytest-timeout==1.4.2",
         "schemathesis==3.10.0",
-        "Faker==8.10.3",
+        "Faker==8.13.2",
         "Telethon==1.22.0",
     ],
     classifiers=[
