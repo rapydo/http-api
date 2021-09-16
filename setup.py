@@ -69,7 +69,7 @@ setup(
         "orjson",
         "marshmallow==3.13.0",
         "webargs==8.0.1",
-        "apispec==5.0.0",
+        "apispec==5.1.0",
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.1.0",
