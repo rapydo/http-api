@@ -73,7 +73,7 @@ setup(
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.1.0",
-        "sentry-sdk[flask]==1.1.0",
+        "sentry-sdk[flask]==1.3.1",
         # Tests
         "pytest-flask==1.2.0",
         "pytest-cov==2.12.1",
