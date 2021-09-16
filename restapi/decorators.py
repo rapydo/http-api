@@ -99,7 +99,7 @@ def endpoint(
     return decorator
 
 
-# The callback is expected to have a first argumento that is a EndpointResource
+# The callback is expected to have a first argument of type EndpointResource
 # and then optionally url parameters, e.g uuid: str
 # I can't define with mypy something like:
 # Callable[[EndpointResource, ...],

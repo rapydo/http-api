@@ -53,7 +53,7 @@ setup(
         "flower==1.0.0",
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
-        "python-telegram-bot==13.6",
+        "python-telegram-bot==13.7",
         "amqp==5.0.6",
         # TOTP
         "pyotp==2.6.0",
