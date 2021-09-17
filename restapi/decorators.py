@@ -1,5 +1,6 @@
+import inspect
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, Union, cast
+from typing import Any, Callable, Dict, Mapping, Optional, Union, cast
 
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused  # type: ignore
@@ -11,12 +12,12 @@ from sentry_sdk import capture_exception
 
 from restapi.config import API_URL, AUTH_URL, SENTRY_URL
 from restapi.connectors import Connector
-from restapi.exceptions import RestApiException
+from restapi.exceptions import RestApiException, ServerError
 from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import TOKEN_VALIDATED_KEY
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
-from restapi.rest.definition import Response
+from restapi.rest.definition import EndpointResource, Response
 from restapi.types import EndpointFunction
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
@@ -99,8 +100,70 @@ def endpoint(
     return decorator
 
 
-# The callback is expected to have a first argument of type EndpointResource
-# and then optionally url parameters, e.g uuid: str
+def inject_callback_parameters(
+    callback_name: str,
+    parameters: Mapping[str, Any],
+    kwargs: Dict[str, Any],
+    view_args: Optional[Dict[str, Any]],
+) -> Optional[Dict[str, Any]]:
+
+    if "endpoint" not in parameters:  # pragma: no cover
+        log.critical(
+            "Missing (endpoint: EndpointResource) parameter in {}", callback_name
+        )
+        return None
+
+    endpoint_type = parameters["endpoint"].annotation
+    if not issubclass(endpoint_type, EndpointResource):  # pragma: no cover
+        log.critical(
+            "Wrong type annotation for parameter 'endpoint' in {}, "
+            "expected EndpointResource but found {}",
+            callback_name,
+            parameters["endpoint"].annotation.__name__,
+        )
+        return None
+
+    injected_parameters: Dict[str, Any] = {}
+    for name, parameter in parameters.items():
+        # endpoint will be injected by the preload decorator and it is not expected
+        # to be found in kwargs / view_args
+        if name == "endpoint":
+            continue
+
+        if view_args and name in view_args:
+            input_param = view_args[name]
+
+        elif name in kwargs:
+            input_param = kwargs[name]
+
+        else:  # pragma: no cover
+            log.critical(
+                "Parameter ({}:{}) in {} isn't found and can't be injected",
+                name,
+                parameters[name].annotation.__name__,
+                callback_name,
+            )
+            return None
+
+        if parameter.annotation == Any or isinstance(input_param, parameter.annotation):
+            injected_parameters[name] = input_param
+        else:  # pragma: no cover
+
+            log.critical(
+                "Wrong type annotation for parameter '{}' in {}, "
+                "expected {} but found {}",
+                name,
+                callback_name,
+                parameter.annotation.__name__,
+                type(input_param).__name__,
+            )
+            return None
+
+    return injected_parameters
+
+
+# The callback is expected to have a first argument of type EndpointResource and then
+# optional additional parameters automatically injected from kwargs and url parameters
 # I can't define with mypy something like:
 # Callable[[EndpointResource, ...],
 def preload(
@@ -110,9 +173,8 @@ def preload(
     callback example:
 
     from flask import request
-    def myfunc(endpoint: EndpointResource) -> Dict[str, Any]:
+    def myfunc(endpoint: EndpointResource, user: User) -> Dict[str, Any]:
 
-        user = endpoint.get_user()
         if (
             not user
             or not request.view_args
@@ -130,14 +192,18 @@ def preload(
         @wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
+            parameters = inspect.signature(callback).parameters
+            injected_parameters = inject_callback_parameters(
+                callback.__name__, parameters, kwargs, request.view_args
+            )
+            if injected_parameters is None:
+                raise ServerError("Invalid endpoint signature")
+
             # callback can raise exceptions to stop che execution and e.g. implement
             # custom authorization policies
             # or can optionally return values (as dict) to be injected
             # into the endpoint as function parameters
-            # type ignore is needed because mypy blames:
-            # Argument after ** must be a mapping, but view_args is a dict...
-            # probably a proper type hint is missing at flask level
-            if inject := callback(self, **request.view_args):  # type: ignore
+            if inject := callback(self, **injected_parameters):
                 kwargs.update(inject)
 
             return func(self, *args, **kwargs)
