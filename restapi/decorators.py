@@ -100,6 +100,10 @@ def endpoint(
     return decorator
 
 
+# This function takes as input the callback function signature and extracts from both
+# view_args and kwargs the corresponding parameters to be injected at runtime
+# If the parameter is not found in view_args and kwargs or it is found with a wrong
+# type, then a None is returned and the preload decorator will raise a ServerError
 def inject_callback_parameters(
     callback_name: str,
     parameters: Mapping[str, Any],
@@ -107,14 +111,13 @@ def inject_callback_parameters(
     view_args: Optional[Dict[str, Any]],
 ) -> Optional[Dict[str, Any]]:
 
-    if "endpoint" not in parameters:  # pragma: no cover
+    if "endpoint" not in parameters:
         log.critical(
             "Missing (endpoint: EndpointResource) parameter in {}", callback_name
         )
         return None
 
-    endpoint_type = parameters["endpoint"].annotation
-    if not issubclass(endpoint_type, EndpointResource):  # pragma: no cover
+    if not issubclass(parameters["endpoint"].annotation, EndpointResource):
         log.critical(
             "Wrong type annotation for parameter 'endpoint' in {}, "
             "expected EndpointResource but found {}",
@@ -136,7 +139,7 @@ def inject_callback_parameters(
         elif name in kwargs:
             input_param = kwargs[name]
 
-        else:  # pragma: no cover
+        else:
             log.critical(
                 "Parameter ({}:{}) in {} isn't found and can't be injected",
                 name,
@@ -147,7 +150,7 @@ def inject_callback_parameters(
 
         if parameter.annotation == Any or isinstance(input_param, parameter.annotation):
             injected_parameters[name] = input_param
-        else:  # pragma: no cover
+        else:
 
             log.critical(
                 "Wrong type annotation for parameter '{}' in {}, "
@@ -196,7 +199,7 @@ def preload(
             injected_parameters = inject_callback_parameters(
                 callback.__name__, parameters, kwargs, request.view_args
             )
-            if injected_parameters is None:
+            if injected_parameters is None:  # pragma: no cover
                 raise ServerError("Invalid endpoint signature")
 
             # callback can raise exceptions to stop che execution and e.g. implement

@@ -1,3 +1,4 @@
+import inspect
 import os
 import tempfile
 import time
@@ -12,6 +13,7 @@ from marshmallow.exceptions import ValidationError
 
 from restapi.config import get_host_type
 from restapi.connectors.smtp.notifications import get_html_template
+from restapi.decorators import inject_callback_parameters
 from restapi.env import Env
 from restapi.exceptions import (
     BadRequest,
@@ -718,3 +720,194 @@ class TestApp(BaseTests):
         # assert r["unique_delimited_list"][2] == "c "
         # Now input is trimmed
         assert r["unique_delimited_list"][2] == "c"
+
+    def test_callbackend_parameters_injection(self, faker: Faker) -> None:
+        def missing_endpoint() -> None:
+            pass
+
+        def wrong_endpoint(endpoint: str) -> None:
+            pass
+
+        def ok_endpoint_no_params(endpoint: EndpointResource) -> None:
+            pass
+
+        def ok_endpoint_with_params(
+            endpoint: EndpointResource, a: str, b: Faker
+        ) -> None:
+            pass
+
+        # Wrong callback: endpoint parameter is missing
+        injected_parameters = inject_callback_parameters(
+            "callback_name", inspect.signature(missing_endpoint).parameters, {}, {}
+        )
+        assert injected_parameters is None
+
+        # Wrong callback: endpoint parameter is missing
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(missing_endpoint).parameters,
+            {"endpoint": None},
+            {"endpoint": None},
+        )
+        assert injected_parameters is None
+
+        # Wrong callback: endpoint parameter has a wrong type
+        injected_parameters = inject_callback_parameters(
+            "callback_name", inspect.signature(wrong_endpoint).parameters, {}, {}
+        )
+        assert injected_parameters is None
+
+        # Wrong callback: endpoint parameter has a wrong type
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(wrong_endpoint).parameters,
+            {"endpoint": None},
+            {"endpoint": None},
+        )
+        assert injected_parameters is None
+
+        # Callback is good and takes no parameters
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_no_params).parameters,
+            {},
+            {},
+        )
+        assert injected_parameters is not None
+
+        # Callback is good and takes no parameters
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_no_params).parameters,
+            {"endpoint": None, "a": "abc"},
+            {"b": "aaa"},
+        )
+        assert injected_parameters is not None
+
+        # Starting from here the callback wants two parameters
+
+        # Parameters not found in kwargs / view_args
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {},
+            {},
+        )
+        assert injected_parameters is None
+
+        # Only one parameter found in kwargs / view_args
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {"a": "abc"},
+            {},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found in kwargs / view_args
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {"a": "abc"},
+            {"b": faker},
+        )
+        assert injected_parameters is not None
+
+        # Both parameters found in kwargs / view_args
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {"b": faker},
+            {"a": "abc"},
+        )
+        assert injected_parameters is not None
+
+        # Both parameters found in kwargs / view_args
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {"a": "abc", "b": faker},
+            {},
+        )
+        assert injected_parameters is not None
+
+        # Both parameters found in kwargs / view_args
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {},
+            {"a": "abc", "b": faker},
+        )
+        assert injected_parameters is not None
+
+        # Both parameters found but with wrong type (int instead of str)
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {"a": 10, "b": faker},
+            {},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (str instead of Faker)
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {"a": "abc", "b": "faker"},
+            {},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (None instead of Faker)
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {"a": "abc", "b": None},
+            {},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (None instead of str)
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {"a": None, "b": faker},
+            {},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (int instead of str)
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {},
+            {"a": 10, "b": faker},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (str instead of Faker)
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {},
+            {"a": "abc", "b": "faker"},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (None instead of Faker)
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {},
+            {"a": "abc", "b": None},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (None instead of str)
+        injected_parameters = inject_callback_parameters(
+            "callback_name",
+            inspect.signature(ok_endpoint_with_params).parameters,
+            {},
+            {"a": None, "b": faker},
+        )
+        assert injected_parameters is None
