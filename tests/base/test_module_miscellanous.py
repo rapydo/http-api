@@ -722,16 +722,22 @@ class TestApp(BaseTests):
         assert r["unique_delimited_list"][2] == "c"
 
     def test_callbackend_parameters_injection(self, faker: Faker) -> None:
-        def missing_endpoint() -> None:
+        # These functions are not executed => no cover
+        def missing_endpoint() -> None:  # pragma: no cover
             pass
 
-        def wrong_endpoint(endpoint: str) -> None:
+        # These functions are not executed => no cover
+        def wrong_endpoint(endpoint: str) -> None:  # pragma: no cover
             pass
 
-        def ok_endpoint_no_params(endpoint: EndpointResource) -> None:
+        # These functions are not executed => no cover
+        def ok_endpoint_no_params(  # pragma: no cover
+            endpoint: EndpointResource,
+        ) -> None:
             pass
 
-        def ok_endpoint_with_params(
+        # These functions are not executed => no cover
+        def ok_endpoint_with_params(  # pragma: no cover
             endpoint: EndpointResource, a: str, b: Faker
         ) -> None:
             pass

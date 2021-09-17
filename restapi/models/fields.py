@@ -28,7 +28,7 @@ class Field(webargs_fields.Field):
 
         kwargs.setdefault("metadata", {})
 
-        if label is not None:
+        if label is not None:  # pragma: no cover
             # Deprecated since 2.1
             warnings.warn(
                 "Deprecated use of field label, "
@@ -37,7 +37,7 @@ class Field(webargs_fields.Field):
             )
             kwargs["metadata"].setdefault("label", label)
 
-        if description is not None:
+        if description is not None:  # pragma: no cover
             # Deprecated since 2.1
             warnings.warn(
                 "Deprecated use of field description, "
@@ -46,7 +46,7 @@ class Field(webargs_fields.Field):
             )
             kwargs["metadata"].setdefault("description", description)
 
-        if autocomplete_endpoint is not None:
+        if autocomplete_endpoint is not None:  # pragma: no cover
             # Deprecated since 2.1
             warnings.warn(
                 f"Deprecated use of field autocomplete_endpoint, "
@@ -58,7 +58,7 @@ class Field(webargs_fields.Field):
             )
             kwargs["metadata"].setdefault("autocomplete_show_id", autocomplete_show_id)
 
-        if autocomplete_id_bind is not None:
+        if autocomplete_id_bind is not None:  # pragma: no cover
             # Deprecated since 2.1
             warnings.warn(
                 f"Deprecated use of field autocomplete_id_bind, "
@@ -67,7 +67,7 @@ class Field(webargs_fields.Field):
             )
             kwargs["metadata"].setdefault("autocomplete_id_bind", autocomplete_id_bind)
 
-        if autocomplete_label_bind is not None:
+        if autocomplete_label_bind is not None:  # pragma: no cover
             # Deprecated since 2.1
             albtmp = autocomplete_label_bind
             warnings.warn(
@@ -79,7 +79,7 @@ class Field(webargs_fields.Field):
                 "autocomplete_label_bind", autocomplete_label_bind
             )
 
-        if password:
+        if password:  # pragma: no cover
             # Deprecated since 2.1
             warnings.warn(
                 f"Deprecated use of field password, "
