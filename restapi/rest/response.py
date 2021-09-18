@@ -157,7 +157,7 @@ class ExtendedJSONEncoder(JSONEncoder):
         if isinstance(o, (datetime, date)):
             return o.isoformat()
         if isinstance(o, decimal.Decimal):
-            return str(o)
+            return float(o)
         # Otherwise: TypeError: Object of type xxx is not JSON serializable
         return super().default(o)  # pragma: no cover
 
