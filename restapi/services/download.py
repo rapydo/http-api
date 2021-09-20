@@ -12,6 +12,8 @@ from restapi.exceptions import BadRequest, NotFound
 from restapi.services.uploader import Uploader
 from restapi.utilities.logs import log
 
+DEFAULT_CHUNK_SIZE = 1048576  # 1 MB
+
 
 class Downloader:
 
@@ -36,7 +38,9 @@ class Downloader:
         return send_from_directory(path, filename, mimetype=mime)
 
     @staticmethod
-    def read_in_chunks(path: Path, chunk_size: int = 1024 * 1024) -> Iterator[bytes]:
+    def read_in_chunks(
+        path: Path, chunk_size: int = DEFAULT_CHUNK_SIZE
+    ) -> Iterator[bytes]:
         """
         Lazy function (generator) to read a file piece by piece.
         """
