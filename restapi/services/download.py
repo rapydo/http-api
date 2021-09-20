@@ -70,4 +70,5 @@ class Downloader:
             out_filename = path.name
 
         response.headers["Content-Disposition"] = f"attachment; filename={out_filename}"
+        response.headers["Content-Length"] = path.stat().st_size
         return response
