@@ -23,6 +23,7 @@ import pyotp
 import pytz
 import segno
 from cryptography.fernet import Fernet
+from cryptography.fernet import InvalidToken as InvalidFernetToken
 from flask import request
 from glom import glom
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
@@ -46,6 +47,7 @@ from restapi.exceptions import (
     Conflict,
     Forbidden,
     RestApiException,
+    ServerError,
     ServiceUnavailable,
     Unauthorized,
 )
@@ -739,7 +741,11 @@ class BaseAuthentication(metaclass=ABCMeta):
             user.mfa_hash = self.fernet.encrypt(random_hash.encode()).decode()
             self.save_user(user)
 
-        return self.fernet.decrypt(user.mfa_hash.encode()).decode()
+        try:
+            return self.fernet.decrypt(user.mfa_hash.encode()).decode()
+        # to test this exception change the fernet key used to encrypt mfa_hash
+        except InvalidFernetToken:
+            raise ServerError("Invalid server configuration")
 
     def verify_totp(self, user: User, totp_code: Optional[str]) -> bool:
 

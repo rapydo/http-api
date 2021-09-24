@@ -111,7 +111,7 @@ class EndpointResource(MethodResource, Resource):  # type: ignore
     ) -> None:
 
         if not user:
-            user = self.get_user()
+            user = self.auth.get_user(user_id=self.authorized_user)
 
         save_event_log(
             event=event,
