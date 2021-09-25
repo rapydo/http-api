@@ -745,7 +745,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             return self.fernet.decrypt(user.mfa_hash.encode()).decode()
         # to test this exception change the fernet key used to encrypt mfa_hash
         except InvalidFernetToken:
-            raise ServerError("Invalid server configuration")
+            raise ServerError("Invalid server signature")
 
     def verify_totp(self, user: User, totp_code: Optional[str]) -> bool:
 
