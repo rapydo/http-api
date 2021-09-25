@@ -250,14 +250,7 @@ class TestUploadAndDownload(BaseTests):
             f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": "bytes=0-9999999999999999"},
         )
-
-        from werkzeug import __version__ as werkzeug_version
-
-        # Back-compatibility check for B2STAGE
-        if werkzeug_version == "0.16.1":  # pragma: no cover
-            assert r.status_code == 200
-        else:
-            assert r.status_code == 206
+        assert r.status_code == 206
 
         r = client.get(
             f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
@@ -279,11 +272,7 @@ class TestUploadAndDownload(BaseTests):
             f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": f"bytes=0-{STR_LEN - 1}"},
         )
-        # Back-compatibility check for B2STAGE
-        if werkzeug_version == "0.16.1":  # pragma: no cover
-            assert r.status_code == 200
-        else:
-            assert r.status_code == 206
+        assert r.status_code == 206
         content = r.data.decode("utf-8")
         assert content == up_data
 

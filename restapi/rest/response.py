@@ -129,13 +129,7 @@ def handle_response(response: FlaskResponse) -> FlaskResponse:
         )
         if content:
             response.data = content
-
-            try:
-                response.headers.update(headers)
-            # Back-compatibility for Werkzeug 0.16.1 as used in B2STAGE
-            except AttributeError:  # pragma: no cover
-                for k, v in headers.items():
-                    response.headers.set(k, v)
+            response.headers.update(headers)
 
     resp = str(response).replace("<Response ", "").replace(">", "")
     log.info(

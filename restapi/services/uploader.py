@@ -90,10 +90,7 @@ class Uploader:
 
         # Save the file
         try:
-            # On b2stage without str it fails with:
-            # 'PosixPath' object has no attribute 'write'
-            # Maybe due to Werkzeug==0.16.1?
-            myfile.save(str(abs_file))
+            myfile.save(abs_file)
             log.debug("Absolute file path should be '{}'", abs_file)
         except Exception as e:  # pragma: no cover
             log.error(e)
