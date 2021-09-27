@@ -37,24 +37,20 @@ class Mail(Connector):
     def connect(self, **kwargs: str) -> "Mail":
         self.instance_variables.update(kwargs)
 
-        if port := self.instance_variables.get("port"):
-            port = Env.to_int(port)
+        port = self.instance_variables.get("port", "25")
+        port = Env.to_int(port)
 
         host = self.instance_variables.get("host")
 
-        if not port:
-            smtp = SMTP(host)
-            log.debug("Connecting to {}", host)
-        elif port == 465:
+        if port == 465:
             smtp = SMTP_SSL(host)
         else:
             smtp = SMTP(host)
 
         smtp.set_debuglevel(0)
-        if port:
-            log.debug("Connecting to {}:{}", host, port)
-            smtp.connect(host, port)
-            smtp.ehlo()
+        log.debug("Connecting to {}:{}", host, port)
+        smtp.connect(host, port)
+        smtp.ehlo()
 
         if self.instance_variables.get("username") and self.instance_variables.get(
             "password"
