@@ -900,6 +900,8 @@ class TestApp(BaseTests):
         assert not match_types(EndpointResource, None)
         assert not match_types(EndpointResource, type(None))
         assert not match_types(EndpointResource, 1)
+        assert not match_types(EndpointResource, True)
+        assert not match_types(EndpointResource, False)
         assert not match_types(EndpointResource, type(1))
         assert not match_types(EndpointResource, [])
         assert not match_types(EndpointResource, {})
@@ -911,6 +913,8 @@ class TestApp(BaseTests):
         assert match_types(Any, None)
         assert match_types(Any, type(None))
         assert match_types(Any, 1)
+        assert match_types(Any, True)
+        assert match_types(Any, False)
         assert match_types(Any, type(1))
         assert match_types(Any, type([]))
         assert match_types(Any, type({}))
@@ -921,6 +925,8 @@ class TestApp(BaseTests):
         assert match_types(str, "EndpointResource")
         assert not match_types(str, None)
         assert not match_types(str, 1)
+        assert not match_types(str, True)
+        assert not match_types(str, False)
         assert not match_types(str, [])
         assert not match_types(str, {})
         assert not match_types(str, ["test"])
@@ -948,4 +954,17 @@ class TestApp(BaseTests):
 
         assert match_types(Union[str, int], 1)
         assert match_types(Union[str, int], "1")
-        assert match_types(not Union[str, int], [])
+        assert not match_types(Union[str, int], [])
+
+        assert match_types(bool, True)
+        assert match_types(bool, False)
+        assert not match_types(bool, 0)
+        assert not match_types(bool, 1)
+        assert not match_types(bool, "...")
+        assert not match_types(bool, [])
+        assert not match_types(bool, [1])
+
+        # please note the "not Union" that I added for a mistake
+        # leading to a infinite recursion loop
+        # before adding as specific case in match_types
+        assert not match_types(not Union[str, int], [])

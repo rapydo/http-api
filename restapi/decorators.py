@@ -132,6 +132,10 @@ def match_types(static_type: Any, runtime_value: Any) -> bool:
 
     origin_type = get_origin(static_type)
 
+    # This can happens if static type is an instance, instead of a Type or a typing
+    if not origin_type:
+        return False
+
     if origin_type == Union:
         return any(
             match_types(arg_type, runtime_value) for arg_type in get_args(static_type)
