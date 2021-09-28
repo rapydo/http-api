@@ -192,6 +192,12 @@ def inject_callback_parameters(
             input_param = kwargs[name]
 
         else:
+
+            p = inspect.signature(callback_fn).parameters[name]
+            # Parameter is missing but it has a default value, so can be safely skipped
+            if p.default is not p.empty:
+                continue
+
             log.critical(
                 "Parameter ({}:{}) in {} isn't found and can't be injected",
                 name,
