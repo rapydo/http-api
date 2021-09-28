@@ -3,11 +3,10 @@ Customization based on configuration 'blueprint' files
 """
 
 import glob
-import inspect
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Type
+from typing import Any, Dict, List, Optional, Set, Tuple, Type, get_type_hints
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
@@ -210,7 +209,7 @@ class EndpointsLoader:
                 auth_optional = fn.__dict__.get("auth.optional", False)
 
                 if auth_required or auth_optional:
-                    parameters = inspect.signature(fn).parameters
+                    parameters = get_type_hints(fn)
 
                     if auth_required:
                         expected_annotation = User
@@ -219,7 +218,7 @@ class EndpointsLoader:
 
                     if (
                         "user" not in parameters
-                        or parameters["user"].annotation != expected_annotation
+                        or parameters["user"] != expected_annotation
                     ):  # pragma: no cover
 
                         if "user" in parameters:
@@ -229,7 +228,7 @@ class EndpointsLoader:
                                 epclss.__name__,
                                 method_fn,
                                 expected_annotation,
-                                parameters["user"].annotation,
+                                parameters["user"],
                             )
                         else:
                             log.critical(

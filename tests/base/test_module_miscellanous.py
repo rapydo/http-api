@@ -1,10 +1,9 @@
-import inspect
 import os
 import tempfile
 import time
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Union
 
 import psutil
 import pytest
@@ -13,7 +12,7 @@ from marshmallow.exceptions import ValidationError
 
 from restapi.config import get_host_type
 from restapi.connectors.smtp.notifications import get_html_template
-from restapi.decorators import inject_callback_parameters
+from restapi.decorators import inject_callback_parameters, match_types
 from restapi.env import Env
 from restapi.exceptions import (
     BadRequest,
@@ -743,30 +742,24 @@ class TestApp(BaseTests):
             pass
 
         # Wrong callback: endpoint parameter is missing
-        injected_parameters = inject_callback_parameters(
-            "callback_name", inspect.signature(missing_endpoint).parameters, {}, {}
-        )
+        injected_parameters = inject_callback_parameters(missing_endpoint, {}, {})
         assert injected_parameters is None
 
         # Wrong callback: endpoint parameter is missing
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(missing_endpoint).parameters,
+            missing_endpoint,
             {"endpoint": None},
             {"endpoint": None},
         )
         assert injected_parameters is None
 
         # Wrong callback: endpoint parameter has a wrong type
-        injected_parameters = inject_callback_parameters(
-            "callback_name", inspect.signature(wrong_endpoint).parameters, {}, {}
-        )
+        injected_parameters = inject_callback_parameters(wrong_endpoint, {}, {})
         assert injected_parameters is None
 
         # Wrong callback: endpoint parameter has a wrong type
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(wrong_endpoint).parameters,
+            wrong_endpoint,
             {"endpoint": None},
             {"endpoint": None},
         )
@@ -774,8 +767,7 @@ class TestApp(BaseTests):
 
         # Callback is good and takes no parameters
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_no_params).parameters,
+            ok_endpoint_no_params,
             {},
             {},
         )
@@ -783,8 +775,7 @@ class TestApp(BaseTests):
 
         # Callback is good and takes no parameters
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_no_params).parameters,
+            ok_endpoint_no_params,
             {"endpoint": None, "a": "abc"},
             {"b": "aaa"},
         )
@@ -794,8 +785,7 @@ class TestApp(BaseTests):
 
         # Parameters not found in kwargs / view_args
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {},
             {},
         )
@@ -803,8 +793,7 @@ class TestApp(BaseTests):
 
         # Only one parameter found in kwargs / view_args
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {"a": "abc"},
             {},
         )
@@ -812,8 +801,7 @@ class TestApp(BaseTests):
 
         # Both parameters found in kwargs / view_args
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {"a": "abc"},
             {"b": faker},
         )
@@ -821,8 +809,7 @@ class TestApp(BaseTests):
 
         # Both parameters found in kwargs / view_args
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {"b": faker},
             {"a": "abc"},
         )
@@ -830,8 +817,7 @@ class TestApp(BaseTests):
 
         # Both parameters found in kwargs / view_args
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {"a": "abc", "b": faker},
             {},
         )
@@ -839,8 +825,7 @@ class TestApp(BaseTests):
 
         # Both parameters found in kwargs / view_args
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {},
             {"a": "abc", "b": faker},
         )
@@ -848,8 +833,7 @@ class TestApp(BaseTests):
 
         # Both parameters found but with wrong type (int instead of str)
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {"a": 10, "b": faker},
             {},
         )
@@ -857,8 +841,7 @@ class TestApp(BaseTests):
 
         # Both parameters found but with wrong type (str instead of Faker)
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {"a": "abc", "b": "faker"},
             {},
         )
@@ -866,8 +849,7 @@ class TestApp(BaseTests):
 
         # Both parameters found but with wrong type (None instead of Faker)
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {"a": "abc", "b": None},
             {},
         )
@@ -875,8 +857,7 @@ class TestApp(BaseTests):
 
         # Both parameters found but with wrong type (None instead of str)
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {"a": None, "b": faker},
             {},
         )
@@ -884,8 +865,7 @@ class TestApp(BaseTests):
 
         # Both parameters found but with wrong type (int instead of str)
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {},
             {"a": 10, "b": faker},
         )
@@ -893,8 +873,7 @@ class TestApp(BaseTests):
 
         # Both parameters found but with wrong type (str instead of Faker)
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {},
             {"a": "abc", "b": "faker"},
         )
@@ -902,8 +881,7 @@ class TestApp(BaseTests):
 
         # Both parameters found but with wrong type (None instead of Faker)
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {},
             {"a": "abc", "b": None},
         )
@@ -911,9 +889,63 @@ class TestApp(BaseTests):
 
         # Both parameters found but with wrong type (None instead of str)
         injected_parameters = inject_callback_parameters(
-            "callback_name",
-            inspect.signature(ok_endpoint_with_params).parameters,
+            ok_endpoint_with_params,
             {},
             {"a": None, "b": faker},
         )
         assert injected_parameters is None
+
+        assert match_types(EndpointResource, EndpointResource)
+        assert not match_types(EndpointResource, "EndpointResource")
+        assert not match_types(EndpointResource, None)
+        assert not match_types(EndpointResource, type(None))
+        assert not match_types(EndpointResource, 1)
+        assert not match_types(EndpointResource, type(1))
+        assert not match_types(EndpointResource, [])
+        assert not match_types(EndpointResource, {})
+        assert not match_types(EndpointResource, ["test"])
+        assert not match_types(EndpointResource, {"test": 1})
+
+        assert match_types(Any, EndpointResource)
+        assert match_types(Any, "EndpointResource")
+        assert match_types(Any, None)
+        assert match_types(Any, type(None))
+        assert match_types(Any, 1)
+        assert match_types(Any, type(1))
+        assert match_types(Any, type([]))
+        assert match_types(Any, type({}))
+        assert match_types(Any, ["test"])
+        assert match_types(Any, {"test": 1})
+
+        assert not match_types(str, EndpointResource)
+        assert match_types(str, "EndpointResource")
+        assert not match_types(str, None)
+        assert not match_types(str, 1)
+        assert not match_types(str, [])
+        assert not match_types(str, {})
+        assert not match_types(str, ["test"])
+        assert not match_types(str, {"test": 1})
+
+        assert not match_types(Optional[str], EndpointResource)
+        assert match_types(Optional[str], "EndpointResource")
+        assert match_types(Optional[str], type(None))
+        assert not match_types(Optional[str], 1)
+        assert not match_types(Optional[str], [])
+        assert not match_types(Optional[str], {})
+        assert not match_types(Optional[str], ["test"])
+        assert not match_types(Optional[str], {"test": 1})
+
+        assert not match_types(List[str], EndpointResource)
+        assert not match_types(List[str], "EndpointResource")
+        assert not match_types(List[str], None)
+        assert not match_types(List[str], 1)
+        assert match_types(List[str], [])
+        assert not match_types(List[str], {})
+        assert match_types(List[str], ["test"])
+        # list args are not verifed, so [1] is currently accepted as List[str]
+        assert match_types(List[str], [1])
+        assert not match_types(List[str], {"test": 1})
+
+        assert match_types(Union[str, int], 1)
+        assert match_types(Union[str, int], "1")
+        assert match_types(not Union[str, int], [])

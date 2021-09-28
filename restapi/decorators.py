@@ -1,6 +1,16 @@
 import inspect
 from functools import wraps
-from typing import Any, Callable, Dict, Mapping, Optional, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    Union,
+    cast,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 import werkzeug.exceptions
 from amqp.exceptions import AccessRefused  # type: ignore
@@ -100,16 +110,50 @@ def endpoint(
     return decorator
 
 
+def match_types(static_type: Any, runtime_value: Any) -> bool:
+
+    # parameters annotated as Any are always accepted, regardless the runtime type
+    if static_type == Any:
+        return True
+
+    if inspect.isclass(runtime_value):
+        runtime_type = runtime_value
+    else:
+        runtime_type = type(runtime_value)
+
+    # If the parameter is annotated with a class (e.g. MyClassName or str)
+    # issubclass is enough to check the runtime type
+    if inspect.isclass(static_type):
+        return issubclass(runtime_type, static_type)
+
+    # In this case the static_type is a generic and cannot be matched with
+    # issubclass or the following error will be raised:
+    # TypeError: Subscripted generics cannot be used with class and instance checks
+
+    origin_type = get_origin(static_type)
+
+    if origin_type == Union:
+        return any(
+            match_types(arg_type, runtime_value) for arg_type in get_args(static_type)
+        )
+
+    # TODO: typing.get_args(static_type) is not verified
+    # Ths means that [1] will be accepted as List[str]
+    return match_types(origin_type, runtime_value)
+
+
 # This function takes as input the callback function signature and extracts from both
 # view_args and kwargs the corresponding parameters to be injected at runtime
 # If the parameter is not found in view_args and kwargs or it is found with a wrong
 # type, then a None is returned and the preload decorator will raise a ServerError
 def inject_callback_parameters(
-    callback_name: str,
-    parameters: Mapping[str, Any],
+    callback_fn: Callable[..., Optional[Any]],
     kwargs: Dict[str, Any],
     view_args: Optional[Dict[str, Any]],
 ) -> Optional[Dict[str, Any]]:
+
+    callback_name = callback_fn.__name__
+    parameters = get_type_hints(callback_fn)
 
     if "endpoint" not in parameters:
         log.critical(
@@ -117,12 +161,12 @@ def inject_callback_parameters(
         )
         return None
 
-    if not issubclass(parameters["endpoint"].annotation, EndpointResource):
+    if not match_types(parameters["endpoint"], EndpointResource):
         log.critical(
             "Wrong type annotation for parameter 'endpoint' in {}, "
             "expected EndpointResource but found {}",
             callback_name,
-            parameters["endpoint"].annotation.__name__,
+            parameters["endpoint"].__name__,
         )
         return None
 
@@ -131,6 +175,10 @@ def inject_callback_parameters(
         # endpoint will be injected by the preload decorator and it is not expected
         # to be found in kwargs / view_args
         if name == "endpoint":
+            continue
+
+        # This is the annotation of the function return, not needed here
+        if name == "return":
             continue
 
         if view_args and name in view_args:
@@ -143,21 +191,20 @@ def inject_callback_parameters(
             log.critical(
                 "Parameter ({}:{}) in {} isn't found and can't be injected",
                 name,
-                parameters[name].annotation.__name__,
+                parameters[name],
                 callback_name,
             )
             return None
 
-        if parameter.annotation == Any or isinstance(input_param, parameter.annotation):
+        if match_types(parameter, input_param):
             injected_parameters[name] = input_param
         else:
-
             log.critical(
                 "Wrong type annotation for parameter '{}' in {}, "
                 "expected {} but found {}",
                 name,
                 callback_name,
-                parameter.annotation.__name__,
+                parameter,
                 type(input_param).__name__,
             )
             return None
@@ -195,9 +242,8 @@ def preload(
         @wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
-            parameters = inspect.signature(callback).parameters
             injected_parameters = inject_callback_parameters(
-                callback.__name__, parameters, kwargs, request.view_args
+                callback, kwargs, request.view_args
             )
             if injected_parameters is None:  # pragma: no cover
                 raise ServerError("Invalid endpoint signature")
