@@ -37,8 +37,7 @@ class Mail(Connector):
     def connect(self, **kwargs: str) -> "Mail":
         self.instance_variables.update(kwargs)
 
-        port = self.instance_variables.get("port", "25")
-        port = Env.to_int(port)
+        port = Env.to_int(self.instance_variables.get("port")) or 25
 
         host = self.instance_variables.get("host")
 
@@ -52,13 +51,10 @@ class Mail(Connector):
         smtp.connect(host, port)
         smtp.ehlo()
 
-        if self.instance_variables.get("username") and self.instance_variables.get(
-            "password"
-        ):
-            smtp.login(
-                self.instance_variables.get("username"),
-                self.instance_variables.get("password"),
-            )
+        username = self.instance_variables.get("username")
+        password = self.instance_variables.get("password")
+        if username and password:
+            smtp.login(username, password)
 
         self.smtp = smtp
         return self
