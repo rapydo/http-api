@@ -165,7 +165,7 @@ def inject_callback_parameters(
         )
         return None
 
-    if not match_types(parameters["endpoint"], EndpointResource):
+    if not match_types(EndpointResource, parameters["endpoint"]):
         log.critical(
             "Wrong type annotation for parameter 'endpoint' in {}, "
             "expected EndpointResource but found {}",
