@@ -112,7 +112,7 @@ jobs:
       - name: Coverage
         uses: rapydo/actions/coverage@v1
         with:
-          path: ${{ matrix.template }}.${{ matrix.mode }}/submodules/http-api
+          repository: ${{ matrix.template }}.${{ matrix.mode }}/submodules/http-api
           project: prj
           step: backend
 
