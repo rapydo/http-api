@@ -6,7 +6,7 @@ class TestApp(BaseTests):
     def test_parameter_injection(self, client: FlaskClient) -> None:
 
         headers, _ = self.do_login(client, None, None)
-        r = client.post(f"{API_URI}/tests/inject/myparam", headers=headers)
+        r = client.get(f"{API_URI}/tests/inject/myparam", headers=headers)
         assert r.status_code == 200
 
         response = self.get_content(r)
