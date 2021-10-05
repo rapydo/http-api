@@ -730,15 +730,15 @@ class TestApp(BaseTests):
             pass
 
         # These functions are not executed => no cover
-        def ok_endpoint_no_params(  # pragma: no cover
+        def ok_endpoint_no_params(
             endpoint: EndpointResource,
-        ) -> None:
+        ) -> None:  # pragma: no cover
             pass
 
         # These functions are not executed => no cover
-        def ok_endpoint_with_params(  # pragma: no cover
+        def ok_endpoint_with_params(
             endpoint: EndpointResource, a: str, b: Faker
-        ) -> None:
+        ) -> None:  # pragma: no cover
             pass
 
         # Wrong callback: endpoint parameter is missing
