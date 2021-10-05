@@ -49,15 +49,17 @@ class Downloader:
                 yield data
 
     # this is good for large files
-    # Beware: path is expected to be already secured, no further validation applied here
     @staticmethod
     def send_file_streamed(
         path: Path, mime: Optional[str] = None, out_filename: Optional[str] = None
     ) -> Response:
+
+        str_path = secure_filename(str(path))
+        path = Path(str_path)
         if mime is None:
             # guess_type expects a str as argument because
             # it is intended to be used with urls and not with paths
-            mime_type = MimeTypes().guess_type(str(path))
+            mime_type = MimeTypes().guess_type(str_path)
             mime = mime_type[0]
 
         log.info("Providing streamed content from {} (mime={})", path, mime)
