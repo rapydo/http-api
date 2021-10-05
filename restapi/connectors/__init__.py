@@ -84,7 +84,7 @@ class Connector(metaclass=abc.ABCMeta):
         if Connector.authentication_service == NO_AUTH:
             log.info("No Authentication service configured")
         else:
-            log.info("Authentication service: {}", Connector.authentication_service)
+            log.debug("Authentication service: {}", Connector.authentication_service)
 
         Connector.services = Connector.load_connectors(
             ABS_RESTAPI_PATH, BACKEND_PACKAGE, Connector.services
@@ -239,7 +239,7 @@ class Connector(metaclass=abc.ABCMeta):
                     extended_models = Meta.import_models(connector, EXTENDED_PACKAGE)
                 custom_models = Meta.import_models(connector, CUSTOM_PACKAGE)
 
-                log.info(
+                log.debug(
                     "Models loaded from {}: core {}, extended {}, custom {}",
                     connector,
                     len(base_models),
