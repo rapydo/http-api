@@ -9,9 +9,10 @@ from restapi.services.authentication import User
 # from restapi.utilities.logs import log
 
 
-def inject_token(endpoint: EndpointResource, token_id: str) -> Dict[str, Any]:
+def inject_token(
+    endpoint: EndpointResource, token_id: str, user: User
+) -> Dict[str, Any]:
 
-    user = endpoint.get_user()
     tokens = endpoint.auth.get_tokens(user=user)
 
     for token in tokens:
