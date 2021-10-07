@@ -14,7 +14,8 @@ import pytest
 import pytz
 from faker import Faker
 from flask import Flask
-from flask.wrappers import Response
+from flask.testing import FlaskClient
+from werkzeug.test import TestResponse as Response
 
 from restapi.config import (
     API_URL,
@@ -43,12 +44,6 @@ class MockedEmail(TypedDict):
 SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
 API_URI = f"{SERVER_URI}{API_URL}"
 AUTH_URI = f"{SERVER_URI}{AUTH_URL}"
-
-# Should be:
-# from flask.testing import FlaskClient
-# but it raises Missing type parameters for generic type "FlaskClient"
-# I cannot understand how to fix this... so let's fallback to Any...
-FlaskClient = Any
 
 Event = namedtuple(
     "Event",
