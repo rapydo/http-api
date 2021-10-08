@@ -3,7 +3,7 @@ import re
 from time import sleep
 
 from click.testing import CliRunner
-from telethon import TelegramClient
+from telethon import TelegramClient  # type-ignore
 from telethon.sessions import StringSession
 
 from restapi import __commands__ as cli
