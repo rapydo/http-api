@@ -41,7 +41,7 @@ def test_bot() -> None:
     session_str = Env.get("TELETHON_SESSION")
     botname = Env.get("TELEGRAM_BOTNAME")
 
-    async def send_command(client: TelegramClient, command: str) -> str:
+    async def send_command(client: TelegramClient, command: str) -> str:  # type-ignore
         await client.send_message(botname, command)
         sleep(1)
         messages = await client.get_messages(botname)
