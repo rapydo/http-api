@@ -1,9 +1,10 @@
 import asyncio
 import re
 from time import sleep
+from typing import Any
 
 from click.testing import CliRunner
-from telethon import TelegramClient  # type-ignore
+from telethon import TelegramClient
 from telethon.sessions import StringSession
 
 from restapi import __commands__ as cli
@@ -41,7 +42,8 @@ def test_bot() -> None:
     session_str = Env.get("TELETHON_SESSION")
     botname = Env.get("TELEGRAM_BOTNAME")
 
-    async def send_command(client: TelegramClient, command: str) -> str:  # type-ignore
+    # use TelegramClient as a type once released the typed version 2 (issue #1195)
+    async def send_command(client: Any, command: str) -> str:
         await client.send_message(botname, command)
         sleep(1)
         messages = await client.get_messages(botname)
