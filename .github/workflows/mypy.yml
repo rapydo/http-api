@@ -24,6 +24,7 @@ jobs:
             html5lib \
             types-requests \
             types-pytz \
+            types-python-dateutil \
             types-certifi \
             types-click \
             types-PyYAML \
@@ -61,6 +62,7 @@ jobs:
             plumbum \
             psutil \
             passlib \
+            telethon \
             gripcontrol \
             pubcontrol \
             ; do

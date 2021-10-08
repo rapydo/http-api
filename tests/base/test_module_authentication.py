@@ -234,7 +234,7 @@ class TestApp(BaseTests):
 
         with pytest.raises(Unauthorized, match=r"Verification code is missing"):
             # NULL totp
-            auth.verify_totp(None, None)  # type: ignore
+            auth.verify_totp(None, None)
 
         user = auth.get_user(username=auth.default_user)
         secret = auth.get_totp_secret(user)
@@ -458,16 +458,16 @@ class TestApp(BaseTests):
         assert auth.get_user(None, None) is None
         user = auth.get_user(username=BaseAuthentication.default_user)
         assert user is not None
-        assert not auth.save_user(None)  # type: ignore
+        assert not auth.save_user(None)
         assert auth.save_user(user)
-        assert not auth.delete_user(None)  # type: ignore
+        assert not auth.delete_user(None)
 
         assert auth.get_group(None, None) is None
         group = auth.get_group(name=DEFAULT_GROUP_NAME)
         assert group is not None
-        assert not auth.save_group(None)  # type: ignore
+        assert not auth.save_group(None)
         assert auth.save_group(group)
-        assert not auth.delete_group(None)  # type: ignore
+        assert not auth.delete_group(None)
 
         # None user has no roles ... verify_roles will always be False
         assert not auth.verify_roles(None, ["A", "B"], required_roles="invalid")
@@ -543,7 +543,7 @@ class TestApp(BaseTests):
         new_description = faker.pystr()
         role.description = new_description
         assert auth.save_role(role)
-        assert not auth.save_role(None)  # type: ignore
+        assert not auth.save_role(None)
 
         # Create a new custom role
         new_role_name = faker.pystr()

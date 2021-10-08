@@ -142,7 +142,7 @@ class TestApp(BaseTests):
         # assert ResponseMaker.get_schema_type(f, fields.Raw()) == "string"
         # assert ResponseMaker.get_schema_type(f, fields.TimeDelta()) == "string"
 
-        assert not ResponseMaker.is_binary(None)  # type: ignore
+        assert not ResponseMaker.is_binary(None)
         assert not ResponseMaker.is_binary("")
         assert not ResponseMaker.is_binary("application/json")
         assert ResponseMaker.is_binary("application/octet-stream")
@@ -519,7 +519,7 @@ class TestApp(BaseTests):
             get_timedelta(every, "years")  # type: ignore
 
         with pytest.raises(BadRequest):
-            get_timedelta(every, faker.pystr())  # type: ignore
+            get_timedelta(every, faker.pystr())
 
         assert seconds_to_human(0) == "0 seconds"
         assert seconds_to_human(1) == "1 second"
