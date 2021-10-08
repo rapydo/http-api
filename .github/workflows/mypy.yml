@@ -33,8 +33,7 @@ jobs:
             pika-stubs \
             celery-types \
             mongo-types \
-            sqlalchemy-stubs \
-            pytest-stub
+            sqlalchemy-stubs
           pip install --upgrade --no-cache-dir --editable .
 
       - name: Run MyPy
