@@ -20,12 +20,6 @@ repos:
     rev: 3.9.2
     hooks:
       - id: flake8
-  - repo: https://github.com/gitguardian/gg-shield
-    rev: v1.7.3
-    hooks:
-      - id: ggshield
-        language_version: python3
-        stages: [commit]
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.910
     hooks:
@@ -35,7 +29,6 @@ repos:
 
             # Extra dependencies
             "lxml",
-            "pytest-stub",
             "types-pytz",
             "types-python-dateutil",
             "types-requests",
@@ -91,3 +84,10 @@ repos:
             "--txt-report",
             ".",
           ]
+
+  - repo: https://github.com/gitguardian/gg-shield
+    rev: v1.7.3
+    hooks:
+      - id: ggshield
+        language_version: python3
+        stages: [commit]

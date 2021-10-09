@@ -16,6 +16,12 @@ DEFAULT_CHUNK_SIZE = 1048576  # 1 MB
 
 
 class Downloader:
+    @staticmethod
+    def guess_mime_type(path: Path) -> Optional[str]:
+        # guess_type expects a str as argument because
+        # it is intended to be used with urls and not with paths
+        mime_type = MimeTypes().guess_type(str(path))
+        return mime_type[0]
 
     # This is good for small files
     # It is also good for media files by sending Range header
@@ -33,6 +39,13 @@ class Downloader:
         path = Uploader.absolute_upload_file(
             filename, subfolder=subfolder, onlydir=True
         )
+
+        if not path.is_file():
+            raise NotFound("Requested file does not exist")
+
+        if mime is None:
+            mime = Downloader.guess_mime_type(path)
+
         log.info("Sending file content from {}/{}", path, filename)
 
         return send_from_directory(path, filename, mimetype=mime)
@@ -56,10 +69,7 @@ class Downloader:
     ) -> Response:
 
         if mime is None:
-            # guess_type expects a str as argument because
-            # it is intended to be used with urls and not with paths
-            mime_type = MimeTypes().guess_type(str(path))
-            mime = mime_type[0]
+            mime = Downloader.guess_mime_type(path)
 
         log.info("Providing streamed content from {} (mime={})", path, mime)
 
