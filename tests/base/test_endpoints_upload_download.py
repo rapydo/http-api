@@ -100,7 +100,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.get(f"{API_URI}/tests/download/folder/doesnotexist")
         assert r.status_code == 404
-        assert self.get_content(r) == "Requested file does not exist"
+        assert self.get_content(r) == "The requested file does not exist"
 
         r = client.get(f"{API_URI}/tests/download/{upload_folder}/{self.fname}")
         assert r.status_code == 200

@@ -27,12 +27,10 @@ if TESTING:
             },
         )
         def get(self, folder: str, fname: str, stream: bool = False) -> Response:
-            if stream:
-                fpath = Uploader.absolute_upload_file(
-                    fname,
-                    # The same defined in test_upload
-                    subfolder=Path(folder),
-                )
-                return Downloader.send_file_streamed(fpath)
+            # The same as defined in test_upload
+            subfolder = Path(folder)
 
-            return Downloader.download(fname, subfolder=Path(folder))
+            if stream:
+                return Downloader.send_file_streamed(fname, subfolder=subfolder)
+
+            return Downloader.download(fname, subfolder=subfolder)

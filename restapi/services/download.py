@@ -37,8 +37,8 @@ class Downloader:
             filename, subfolder=subfolder, onlydir=True
         )
 
-        if not path.is_file():
-            raise NotFound("Requested file does not exist")
+        if not path.joinpath(filename).is_file():
+            raise NotFound("The requested file does not exist")
 
         if mime is None:
             mime = Downloader.guess_mime_type(path)
@@ -62,15 +62,23 @@ class Downloader:
     # Beware: path is expected to be already secured, no further validation applied here
     @staticmethod
     def send_file_streamed(
-        path: Path, mime: Optional[str] = None, out_filename: Optional[str] = None
+        filename: str,
+        subfolder: Optional[Path] = None,
+        mime: Optional[str] = None,
+        out_filename: Optional[str] = None,
     ) -> Response:
+
+        filename = secure_filename(filename)
+        path = Uploader.absolute_upload_file(
+            filename, subfolder=subfolder, onlydir=True
+        )
 
         if mime is None:
             mime = Downloader.guess_mime_type(path)
 
         log.info("Providing streamed content from {} (mime={})", path, mime)
 
-        if not path.is_file():
+        if not path.joinpath(filename).is_file():
             raise NotFound("The requested file does not exist")
 
         response = Response(
