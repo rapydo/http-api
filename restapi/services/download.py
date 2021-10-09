@@ -59,7 +59,6 @@ class Downloader:
                 yield data
 
     # this is good for large files
-    # Beware: path is expected to be already secured, no further validation applied here
     @staticmethod
     def send_file_streamed(
         filename: str,
@@ -72,23 +71,24 @@ class Downloader:
         path = Uploader.absolute_upload_file(
             filename, subfolder=subfolder, onlydir=True
         )
+        filepath = path.joinpath(filename)
 
         if mime is None:
-            mime = Downloader.guess_mime_type(path)
+            mime = Downloader.guess_mime_type(filepath)
 
-        log.info("Providing streamed content from {} (mime={})", path, mime)
+        log.info("Providing streamed content from {} (mime={})", filepath, mime)
 
-        if not path.joinpath(filename).is_file():
+        if not filepath.joinpath(filename).is_file():
             raise NotFound("The requested file does not exist")
 
         response = Response(
-            stream_with_context(Downloader.read_in_chunks(path)),
+            stream_with_context(Downloader.read_in_chunks(filepath)),
             mimetype=mime,
         )
 
         if not out_filename:
-            out_filename = path.name
+            out_filename = filepath.name
 
         response.headers["Content-Disposition"] = f"attachment; filename={out_filename}"
-        response.headers["Content-Length"] = path.stat().st_size
+        response.headers["Content-Length"] = filepath.stat().st_size
         return response
