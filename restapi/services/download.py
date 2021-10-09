@@ -78,7 +78,7 @@ class Downloader:
 
         log.info("Providing streamed content from {} (mime={})", filepath, mime)
 
-        if not filepath.joinpath(filename).is_file():
+        if not filepath.is_file():
             raise NotFound("The requested file does not exist")
 
         response = Response(
