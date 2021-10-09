@@ -101,11 +101,6 @@ class TestUploadAndDownload(BaseTests):
         r = client.get(f"{API_URI}/tests/download/folder/doesnotexist")
         assert r.status_code == 400
 
-        # this is a special case introduced for testing purpose
-        # this special file name will be converted to None into the endpoint
-        r = client.get(f"{API_URI}/tests/download/folder/SPECIAL-VALUE-FOR-NONE")
-        assert r.status_code == 400
-
         r = client.get(f"{API_URI}/tests/download/{upload_folder}/{self.fname}")
         assert r.status_code == 200
         content = r.data.decode("utf-8")

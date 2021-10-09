@@ -35,7 +35,4 @@ if TESTING:
                 )
                 return Downloader.send_file_streamed(fpath)
 
-            if fname == "SPECIAL-VALUE-FOR-NONE":
-                return Downloader.download(None)
-
             return Downloader.download(fname, subfolder=Path(folder))

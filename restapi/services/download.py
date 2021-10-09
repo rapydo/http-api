@@ -8,7 +8,7 @@ from typing import Iterator, Optional
 from flask import Response, send_from_directory, stream_with_context
 from werkzeug.utils import secure_filename
 
-from restapi.exceptions import BadRequest, NotFound
+from restapi.exceptions import NotFound
 from restapi.services.uploader import Uploader
 from restapi.utilities.logs import log
 
@@ -27,13 +27,10 @@ class Downloader:
     # It is also good for media files by sending Range header
     @staticmethod
     def download(
-        filename: Optional[str] = None,
+        filename: str,
         subfolder: Optional[Path] = None,
         mime: Optional[str] = None,
     ) -> Response:
-
-        if filename is None:
-            raise BadRequest("No filename specified to download")
 
         filename = secure_filename(filename)
         path = Uploader.absolute_upload_file(
