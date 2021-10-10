@@ -19,6 +19,7 @@ if TESTING:
             responses={
                 200: "Tests executed",
                 206: "Sent partial content",
+                403: "Invalid file path",
                 404: "The requested file does not exist",
                 416: "Range Not Satisfiable",
             },
