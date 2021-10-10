@@ -43,8 +43,8 @@ class AdminGroups(EndpointResource):
                 # mypy correctly raises errors because User is not defined
                 # in generic Connector instances (as auth.db is)...
                 # but in mongo connector the User model is properly injected
-                User = self.auth.db.User  # type: ignore
-                members = User.objects.raw({"belongs_to": g.id}).all()
+                UserModel = self.auth.db.User  # type: ignore
+                members = UserModel.objects.raw({"belongs_to": g.id}).all()
             else:
                 members = list(g.members)
             coordinators = [u for u in members if self.auth.is_coordinator(u)]
