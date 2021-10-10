@@ -36,7 +36,11 @@ class Uploader:
             raise BadRequest("Invalid null byte in subfolder parameter")
 
         if UPLOAD_PATH not in path.parents:
-            log.error("Invalid root path: {}", path)
+            log.error(
+                "Invalid root path: {} is expected to be a child of {}",
+                path,
+                UPLOAD_PATH,
+            )
             raise Forbidden("Invalid file path")
 
         if path != path.resolve():
