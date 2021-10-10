@@ -30,6 +30,12 @@ class Uploader:
         )
 
     @staticmethod
+    def validate_upload_folder(path: Optional[Path]) -> None:
+
+        if "\x00" in str(path):
+            raise BadRequest("Invalid null byte in subfolder parameter")
+
+    @staticmethod
     def absolute_upload_file(
         filename: str, subfolder: Optional[Path] = None, onlydir: bool = False
     ) -> Path:
@@ -79,6 +85,9 @@ class Uploader:
         # Check file name
         fname = secure_filename(myfile.filename)
         abs_file = Uploader.absolute_upload_file(fname, subfolder)
+
+        Uploader.validate_upload_folder(abs_file)
+
         log.info("File request for [{}]({})", myfile, abs_file)
 
         if abs_file.exists():
@@ -124,6 +133,8 @@ class Uploader:
 
         if not self.allowed_file(filename):
             raise BadRequest("File extension not allowed")
+
+        Uploader.validate_upload_folder(upload_dir)
 
         if not upload_dir.exists():
             upload_dir.mkdir(parents=True, exist_ok=True)
@@ -203,6 +214,9 @@ class Uploader:
     def chunk_upload(
         self, upload_dir: Path, filename: str, chunk_size: Optional[int] = None
     ) -> Tuple[bool, Response]:
+
+        Uploader.validate_upload_folder(upload_dir)
+
         filename = secure_filename(filename)
 
         range_header = request.headers.get("Content-Range", "")

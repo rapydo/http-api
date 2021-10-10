@@ -36,6 +36,7 @@ class Downloader:
         path = Uploader.absolute_upload_file(
             filename, subfolder=subfolder, onlydir=True
         )
+        Uploader.validate_upload_folder(path)
 
         if not path.joinpath(filename).is_file():
             raise NotFound("The requested file does not exist")
@@ -71,6 +72,7 @@ class Downloader:
         path = Uploader.absolute_upload_file(
             filename, subfolder=subfolder, onlydir=True
         )
+        Uploader.validate_upload_folder(path)
         filepath = path.joinpath(filename)
 
         if mime is None:
