@@ -7,7 +7,7 @@ from werkzeug.http import parse_content_range_header
 from werkzeug.utils import secure_filename
 
 from restapi.config import UPLOAD_PATH, get_backend_url
-from restapi.exceptions import BadRequest, Conflict, ServiceUnavailable
+from restapi.exceptions import BadRequest, Conflict, Forbidden, ServiceUnavailable
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
@@ -30,10 +30,18 @@ class Uploader:
         )
 
     @staticmethod
-    def validate_upload_folder(path: Optional[Path]) -> None:
+    def validate_upload_folder(path: Path) -> None:
 
         if "\x00" in str(path):
             raise BadRequest("Invalid null byte in subfolder parameter")
+
+        if UPLOAD_PATH not in path.parents:
+            log.error("Invalid root path: {}", path)
+            raise Forbidden("Invalid file path")
+
+        if path != path.resolve():
+            log.error("Invalid path: path is relative or contains double-dots")
+            raise Forbidden("Invalid file path")
 
     @staticmethod
     def absolute_upload_file(
