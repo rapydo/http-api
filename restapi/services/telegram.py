@@ -479,7 +479,7 @@ class BotApiClient:
             if payload:
                 data = orjson.dumps(payload).decode("UTF8")
 
-            response = requests.request(method, url=url, data=data)
+            response = requests.request(method, url=url, data=data, timeout=10)
 
             out = response.json()
         # Never raised during tests: how to test it?

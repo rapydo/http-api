@@ -228,7 +228,10 @@ class RabbitExt(Connector):
         r = requests.get(
             f"{schema}{host}:{port}/api/exchanges/{vhost}/{exchange}/bindings/source",
             auth=HTTPBasicAuth(user, password),
+            # this verify=False is needed because APIs are called on
+            # the internal docker network where the TLS certificate is invalid
             verify=False,
+            timeout=5,
         )
         response = r.json()
         if r.status_code != 200:  # pragma: no cover
