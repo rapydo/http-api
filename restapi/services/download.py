@@ -8,6 +8,7 @@ from typing import Iterator, Optional
 from flask import Response, send_from_directory, stream_with_context
 from werkzeug.utils import secure_filename
 
+from restapi.config import UPLOAD_PATH
 from restapi.exceptions import NotFound
 from restapi.services.uploader import Uploader
 from restapi.utilities.logs import log
@@ -28,16 +29,14 @@ class Downloader:
     @staticmethod
     def download(
         filename: str,
-        subfolder: Optional[Path] = None,
+        subfolder: Path,
         mime: Optional[str] = None,
     ) -> Response:
 
-        filename = secure_filename(filename)
-        path = Uploader.absolute_upload_file(
-            filename, subfolder=subfolder, onlydir=True
-        )
+        path = UPLOAD_PATH.joinpath(subfolder)
         Uploader.validate_upload_folder(path)
 
+        filename = secure_filename(filename)
         if not path.joinpath(filename).is_file():
             raise NotFound("The requested file does not exist")
 
@@ -63,16 +62,15 @@ class Downloader:
     @staticmethod
     def send_file_streamed(
         filename: str,
-        subfolder: Optional[Path] = None,
+        subfolder: Path,
         mime: Optional[str] = None,
         out_filename: Optional[str] = None,
     ) -> Response:
 
-        filename = secure_filename(filename)
-        path = Uploader.absolute_upload_file(
-            filename, subfolder=subfolder, onlydir=True
-        )
+        path = UPLOAD_PATH.joinpath(subfolder)
         Uploader.validate_upload_folder(path)
+
+        filename = secure_filename(filename)
         filepath = path.joinpath(filename)
 
         if mime is None:

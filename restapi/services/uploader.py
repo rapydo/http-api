@@ -48,27 +48,6 @@ class Uploader:
             raise Forbidden("Invalid file path")
 
     @staticmethod
-    def absolute_upload_file(
-        filename: str, subfolder: Optional[Path] = None, onlydir: bool = False
-    ) -> Path:
-
-        root_path = UPLOAD_PATH
-        if subfolder:
-
-            if "\x00" in str(subfolder):
-                raise BadRequest("Invalid null byte in subfolder parameter")
-
-            root_path = root_path.joinpath(subfolder)
-            if not root_path.exists():
-                root_path.mkdir(parents=True, exist_ok=True)
-
-        if onlydir:
-            return root_path
-
-        filename = secure_filename(filename)
-        return root_path.joinpath(filename)
-
-    @staticmethod
     def get_file_metadata(abs_file: Path) -> Dict[str, str]:
         try:
             # Check the type
@@ -81,7 +60,7 @@ class Uploader:
             return {}
 
     # this method is used by b2stage and mistral
-    def upload(self, subfolder: Optional[Path] = None, force: bool = False) -> Response:
+    def upload(self, subfolder: Path, force: bool = False) -> Response:
 
         if "file" not in request.files:
             raise BadRequest("No files specified")
@@ -95,10 +74,14 @@ class Uploader:
             raise BadRequest("File extension not allowed")
 
         # Check file name
-        fname = secure_filename(myfile.filename)
-        abs_file = Uploader.absolute_upload_file(fname, subfolder)
+        upload_dir = UPLOAD_PATH.joinpath(subfolder)
+        Uploader.validate_upload_folder(upload_dir)
 
-        Uploader.validate_upload_folder(abs_file)
+        if not upload_dir.exists():
+            upload_dir.mkdir(parents=True, exist_ok=True)
+
+        fname = secure_filename(myfile.filename)
+        abs_file = upload_dir.joinpath(fname)
 
         log.info("File request for [{}]({})", myfile, abs_file)
 

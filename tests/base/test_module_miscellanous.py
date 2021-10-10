@@ -449,17 +449,17 @@ class TestApp(BaseTests):
         with pytest.raises(
             BadRequest, match=r"Invalid null byte in subfolder parameter"
         ):
-            Uploader.absolute_upload_file("0", subfolder=Path("\x00"))
+            Uploader.validate_upload_folder(Path("\x00"))
 
         with pytest.raises(
             BadRequest, match=r"Invalid null byte in subfolder parameter"
         ):
-            Uploader.absolute_upload_file("0", subfolder=Path("/uploads/\x00"))
+            Uploader.validate_upload_folder(Path("/uploads/\x00"))
 
         with pytest.raises(
             BadRequest, match=r"Invalid null byte in subfolder parameter"
         ):
-            Uploader.absolute_upload_file("0", subfolder=Path("/uploads/AA\x00BB"))
+            Uploader.validate_upload_folder(Path("/uploads/AA\x00BB"))
 
     # #######################################
     # ####      Time
