@@ -1,11 +1,8 @@
-from pathlib import Path
-
 from restapi import decorators
-from restapi.config import TESTING
+from restapi.config import TESTING, UPLOAD_PATH
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.download import Downloader
-from restapi.services.uploader import Uploader
 
 if TESTING:
 
@@ -28,7 +25,7 @@ if TESTING:
         )
         def get(self, folder: str, fname: str, stream: bool = False) -> Response:
             # The same as defined in test_upload
-            subfolder = Path(folder)
+            subfolder = UPLOAD_PATH.joinpath(folder)
 
             if stream:
                 return Downloader.send_file_streamed(fname, subfolder=subfolder)
