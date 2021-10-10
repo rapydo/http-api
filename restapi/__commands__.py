@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import click
@@ -265,19 +266,25 @@ def tests(
     else:
         parameters.append(CUSTOM_PACKAGE)
 
+    test_folder = Path("tests")
     if file is not None:
-        # Can't be enabled due to mistral stuck at py38
-        # file = file.removeprefix("tests/")
-        if file.startswith("tests/"):
-            file = file[6:]
 
-        if not os.path.isfile(os.path.join("tests", file)):
+        filepath = Path(file)
+        if test_folder not in filepath.parents:
+            filepath = test_folder.joinpath(filepath)
+
+        if not filepath.is_file():
             print_and_exit("File not found: {}", file)
-        parameters.append(file)
+        parameters.append(str(filepath.relative_to(test_folder)))
     elif folder is not None:
-        if not os.path.isdir(os.path.join("tests", folder)):
+
+        folderpath = Path(folder)
+        if test_folder not in folderpath.parents:
+            folderpath = test_folder.joinpath(folderpath)
+
+        if not folderpath.is_dir():
             print_and_exit("Folder not found: {}", folder)
-        parameters.append(folder)
+        parameters.append(str(folderpath.relative_to(test_folder)))
 
     # In prod mode tests are execute with the server running.
     # Destroy test fails with alchemy due to db locks
