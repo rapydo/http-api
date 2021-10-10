@@ -59,7 +59,7 @@ class Uploader:
             log.warning("Unknown type for '{}'", abs_file)
             return {}
 
-    # this method is used by b2stage and mistral
+    # this method is used by mistral
     def upload(self, subfolder: Path, force: bool = False) -> Response:
 
         if "file" not in request.files:
@@ -73,15 +73,13 @@ class Uploader:
         if not self.allowed_file(myfile.filename):
             raise BadRequest("File extension not allowed")
 
-        # Check file name
-        upload_dir = UPLOAD_PATH.joinpath(subfolder)
-        Uploader.validate_upload_folder(upload_dir)
+        Uploader.validate_upload_folder(subfolder)
 
-        if not upload_dir.exists():
-            upload_dir.mkdir(parents=True, exist_ok=True)
+        if not subfolder.exists():
+            subfolder.mkdir(parents=True, exist_ok=True)
 
         fname = secure_filename(myfile.filename)
-        abs_file = upload_dir.joinpath(fname)
+        abs_file = subfolder.joinpath(fname)
 
         log.info("File request for [{}]({})", myfile, abs_file)
 
