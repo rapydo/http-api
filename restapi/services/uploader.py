@@ -35,16 +35,16 @@ class Uploader:
         if "\x00" in str(path):
             raise BadRequest("Invalid null byte in subfolder parameter")
 
-        if UPLOAD_PATH not in path.parents:
+        if path != path.resolve():
+            log.error("Invalid path: path is relative or contains double-dots")
+            raise Forbidden("Invalid file path")
+
+        if path != UPLOAD_PATH and UPLOAD_PATH not in path.parents:
             log.error(
                 "Invalid root path: {} is expected to be a child of {}",
                 path,
                 UPLOAD_PATH,
             )
-            raise Forbidden("Invalid file path")
-
-        if path != path.resolve():
-            log.error("Invalid path: path is relative or contains double-dots")
             raise Forbidden("Invalid file path")
 
     @staticmethod
