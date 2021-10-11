@@ -1,4 +1,3 @@
-import os
 from typing import Any, Dict, Iterator, Optional, Tuple
 
 import html2text
@@ -52,29 +51,26 @@ def convert_html2text(html_body: str) -> str:
 
 def _get_html_template(template_file: str, replaces: Dict[str, Any]) -> Optional[str]:
     # Custom templates from project backend/models/email/
-    template_path = os.path.join(
-        CODE_DIR, CUSTOM_PACKAGE, MODELS_DIR, "emails", template_file
+    template_path = CODE_DIR.joinpath(
+        CUSTOM_PACKAGE, MODELS_DIR, "emails", template_file
     )
 
-    if not os.path.exists(template_path):
+    if not template_path.exists():
         # Core templates from restapi/connectors/smtp/templates/
-        template_path = os.path.join(
-            ABS_RESTAPI_PATH,
+        template_path = ABS_RESTAPI_PATH.joinpath(
             CONNECTORS_FOLDER,
             "smtp",
             "templates",
             template_file,
         )
 
-    if not os.path.exists(template_path):
+    if not template_path.exists():
         log.info("Template not found: {}", template_path)
         return None
 
     try:
 
-        templateLoader = jinja2.FileSystemLoader(
-            searchpath=os.path.dirname(template_path)
-        )
+        templateLoader = jinja2.FileSystemLoader(searchpath=template_path.parent)
         templateEnv = jinja2.Environment(loader=templateLoader, autoescape=True)
         template = templateEnv.get_template(template_file)
 
@@ -156,7 +152,7 @@ def send_registration_notification(user: User) -> None:
 def send_activation_link(user: User, url: str) -> bool:
 
     return send_notification(
-        subject=os.getenv("EMAIL_ACTIVATION_SUBJECT", "Account activation"),
+        subject=Env.get("EMAIL_ACTIVATION_SUBJECT", "Account activation"),
         template="activate_account.html",
         to_address=user.email,
         data={"url": url},

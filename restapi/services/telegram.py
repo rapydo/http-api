@@ -469,7 +469,7 @@ class BotApiClient:
         payload: Optional[Dict[str, Any]] = None,
     ) -> Any:
         host = BotApiClient.variables.get("backend_host")
-        port = Env.get("FLASK_PORT")
+        port = Env.get("FLASK_PORT", "8080")
         url = f"http://{host}:{port}/{base}/{path}"
 
         log.debug("Calling {} on {}", method, url)

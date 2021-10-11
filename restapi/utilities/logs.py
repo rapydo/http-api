@@ -1,4 +1,3 @@
-import os
 import re
 import sys
 import urllib.parse
@@ -12,9 +11,9 @@ from loguru import logger as log
 from restapi.config import HOST_TYPE, PRODUCTION
 from restapi.env import Env
 
-log_level = os.getenv("LOGURU_LEVEL", "DEBUG")
-LOG_RETENTION = os.getenv("LOG_RETENTION", "180")
-FILE_LOGLEVEL = os.getenv("FILE_LOGLEVEL", "WARNING")
+log_level = Env.get("LOGURU_LEVEL", "DEBUG")
+LOG_RETENTION = Env.get("LOG_RETENTION", "180")
+FILE_LOGLEVEL = Env.get("FILE_LOGLEVEL", "WARNING")
 # FILE_LOGLEVEL = "WARNING" if not TESTING else "INFO"
 LOGS_FOLDER = Path("/logs")
 

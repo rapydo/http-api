@@ -244,11 +244,11 @@ class BaseAuthentication(metaclass=ABCMeta):
     @staticmethod
     def load_default_user() -> None:
 
-        BaseAuthentication.default_user = Env.get("AUTH_DEFAULT_USERNAME")
-        BaseAuthentication.default_password = Env.get("AUTH_DEFAULT_PASSWORD")
+        BaseAuthentication.default_user = Env.get("AUTH_DEFAULT_USERNAME", "")
+        BaseAuthentication.default_password = Env.get("AUTH_DEFAULT_PASSWORD", "")
         if (
-            BaseAuthentication.default_user is None
-            or BaseAuthentication.default_password is None
+            not BaseAuthentication.default_user
+            or not BaseAuthentication.default_password
         ):  # pragma: no cover
             print_and_exit("Default credentials are unavailable!")
 
@@ -733,7 +733,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
         if TESTING:  # pragma: no cover
             # TESTING_TOTP_HASH is set by setup-cypress github action
-            if (p := Env.get("AUTH_TESTING_TOTP_HASH")) is not None:
+            if p := Env.get("AUTH_TESTING_TOTP_HASH", ""):
                 return p
 
         if not user.mfa_hash:

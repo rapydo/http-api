@@ -26,8 +26,8 @@ def cli() -> None:  # pragma: no cover
 # Too dangerous to launch it during tests... skipping tests
 def main(args: List[str]) -> None:  # pragma: no cover
 
-    current_app = os.getenv("FLASK_APP")
-    if current_app is None or current_app.strip() == "":
+    current_app = Env.get("FLASK_APP", "").strip()
+    if not current_app:
         os.environ["FLASK_APP"] = f"{current_package}.__main__"
 
     # Call to untyped function "FlaskGroup" in typed context
@@ -56,7 +56,7 @@ def launch() -> None:  # pragma: no cover
         "--host",
         BIND_INTERFACE,
         "--port",
-        os.getenv("FLASK_PORT", "8080"),
+        Env.get("FLASK_PORT", "8080"),
         "--reload",
         "--no-debugger",
         "--eager-loading",

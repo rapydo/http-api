@@ -38,9 +38,9 @@ def test_bot() -> None:
     # How to generate StringSessions:
     # https://docs.telethon.dev/en/latest/concepts/sessions.html#string-sessions
     api_id = Env.get_int("TELEGRAM_APP_ID")
-    api_hash = Env.get("TELEGRAM_APP_HASH")
-    session_str = Env.get("TELETHON_SESSION")
-    botname = Env.get("TELEGRAM_BOTNAME")
+    api_hash = Env.get("TELEGRAM_APP_HASH", "") or None
+    session_str = Env.get("TELETHON_SESSION", "") or None
+    botname = Env.get("TELEGRAM_BOTNAME", "") or None
 
     # use TelegramClient as a type once released the typed version 2 (issue #1195)
     async def send_command(client: Any, command: str) -> str:

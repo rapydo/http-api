@@ -1,10 +1,10 @@
 import base64
-import os
 import re
 import urllib.parse
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
 
 import jwt
@@ -593,7 +593,7 @@ class BaseTests:
                     # to skip any external url
                     if frontend_host in url:
                         # token is the last part of the url, extract as a path
-                        token = os.path.basename(url)
+                        token = Path(url).name
                         break
 
         if token:
@@ -664,8 +664,8 @@ class BaseTests:
         cls, num: int = 1, filters: Optional[Dict[str, str]] = None
     ) -> List[Event]:
 
-        fpath = "/logs/security-events.log"
-        if not os.path.exists(fpath):  # pragma: no cover
+        fpath = LOGS_FOLDER.joinpath("security-events.log")
+        if not fpath.exists():  # pragma: no cover
             return []
 
         with open(fpath) as file:

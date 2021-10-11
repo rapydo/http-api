@@ -1,5 +1,5 @@
-import os
 import tempfile
+from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Union
 
 from flask import Flask
@@ -28,7 +28,7 @@ class Cache:
 
         return {
             "CACHE_TYPE": "flask_caching.backends.filesystem",
-            "CACHE_DIR": os.path.join(tempfile.gettempdir(), "cache"),
+            "CACHE_DIR": str(Path(tempfile.gettempdir(), "cache")),
             "CACHE_THRESHOLD": 4096,
             # 'CACHE_IGNORE_ERRORS': True,
         }

@@ -6,7 +6,7 @@ from typing import Dict, Optional, Union
 class Env:
     @staticmethod
     @lru_cache
-    def get(var: str, default: Optional[str] = None) -> Optional[str]:
+    def get(var: str, default: str) -> str:
         return os.getenv(var, default)
 
     @staticmethod
