@@ -12,18 +12,18 @@ class Env:
     @staticmethod
     @lru_cache
     def get_bool(var: str, default: bool = False) -> bool:
-        return Env.to_bool(Env.get(var), default)
+        return Env.to_bool(Env.get(var, ""), default)
 
     @staticmethod
     @lru_cache
     def get_int(var: str, default: int = 0) -> int:
-        return Env.to_int(Env.get(var), default)
+        return Env.to_int(Env.get(var, ""), default)
 
     @staticmethod
     @lru_cache
     def to_bool(var: Union[None, str, bool], default: bool = False) -> bool:
 
-        if var is None:
+        if var is None or var == "":
             return default
 
         if isinstance(var, bool):
@@ -52,7 +52,7 @@ class Env:
     @lru_cache
     def to_int(var: Union[None, str, int], default: int = 0) -> int:
 
-        if var is None:
+        if var is None or var == "":
             return default
 
         if isinstance(var, int):
