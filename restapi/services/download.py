@@ -33,19 +33,19 @@ class Downloader:
         mime: Optional[str] = None,
     ) -> Response:
 
-        path = UPLOAD_PATH.joinpath(subfolder)
-        Uploader.validate_upload_folder(path)
+        Uploader.validate_upload_folder(subfolder)
 
         filename = secure_filename(filename)
-        if not path.joinpath(filename).is_file():
+        filepath = subfolder.joinpath(filename)
+        if not filepath.is_file():
             raise NotFound("The requested file does not exist")
 
         if mime is None:
-            mime = Downloader.guess_mime_type(path)
+            mime = Downloader.guess_mime_type(filepath)
 
-        log.info("Sending file content from {}/{}", path, filename)
+        log.info("Sending file content from {}", filepath)
 
-        return send_from_directory(path, filename, mimetype=mime)
+        return send_from_directory(subfolder, filename, mimetype=mime)
 
     @staticmethod
     def read_in_chunks(
@@ -67,19 +67,18 @@ class Downloader:
         out_filename: Optional[str] = None,
     ) -> Response:
 
-        path = UPLOAD_PATH.joinpath(subfolder)
-        Uploader.validate_upload_folder(path)
+        Uploader.validate_upload_folder(subfolder)
 
         filename = secure_filename(filename)
-        filepath = path.joinpath(filename)
+        filepath = subfolder.joinpath(filename)
+
+        if not filepath.is_file():
+            raise NotFound("The requested file does not exist")
 
         if mime is None:
             mime = Downloader.guess_mime_type(filepath)
 
         log.info("Providing streamed content from {} (mime={})", filepath, mime)
-
-        if not filepath.is_file():
-            raise NotFound("The requested file does not exist")
 
         response = Response(
             stream_with_context(Downloader.read_in_chunks(filepath)),

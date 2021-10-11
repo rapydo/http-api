@@ -198,7 +198,7 @@ class Uploader:
 
         return total_length, start, stop
 
-    # Please not that chunk_upload as to be used from a PUT endpoint
+    # Please note that chunk_upload as to be used from a PUT endpoint
     # PUT request is way different compared to POST request. With PUT request
     # the file contents can be accessed using either request.data or request.stream.
     # The first one stores incoming data as string, while request.stream acts
