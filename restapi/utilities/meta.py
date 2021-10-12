@@ -62,10 +62,12 @@ class Meta:
             return import_module(modulestring)
         except ModuleNotFoundError as e:
             if exit_on_fail:
+                log.error(e)
                 raise e
             return None
         except Exception as e:  # pragma: no cover
             if exit_on_fail:
+                log.error(e)
                 raise e
             log.error("Module {} not found.\nError: {}", modulestring, e)
 

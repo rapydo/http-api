@@ -6,7 +6,7 @@ from plumbum.cmd import file
 from werkzeug.http import parse_content_range_header
 from werkzeug.utils import secure_filename
 
-from restapi.config import UPLOAD_PATH, get_backend_url
+from restapi.config import DATA_PATH, get_backend_url
 from restapi.exceptions import BadRequest, Conflict, Forbidden, ServiceUnavailable
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
@@ -39,11 +39,11 @@ class Uploader:
             log.error("Invalid path: path is relative or contains double-dots")
             raise Forbidden("Invalid file path")
 
-        if path != UPLOAD_PATH and UPLOAD_PATH not in path.parents:
+        if path != DATA_PATH and DATA_PATH not in path.parents:
             log.error(
                 "Invalid root path: {} is expected to be a child of {}",
                 path,
-                UPLOAD_PATH,
+                DATA_PATH,
             )
             raise Forbidden("Invalid file path")
 

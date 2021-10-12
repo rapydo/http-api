@@ -1,4 +1,5 @@
 """
+
 Customization based on configuration 'blueprint' files
 """
 
@@ -220,19 +221,21 @@ class EndpointsLoader:
 
                         if "user" in parameters:
                             log.critical(
-                                "Wrong user parameter in {}.{}, "
+                                "Wrong user parameter in {}.{} (function {}), "
                                 "expected {} but found {}",
                                 epclss.__name__,
                                 method_fn,
+                                fn.__name__,
                                 expected_annotation,
                                 parameters["user"],
                             )
                         else:
                             log.critical(
-                                "Missing user: {} parameter in {}.{}",
+                                "Missing user: {} parameter in {}.{} (function {})",
                                 expected_annotation,
                                 epclss.__name__,
                                 method_fn,
+                                fn.__name__,
                             )
 
                 if not hasattr(fn, "uri"):  # pragma: no cover

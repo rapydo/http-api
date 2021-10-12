@@ -49,7 +49,7 @@ HOST_TYPE = get_host_type(HOSTNAME)
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8080"
-UPLOAD_PATH: Path = Path(Env.get("UPLOAD_PATH", "/uploads"))
+DATA_PATH: Path = Path(Env.get("DATA_PATH", "/uploads"))
 IMPORT_PATH: Path = Path(Env.get("DATA_IMPORT_FOLDER", "/imports"))
 CODE_DIR: Path = Path(Env.get("CODE_DIR", "/code"))
 APP_SECRETS = Path(Env.get("APP_SECRETS", "/secrets"))

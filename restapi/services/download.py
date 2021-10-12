@@ -8,7 +8,7 @@ from typing import Iterator, Optional
 from flask import Response, send_from_directory, stream_with_context
 from werkzeug.utils import secure_filename
 
-from restapi.config import UPLOAD_PATH
+from restapi.config import DATA_PATH
 from restapi.exceptions import NotFound
 from restapi.services.uploader import Uploader
 from restapi.utilities.logs import log

@@ -4,7 +4,7 @@ from typing import Dict
 
 from faker import Faker
 
-from restapi.config import PRODUCTION, UPLOAD_PATH, get_backend_url
+from restapi.config import PRODUCTION, DATA_PATH, get_backend_url
 from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
 
 
@@ -60,7 +60,7 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, self.fname)
+        destination_path = DATA_PATH.joinpath(upload_folder, self.fname)
         assert destination_path.exists()
         assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
 
@@ -81,7 +81,7 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, self.fname)
+        destination_path = DATA_PATH.joinpath(upload_folder, self.fname)
         assert destination_path.exists()
         assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
 
@@ -195,7 +195,7 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 206
         assert self.get_content(r) == "partial"
 
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        destination_path = DATA_PATH.joinpath(upload_folder, filename)
         assert destination_path.exists()
         # The file is still writeable because the upload is in progress
         assert oct(os.stat(destination_path).st_mode & 0o777) != "0o440"
@@ -216,7 +216,7 @@ class TestUploadAndDownload(BaseTests):
         assert meta.get("charset") == "us-ascii"
         assert meta.get("type") == "text/plain"
 
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        destination_path = DATA_PATH.joinpath(upload_folder, filename)
         assert destination_path.exists()
         assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
 
@@ -285,7 +285,7 @@ class TestUploadAndDownload(BaseTests):
         assert self.get_content(r) == "Permission denied: failed to write the file"
 
         # force the file to be writeable again
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        destination_path = DATA_PATH.joinpath(upload_folder, filename)
         # -rw-rw----
         destination_path.chmod(0o660)
 
@@ -298,7 +298,7 @@ class TestUploadAndDownload(BaseTests):
 
         assert r.status_code == 200
 
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        destination_path = DATA_PATH.joinpath(upload_folder, filename)
         assert destination_path.exists()
         # File permissions are restored
         assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
@@ -352,5 +352,5 @@ class TestUploadAndDownload(BaseTests):
         error = "Permission denied: the destination file does not exist"
         assert self.get_content(r) == error
 
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        destination_path = DATA_PATH.joinpath(upload_folder, filename)
         assert not destination_path.exists()
