@@ -98,9 +98,9 @@ def load_yaml_file(filepath: Path) -> ConfigurationType:
 
     with open(filepath) as fh:
         try:
-            docs = list(yaml.load_all(fh, yaml.loader.Loader))
+            docs = list(yaml.safe_load_all(fh))
 
-            if len(docs) == 0:
+            if not docs:
                 raise AttributeError(f"YAML file is empty: {filepath}")
 
             return cast(ConfigurationType, docs[0])
