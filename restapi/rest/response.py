@@ -4,6 +4,7 @@ import sys
 import time
 from datetime import date, datetime
 from io import BytesIO
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, cast
 from urllib import parse as urllib_parse
 
@@ -152,6 +153,8 @@ class ExtendedJSONEncoder(JSONEncoder):
             return o.isoformat()
         if isinstance(o, decimal.Decimal):
             return float(o)
+        if isinstance(o, Path):
+            return str(o)
         # Otherwise: TypeError: Object of type xxx is not JSON serializable
         return super().default(o)  # pragma: no cover
 
