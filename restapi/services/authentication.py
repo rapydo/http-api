@@ -218,7 +218,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     )
 
     MAX_LOGIN_ATTEMPTS = get_max_login_attempts(
-        Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0)
+        Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 8)
     )
 
     FAILED_LOGINS_EXPIRATION: timedelta = timedelta(
