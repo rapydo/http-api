@@ -1,5 +1,5 @@
 from restapi import decorators
-from restapi.config import TESTING, DATA_PATH
+from restapi.config import DATA_PATH, TESTING
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.download import Downloader
@@ -31,4 +31,4 @@ if TESTING:
             if stream:
                 return Downloader.send_file_streamed(fname, subfolder=subfolder)
 
-            return Downloader.download(fname, subfolder=subfolder)
+            return Downloader.send_file_content(fname, subfolder=subfolder)

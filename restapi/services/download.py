@@ -24,10 +24,11 @@ class Downloader:
         mime_type = MimeTypes().guess_type(str(path))
         return mime_type[0]
 
-    # This is good for small files
+    # This is good for small files, in particular with displayable files
+    # like images, videos or PDF files
     # It is also good for media files by sending Range header
     @staticmethod
-    def download(
+    def send_file_content(
         filename: str,
         subfolder: Path,
         mime: Optional[str] = None,
@@ -45,6 +46,8 @@ class Downloader:
 
         log.info("Sending file content from {}", filepath)
 
+        # This function is mainly used for displayable files like images and video
+        # so that DO NOT SET as_attachment=True that would force the download
         return send_from_directory(subfolder, filename, mimetype=mime)
 
     @staticmethod
