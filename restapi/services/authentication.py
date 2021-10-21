@@ -94,6 +94,7 @@ DEFAULT_GROUP_DESCR = "Default group"
 DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE = 60
 MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE = 60
 MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE = 10
+LOGIN_BAN_TIME_MAX_TESTING_VALUE = 10
 
 
 # Produced by fill_payload
@@ -162,6 +163,15 @@ def get_max_login_attempts(val: int) -> int:
     return val
 
 
+def get_login_ban_time(val: int) -> int:
+
+    if TESTING and val:
+        # max 10 seconds, otherwise tests will hang
+        return min(val, LOGIN_BAN_TIME_MAX_TESTING_VALUE)
+
+    return val
+
+
 # ##############################################################################
 
 
@@ -222,7 +232,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     )
 
     FAILED_LOGINS_EXPIRATION: timedelta = timedelta(
-        seconds=Env.get_int("AUTH_LOGIN_BAN_TIME", 3600)
+        seconds=get_login_ban_time(Env.get_int("AUTH_LOGIN_BAN_TIME", 3600))
     )
 
     default_user: Optional[str] = None
