@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 import urllib.parse
@@ -19,6 +20,20 @@ LOGS_FOLDER = Path("/logs")
 
 LOGS_PATH: Optional[str] = LOGS_FOLDER.joinpath(f"{HOST_TYPE}.log")
 EVENTS_PATH: Optional[str] = LOGS_FOLDER.joinpath("security-events.log")
+
+if not os.access(LOGS_PATH, os.W_OK):  # pragma: no cover
+    print(
+        f"\nCan't initialize logging because {LOGS_PATH} is not writeable, "
+        "backend server cannot start\n"
+    )
+    sys.exit(1)
+
+if not os.access(EVENTS_PATH, os.W_OK):  # pragma: no cover
+    print(
+        f"\nCan't initialize logging because {EVENTS_PATH} is not writeable, "
+        "backend server cannot start\n"
+    )
+    sys.exit(1)
 
 
 class Events(str, Enum):
