@@ -133,14 +133,29 @@ def handle_response(response: FlaskResponse) -> FlaskResponse:
             response.headers.update(headers)
 
     resp = str(response).replace("<Response ", "").replace(">", "")
-    log.info(
-        "{} {} {}{} -> {}",
-        BaseAuthentication.get_remote_ip(raise_warnings=False),
-        request.method,
-        url,
-        data_string,
-        resp,
+    ip = BaseAuthentication.get_remote_ip(raise_warnings=False)
+
+    is_healthcheck = (
+        ip == "127.0.0.1" and request.method == "GET" and url == "/api/status"
     )
+    if is_healthcheck:
+        log.debug(
+            "{} {} {}{} -> {} [HEALTHCHECK]",
+            ip,
+            request.method,
+            url,
+            data_string,
+            resp,
+        )
+    else:
+        log.info(
+            "{} {} {}{} -> {}",
+            ip,
+            request.method,
+            url,
+            data_string,
+            resp,
+        )
 
     return response
 
