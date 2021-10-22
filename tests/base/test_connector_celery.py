@@ -54,9 +54,8 @@ def test_celery(app: Flask, faker: Faker) -> None:
     assert task_output == "Task executed!"
 
     # wrong is a special value included in tasks template
-    task_output = BaseTests.send_task(app, "test_task", "wrong")
-
-    assert task_output is None
+    with pytest.raises(AttributeError):
+        BaseTests.send_task(app, "test_task", "wrong")
 
     mail = BaseTests.read_mock_email()
     project_tile = get_project_configuration("project.title", default="YourProject")
