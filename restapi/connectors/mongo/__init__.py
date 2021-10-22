@@ -88,6 +88,8 @@ def catch_db_exceptions(func: F) -> F:
     return cast(F, wrapper)
 
 
+# Use MongoDB or not? An interesting opinion against MongoDB here:
+# https://javascript.plainenglish.io/why-you-should-not-use-mongodb-for-your-project-bf0f1caa6672
 class MongoExt(Connector):
 
     DATABASE: str = "rapydo"
