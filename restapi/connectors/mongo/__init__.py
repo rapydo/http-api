@@ -115,7 +115,9 @@ class MongoExt(Connector):
         if USER and PWD:
             credentials = f"{USER}:{PWD}@"
 
-        return f"mongodb://{credentials}{HOST}:{PORT}/{MongoExt.DATABASE}"
+        # This is needed to authenticate mongodb at the connect
+        auth = "?authSource=admin"
+        return f"mongodb://{credentials}{HOST}:{PORT}/{MongoExt.DATABASE}{auth}"
 
     def connect(self, **kwargs: str) -> "MongoExt":
 
