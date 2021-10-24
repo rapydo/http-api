@@ -92,7 +92,7 @@ def verify(service: str) -> None:
 
     c = connector_module.get_instance()  # type: ignore
     log.info(
-        "Backend successfully authenticated on {}", c.variables.get("host", service)
+        "{} successfully authenticated on {}", service, c.variables.get("host", service)
     )
     # log.info("Completed successfully")
 
