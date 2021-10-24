@@ -273,9 +273,16 @@ class SQLAlchemy(Connector):
                 db.init_app(self.app)
 
             # This is needed to test the connection
-            with self.app.app_context():
-                sql = text("SELECT 1")
-                db.engine.execute(sql)
+            # Moved outside by query through the db.session
+            # db.engine requires the app_context(), but session always work...
+            # with self.app.app_context():
+            #     sql = text("SELECT 1")
+            #     db.engine.execute(sql)
+        # This is to test the connection when executed from the cli (i.e. outside flask)
+
+        # This is needed to test the connection
+        sql = text("SELECT 1")
+        db.session.execute(sql)
 
         self.db = db
         return self
