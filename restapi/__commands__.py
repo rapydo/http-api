@@ -8,7 +8,7 @@ import click
 from flask.cli import FlaskGroup
 
 from restapi import __package__ as current_package
-from restapi.config import CUSTOM_PACKAGE, PRODUCTION
+from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE, PRODUCTION
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.utilities import print_and_exit
@@ -86,7 +86,15 @@ def verify(service: str) -> None:
     if host != "nohost":
         wait_socket(host, port, service)
 
-    log.info("Completed successfully")
+    connector_module = Connector.get_module(service, BACKEND_PACKAGE)
+    if not connector_module:  # pragma: no cover
+        print_and_exit("Connector {} not detected", service)
+
+    c = connector_module.get_instance()  # type: ignore
+    log.info(
+        "Backend successfully authenticated on {}", c.variables.get("host", service)
+    )
+    # log.info("Completed successfully")
 
 
 @cli.command()
