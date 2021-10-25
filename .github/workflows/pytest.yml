@@ -75,7 +75,7 @@ jobs:
           rapydo -e ACTIVATE_TELEGRAM=0 start
           sleep 25
           rapydo logs
-          rapydo shell --no-tty backend 'restapi tests --core --wait --destroy'
+          rapydo shell backend 'restapi tests --core --wait --destroy'
 
           LOGURU_LEVEL=WARNING rapydo list services
           # This should fail if at least one container is in Exit status
@@ -102,7 +102,7 @@ jobs:
           rapydo logs --tail 20 proxy backend
 
           # Tests in production mode
-          rapydo shell --no-tty backend 'restapi tests --core --wait'
+          rapydo shell backend 'restapi tests --core --wait'
 
           LOGURU_LEVEL=WARNING rapydo list services
           # This should fail if at least one container is in Exit status
