@@ -28,6 +28,7 @@ from sqlalchemy.exc import (
 )
 from sqlalchemy.orm import Session, scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
+from sqlalchemy.orm.session import close_all_sessions
 
 from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
@@ -323,14 +324,18 @@ class SQLAlchemy(Connector):
                 instance.db.engine.execute(sql)
 
                 instance.db.session.remove()
-                instance.db.session.close_all()
+                # Deprecated since v1.3
+                # instance.db.session.close_all()
+                close_all_sessions()
                 # massive destruction
                 log.critical("Destroy current SQL data")
                 instance.db.drop_all()
 
     @staticmethod
     # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
-    def update_properties(instance: Model, properties: Dict[str, Any]) -> None:  # type: ignore
+    def update_properties(
+        instance: Model, properties: Dict[str, Any]  # type: ignore
+    ) -> None:
 
         for field, value in properties.items():
             # Call to untyped function "set_attribute" in typed context
