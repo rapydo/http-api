@@ -116,7 +116,7 @@ class CeleryExt(Connector):
                         exception=str(ex),
                         traceback=traceback.format_exc(),
                     )
-                    raise Ignore()
+                    raise Ignore(str(ex))
 
             return cast(F, wrapper)
 

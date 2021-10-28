@@ -334,8 +334,8 @@ class SQLAlchemy(Connector):
     @staticmethod
     # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
     def update_properties(
-        instance: Model, properties: Dict[str, Any]  # type: ignore
-    ) -> None:
+        instance: Model, properties: Dict[str, Any]
+    ) -> None:  # type: ignore
 
         for field, value in properties.items():
             # Call to untyped function "set_attribute" in typed context
