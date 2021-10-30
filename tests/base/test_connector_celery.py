@@ -93,7 +93,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
     with pytest.raises(AttributeError, match=r"Task not found"):
         BaseTests.send_task(app, "does-not-exist")
 
-    if obj.variables.get("backend") == "RABBIT":
+    if obj.variables.get("backend_service") == "RABBIT":
         log.warning(
             "Due to limitations on RABBIT backend task results will not be tested"
         )

@@ -176,7 +176,7 @@ class CeleryExt(Connector):
 
         variables = self.variables.copy()
         variables.update(kwargs)
-        broker = variables.get("broker")
+        broker = variables.get("broker_service")
 
         if broker is None:  # pragma: no cover
             print_and_exit("Unable to start Celery, missing broker service")
@@ -237,7 +237,7 @@ class CeleryExt(Connector):
         self.celery_app.conf.broker_read_url = self.celery_app.conf.broker_url
         self.celery_app.conf.broker_write_url = self.celery_app.conf.broker_url
 
-        backend = variables.get("backend", broker)
+        backend = variables.get("backend_service", broker)
 
         if backend == "RABBIT":
             service_vars = Env.load_variables_group(prefix="rabbitmq")
@@ -364,7 +364,7 @@ class CeleryExt(Connector):
         conf = self.celery_app.conf
         # Replace the previous App with new settings
         self.celery_app = Celery(
-            "RAPyDo", broker=conf["broker_url"], backend=conf["result_backend"]
+            "RAPyDo", broker=conf.broker_url, backend=conf.result_backend
         )
         self.celery_app.conf = conf
 

@@ -167,7 +167,7 @@ def mywait() -> None:
 
         if name == "celery":
 
-            broker = variables.get("broker", "N/A")
+            broker = variables.get("broker_service", "N/A")
 
             if broker == "RABBIT":
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
@@ -181,7 +181,7 @@ def mywait() -> None:
 
             wait_socket(host, port, label)
 
-            backend = variables.get("backend", "N/a")
+            backend = variables.get("backend_service", "N/a")
             # Rabbit is no longer used as backend due to the strong limitations
             if backend == "RABBIT":  # pragma: no cover
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
