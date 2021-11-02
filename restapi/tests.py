@@ -7,7 +7,7 @@ from collections import namedtuple
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
+from typing import Any, Dict, Generator, List, Optional, Tuple, TypedDict, Union, cast
 
 import jwt
 import orjson
@@ -55,7 +55,7 @@ Event = namedtuple(
 
 
 @contextmanager
-def set_directory() -> None:
+def execute_from_code_dir() -> Generator[None, None, None]:
     """Sets the cwd within the context"""
 
     origin = Path().absolute()
@@ -742,5 +742,5 @@ class BaseTests:
         if not task:
             raise AttributeError("Task not found")
 
-        with set_directory():
+        with execute_from_code_dir():
             return task(*args, **kwargs)

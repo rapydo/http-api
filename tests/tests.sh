@@ -14,12 +14,6 @@ else
     CURRENT_PACKAGE=$1
 fi
 
-# if [ -z "$2" ]; then
-#     folder=tests
-# else
-#     folder=tests/$2
-# fi
-
 if [[ "${CURRENT_PACKAGE}" == "restapi" ]]; then
     coverage_folder="tests/base"
 else
@@ -37,4 +31,4 @@ else
     test_folder="tests/${2}"
 fi
 
-py.test --confcutdir=tests --timeout=300 --durations=5 -x -s --cov-report=xml --cov=${CURRENT_PACKAGE} --cov=${coverage_folder} ${test_folder}
+py.test --confcutdir=tests --timeout=300 --durations=5 -x -s --cov-report=xml:/tmp/coverage.xml --cov=${CURRENT_PACKAGE} --cov=${coverage_folder} ${test_folder}
