@@ -86,7 +86,7 @@ jobs:
         run: |
           cd ${{ matrix.template }}.${{ matrix.mode }}
 
-          rapydo --production --testing --project prj init --force
+          rapydo --testing --production --project prj init --force
           rapydo pull --quiet
           bash ../tests/customize_template.sh ${{ matrix.template }}
           rapydo ssl --volatile

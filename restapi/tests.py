@@ -1,8 +1,10 @@
 import base64
+import os
 import re
 import urllib.parse
 import uuid
 from collections import namedtuple
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
@@ -20,6 +22,7 @@ from werkzeug.test import TestResponse as Response
 from restapi.config import (
     API_URL,
     AUTH_URL,
+    CODE_DIR,
     DEFAULT_HOST,
     DEFAULT_PORT,
     JWT_SECRET_FILE,
@@ -49,6 +52,18 @@ Event = namedtuple(
     "Event",
     ["date", "ip", "user", "event", "target_type", "target_id", "url", "payload"],
 )
+
+
+@contextmanager
+def set_directory() -> None:
+    """Sets the cwd within the context"""
+
+    origin = Path().absolute()
+    try:
+        os.chdir(CODE_DIR)
+        yield
+    finally:
+        os.chdir(origin)
 
 
 class BaseTests:
@@ -727,4 +742,5 @@ class BaseTests:
         if not task:
             raise AttributeError("Task not found")
 
-        return task(*args, **kwargs)
+        with set_directory():
+            return task(*args, **kwargs)
