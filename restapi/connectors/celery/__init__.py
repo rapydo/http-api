@@ -195,9 +195,10 @@ class CeleryExt(Connector):
                 #   ssl_keyfile (optional): path to the client key
 
                 server_hostname = RabbitExt.get_hostname(service_vars.get("host", ""))
+                force_self_signed = Env.get_bool("SSL_FORCE_SELF_SIGNED")
                 ca_certs = (
                     SSL_CERTIFICATE
-                    if server_hostname == "localhost"
+                    if server_hostname == "localhost" or force_self_signed
                     else certifi.where()
                 )
                 self.celery_app.conf.broker_use_ssl = {

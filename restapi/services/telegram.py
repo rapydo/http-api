@@ -312,9 +312,9 @@ class Bot:
             keyboard = []
             for k, val in dict(zip(choices, labels)).items():
                 data_key = getUUID()
-                # Because func, update and context are not (easily) serializable are
-                # saved in a data_cache and the callback will access them by using the
-                # unique data_key assigned to such data.
+                # Because func, update and context are not (easily) serializable they
+                # are saved in a data_cache and the callback will access them
+                # by using the assigned unique data_key
                 data_cache[data_key] = {
                     "func": func,
                     "update": update,
