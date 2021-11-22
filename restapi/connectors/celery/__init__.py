@@ -327,6 +327,14 @@ class CeleryExt(Connector):
         # messages as it wants.
         self.celery_app.conf.worker_prefetch_multiplier = 1
 
+        # Introduced in Celery 5.1: on connection loss cancels all currently executed
+        # tasks with late acknowledgement enabled.
+        # These tasks cannot be acknowledged as the connection is gone,
+        # and the tasks are automatically redelivered back to the queue.
+        # In Celery 5.1 it is set to False by default.
+        # The setting will be set to True by default in Celery 6.0.
+        self.celery_app.conf.worker_cancel_long_running_tasks_on_connection_loss = True
+
         if Env.get_bool("CELERYBEAT_ENABLED"):
 
             CeleryExt.CELERYBEAT_SCHEDULER = backend
