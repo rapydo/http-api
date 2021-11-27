@@ -4,7 +4,7 @@ from typing import Dict
 
 from faker import Faker
 
-from restapi.config import PRODUCTION, UPLOAD_PATH, get_backend_url
+from restapi.config import PRODUCTION, DATA_PATH, get_backend_url
 from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
 
 
@@ -60,7 +60,7 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, self.fname)
+        destination_path = DATA_PATH.joinpath(upload_folder, self.fname)
         assert destination_path.exists()
         assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
 
@@ -81,7 +81,7 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, self.fname)
+        destination_path = DATA_PATH.joinpath(upload_folder, self.fname)
         assert destination_path.exists()
         assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
 
@@ -99,12 +99,8 @@ class TestUploadAndDownload(BaseTests):
         upload_folder = "fixsubfolder"
 
         r = client.get(f"{API_URI}/tests/download/folder/doesnotexist")
-        assert r.status_code == 400
-
-        # this is a special case introduced for testing purpose
-        # this special file name will be converted to None into the endpoint
-        r = client.get(f"{API_URI}/tests/download/folder/SPECIAL-VALUE-FOR-NONE")
-        assert r.status_code == 400
+        assert r.status_code == 404
+        assert self.get_content(r) == "The requested file does not exist"
 
         r = client.get(f"{API_URI}/tests/download/{upload_folder}/{self.fname}")
         assert r.status_code == 200
@@ -188,7 +184,7 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 400
         assert self.get_content(r) == "Invalid request"
 
-        up_data = faker.pystr(min_chars=24, max_chars=48)
+        up_data = faker.pystr(min_chars=24, max_chars=48).lower()
         STR_LEN = len(up_data)
         with io.StringIO(up_data[0:5]) as f:
             r = client.put(
@@ -199,9 +195,9 @@ class TestUploadAndDownload(BaseTests):
         assert r.status_code == 206
         assert self.get_content(r) == "partial"
 
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        destination_path = DATA_PATH.joinpath(upload_folder, filename)
         assert destination_path.exists()
-        # The file is not yet read only because the upload is in progress
+        # The file is still writeable because the upload is in progress
         assert oct(os.stat(destination_path).st_mode & 0o777) != "0o440"
 
         with io.StringIO(up_data[5:]) as f:
@@ -220,7 +216,7 @@ class TestUploadAndDownload(BaseTests):
         assert meta.get("charset") == "us-ascii"
         assert meta.get("type") == "text/plain"
 
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        destination_path = DATA_PATH.joinpath(upload_folder, filename)
         assert destination_path.exists()
         assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
 
@@ -250,14 +246,7 @@ class TestUploadAndDownload(BaseTests):
             f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": "bytes=0-9999999999999999"},
         )
-
-        from werkzeug import __version__ as werkzeug_version
-
-        # Back-compatibility check for B2STAGE
-        if werkzeug_version == "0.16.1":  # pragma: no cover
-            assert r.status_code == 200
-        else:
-            assert r.status_code == 206
+        assert r.status_code == 206
 
         r = client.get(
             f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
@@ -279,11 +268,7 @@ class TestUploadAndDownload(BaseTests):
             f"{API_URI}/tests/download/{upload_folder}/{uploaded_filename}",
             headers={"Range": f"bytes=0-{STR_LEN - 1}"},
         )
-        # Back-compatibility check for B2STAGE
-        if werkzeug_version == "0.16.1":  # pragma: no cover
-            assert r.status_code == 200
-        else:
-            assert r.status_code == 206
+        assert r.status_code == 206
         content = r.data.decode("utf-8")
         assert content == up_data
 
@@ -300,7 +285,7 @@ class TestUploadAndDownload(BaseTests):
         assert self.get_content(r) == "Permission denied: failed to write the file"
 
         # force the file to be writeable again
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        destination_path = DATA_PATH.joinpath(upload_folder, filename)
         # -rw-rw----
         destination_path.chmod(0o660)
 
@@ -313,7 +298,7 @@ class TestUploadAndDownload(BaseTests):
 
         assert r.status_code == 200
 
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        destination_path = DATA_PATH.joinpath(upload_folder, filename)
         assert destination_path.exists()
         # File permissions are restored
         assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
@@ -367,5 +352,5 @@ class TestUploadAndDownload(BaseTests):
         error = "Permission denied: the destination file does not exist"
         assert self.get_content(r) == error
 
-        destination_path = UPLOAD_PATH.joinpath(upload_folder, filename)
+        destination_path = DATA_PATH.joinpath(upload_folder, filename)
         assert not destination_path.exists()

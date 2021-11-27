@@ -4,13 +4,15 @@ from restapi import decorators
 from restapi.endpoints.schemas import TokenSchema
 from restapi.exceptions import BadRequest, Forbidden
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import User
 
 # from restapi.utilities.logs import log
 
 
-def inject_token(endpoint: EndpointResource, token_id: str) -> Dict[str, Any]:
+def inject_token(
+    endpoint: EndpointResource, token_id: str, user: User
+) -> Dict[str, Any]:
 
-    user = endpoint.get_user()
     tokens = endpoint.auth.get_tokens(user=user)
 
     for token in tokens:
@@ -33,9 +35,7 @@ class Tokens(EndpointResource):
         summary="Retrieve all tokens emitted for logged user",
         responses={200: "List of tokens"},
     )
-    def get(self) -> Response:
-
-        user = self.get_user()
+    def get(self, user: User) -> Response:
 
         tokens = self.auth.get_tokens(user=user)
 
@@ -49,7 +49,7 @@ class Tokens(EndpointResource):
         summary="Remove specified token and make it invalid from now on",
         responses={204: "Token has been invalidated"},
     )
-    def delete(self, token_id: str, token: str) -> Response:
+    def delete(self, token_id: str, token: str, user: User) -> Response:
 
         if self.auth.invalidate_token(token=token):
             return self.empty_response()

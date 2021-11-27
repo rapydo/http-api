@@ -1,14 +1,14 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 import pytz
 
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.connectors import Connector
-from restapi.exceptions import ServerError
 from restapi.models import ISO8601UTC, Schema, fields, validate
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import User
 
 if TESTING:
 
@@ -42,14 +42,18 @@ if TESTING:
             validate=validate.Range(
                 min=1, max=10, min_inclusive=False, max_inclusive=False
             ),
-            label="Int exclusive field",
+            metadata={
+                "label": "Int exclusive field",
+            },
         )
         myint_inclusive = fields.Int(
             required=True,
             # Both label and description explicit definition
             validate=validate.Range(min=1, max=10),
-            label="Int inclusive field",
-            description="This field accepts values in a defined range",
+            metadata={
+                "label": "Int inclusive field",
+                "description": "This field accepts values in a defined range",
+            },
         )
 
         myselect = fields.Str(
@@ -72,13 +76,13 @@ if TESTING:
         # but the normal Marshmallow fields does not json-load the inputs
 
         # fields.Nested is a replacement of the default Nested field with the ability
-        # to received json.dumped data from requests or pytest
+        # to receive json dumped data from requests or pytest
         mynested = fields.Nested(Nested, required=True)
 
         mynullablenested = fields.Nested(Nested, required=True, allow_none=True)
 
         # fields.List is a replacement of the default List field with the ability
-        # to received json.dumped data from requests or pytest
+        # to receive json dumped data from requests or pytest
 
         # In json model the type of this field will be resolved as string[]
         mylist = fields.List(fields.Str(), required=True)
@@ -97,7 +101,7 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={204: "Tests executed"},
         )
-        def post(self, **kwargs: Any) -> Response:
+        def post(self, user: Optional[User], **kwargs: Any) -> Response:
 
             return self.empty_response()
 
@@ -132,12 +136,7 @@ if TESTING and Connector.check_availability("neo4j"):
             summary="Accept inputs based on a neo4j-related schema",
             responses={204: "Tests executed"},
         )
-        def post(self, choice: str) -> Response:
-
-            user = self.get_user()
-            # Can't happen since auth is required
-            if not user:  # pragma: no cover
-                raise ServerError("User misconfiguration")
+        def post(self, choice: str, user: User) -> Response:
 
             data = {
                 "choice": choice,

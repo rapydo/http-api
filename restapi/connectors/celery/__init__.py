@@ -5,7 +5,7 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union, cast
 
 import certifi
-from celery import Celery
+from celery import Celery, states
 from celery.exceptions import Ignore
 
 from restapi.config import CUSTOM_PACKAGE, SSL_CERTIFICATE, TESTING
@@ -48,9 +48,36 @@ class CeleryExt(Connector):
                 try:
                     with CeleryExt.app.app_context():
                         return func(self, *args, **kwargs)
-                except Ignore:
+                except Ignore as ex:
+
+                    if TESTING:
+                        self.request.id = "fixed-id"
+                        self.request.task = name or func.__name__
+
+                    task_id = self.request.id
+                    task_name = self.request.task
+                    log.warning(
+                        "Celery task {} ({}) failed: {}", task_id, task_name, ex
+                    )
+
+                    self.update_state(
+                        state=states.FAILURE,
+                        meta={
+                            "exc_type": type(ex).__name__,
+                            "exc_message": traceback.format_exc().split("\n"),
+                            # 'custom': '...'
+                        },
+                    )
+                    self.send_event(
+                        "task-failed",
+                        # Retry sending the message if the connection is lost
+                        retry=True,
+                        exception=str(ex),
+                        traceback=traceback.format_exc(),
+                    )
+
                     raise
-                except Exception:
+                except Exception as ex:
 
                     if TESTING:
                         self.request.id = "fixed-id"
@@ -74,6 +101,22 @@ class CeleryExt(Connector):
                         send_celery_error_notification(
                             task_id, task_name, arguments, clean_error_stack
                         )
+                    self.update_state(
+                        state=states.FAILURE,
+                        meta={
+                            "exc_type": type(ex).__name__,
+                            "exc_message": traceback.format_exc().split("\n"),
+                            # 'custom': '...'
+                        },
+                    )
+                    self.send_event(
+                        "task-failed",
+                        # Retry sending the message if the connection is lost
+                        retry=True,
+                        exception=str(ex),
+                        traceback=traceback.format_exc(),
+                    )
+                    raise Ignore(str(ex))
 
             return cast(F, wrapper)
 
@@ -133,7 +176,7 @@ class CeleryExt(Connector):
 
         variables = self.variables.copy()
         variables.update(kwargs)
-        broker = variables.get("broker")
+        broker = variables.get("broker_service")
 
         if broker is None:  # pragma: no cover
             print_and_exit("Unable to start Celery, missing broker service")
@@ -152,9 +195,10 @@ class CeleryExt(Connector):
                 #   ssl_keyfile (optional): path to the client key
 
                 server_hostname = RabbitExt.get_hostname(service_vars.get("host", ""))
+                force_self_signed = Env.get_bool("SSL_FORCE_SELF_SIGNED")
                 ca_certs = (
                     SSL_CERTIFICATE
-                    if server_hostname == "localhost"
+                    if server_hostname == "localhost" or force_self_signed
                     else certifi.where()
                 )
                 self.celery_app.conf.broker_use_ssl = {
@@ -194,7 +238,7 @@ class CeleryExt(Connector):
         self.celery_app.conf.broker_read_url = self.celery_app.conf.broker_url
         self.celery_app.conf.broker_write_url = self.celery_app.conf.broker_url
 
-        backend = variables.get("backend", broker)
+        backend = variables.get("backend_service", broker)
 
         if backend == "RABBIT":
             service_vars = Env.load_variables_group(prefix="rabbitmq")
@@ -242,6 +286,9 @@ class CeleryExt(Connector):
         # Skip initial warnings, avoiding pickle format (deprecated)
         self.celery_app.conf.accept_content = ["json"]
         self.celery_app.conf.task_serializer = "json"
+        # Decides if publishing task messages will be retried in the case of
+        # connection loss or other connection errors
+        self.celery_app.conf.task_publish_retry = True
         self.celery_app.conf.result_serializer = "json"
 
         # Already enabled by default to use UTC
@@ -251,6 +298,9 @@ class CeleryExt(Connector):
         # Not needed, because tasks are dynamcally injected
         # self.celery_app.conf.imports
         # self.celery_app.conf.includes
+
+        # Note about priority: multi-queues is better than prioritized tasks
+        # https://docs.celeryproject.org/en/master/faq.html#does-celery-support-task-priorities
 
         # Max priority default value for all queues
         # Required to be able to set priority parameter on task calls
@@ -276,6 +326,14 @@ class CeleryExt(Connector):
         # Changing that setting to 0 will allow the worker to keep consuming as many
         # messages as it wants.
         self.celery_app.conf.worker_prefetch_multiplier = 1
+
+        # Introduced in Celery 5.1: on connection loss cancels all currently executed
+        # tasks with late acknowledgement enabled.
+        # These tasks cannot be acknowledged as the connection is gone,
+        # and the tasks are automatically redelivered back to the queue.
+        # In Celery 5.1 it is set to False by default.
+        # The setting will be set to True by default in Celery 6.0.
+        self.celery_app.conf.worker_cancel_long_running_tasks_on_connection_loss = True
 
         if Env.get_bool("CELERYBEAT_ENABLED"):
 
@@ -315,7 +373,7 @@ class CeleryExt(Connector):
         conf = self.celery_app.conf
         # Replace the previous App with new settings
         self.celery_app = Celery(
-            "RAPyDo", broker=conf["broker_url"], backend=conf["result_backend"]
+            "RAPyDo", broker=conf.broker_url, backend=conf.result_backend
         )
         self.celery_app.conf = conf
 

@@ -25,24 +25,24 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [
-            "git+https://github.com/rapydo/http-api.git@2.0",
+            "git+https://github.com/rapydo/http-api.git@2.1",
 
             # Extra dependencies
             "lxml",
-            "pytest-stub",
             "types-pytz",
             "types-python-dateutil",
             "types-requests",
             "types-certifi",
             "types-click",
             "types-PyYAML",
-            "types-simplejson",
+            "types-orjson",
             "pymongo-stubs",
             "types-redis",
             "pika-stubs",
             "celery-types",
             "mongo-types",
             "sqlalchemy-stubs",
+            "Faker==9.5.0",
           ]
 
         # https://mypy.readthedocs.io/en/stable/command_line.html
@@ -85,3 +85,10 @@ repos:
             "--txt-report",
             ".",
           ]
+
+  - repo: https://github.com/gitguardian/gg-shield
+    rev: v1.7.3
+    hooks:
+      - id: ggshield
+        language_version: python3
+        stages: [commit]

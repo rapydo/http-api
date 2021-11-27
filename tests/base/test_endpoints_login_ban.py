@@ -11,7 +11,7 @@ from restapi.tests import AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 
 max_login_attempts = BaseAuthentication.MAX_LOGIN_ATTEMPTS
-ban_duration = Env.get_int("AUTH_LOGIN_BAN_TIME", 10)
+ban_duration = BaseAuthentication.FAILED_LOGINS_EXPIRATION.seconds
 
 BAN_MESSAGE = (
     "Sorry, this account is temporarily blocked "

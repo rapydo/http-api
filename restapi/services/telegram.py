@@ -1,8 +1,8 @@
-import json
 import threading
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, cast
 
+import orjson
 import requests
 from marshmallow import Schema, ValidationError, fields
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Update
@@ -312,9 +312,9 @@ class Bot:
             keyboard = []
             for k, val in dict(zip(choices, labels)).items():
                 data_key = getUUID()
-                # Because func, update and context are not (easily) serializable are
-                # saved in a data_cache and the callback will access them by using the
-                # unique data_key assigned to such data.
+                # Because func, update and context are not (easily) serializable they
+                # are saved in a data_cache and the callback will access them
+                # by using the assigned unique data_key
                 data_cache[data_key] = {
                     "func": func,
                     "update": update,
@@ -469,7 +469,7 @@ class BotApiClient:
         payload: Optional[Dict[str, Any]] = None,
     ) -> Any:
         host = BotApiClient.variables.get("backend_host")
-        port = Env.get("FLASK_PORT")
+        port = Env.get("FLASK_PORT", "8080")
         url = f"http://{host}:{port}/{base}/{path}"
 
         log.debug("Calling {} on {}", method, url)
@@ -477,9 +477,9 @@ class BotApiClient:
         try:
             data: Optional[str] = None
             if payload:
-                data = json.dumps(payload)
+                data = orjson.dumps(payload).decode("UTF8")
 
-            response = requests.request(method, url=url, data=data)
+            response = requests.request(method, url=url, data=data, timeout=10)
 
             out = response.json()
         # Never raised during tests: how to test it?

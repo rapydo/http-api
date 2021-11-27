@@ -127,7 +127,10 @@ class HTTPTokenAuth:
                         )
 
                     caller.authorized_user = user.uuid
+                    kwargs["user"] = user
                     request.environ[TOKEN_VALIDATED_KEY] = True
+                else:
+                    kwargs["user"] = None
 
                 return func(*args, **kwargs)
 
@@ -234,6 +237,7 @@ class HTTPTokenAuth:
                     )
 
                 caller.authorized_user = user.uuid
+                kwargs["user"] = user
                 return func(*args, **kwargs)
 
             return cast(EndpointFunction, wrapper)

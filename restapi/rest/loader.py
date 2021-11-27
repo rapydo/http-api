@@ -1,12 +1,11 @@
 """
+
 Customization based on configuration 'blueprint' files
 """
 
-import glob
-import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Type
+from typing import Any, Dict, List, Optional, Set, Tuple, Type, get_type_hints
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
@@ -16,6 +15,7 @@ from restapi import decorators
 from restapi.config import ABS_RESTAPI_PATH, CONF_PATH, CUSTOM_PACKAGE
 from restapi.env import Env
 from restapi.rest.annotations import inject_apispec_docs
+from restapi.services.authentication import User
 from restapi.utilities import print_and_exit
 from restapi.utilities.configuration import read_configuration
 from restapi.utilities.globals import mem
@@ -61,13 +61,12 @@ class EndpointsLoader:
 
     def load_configuration(self) -> Dict[str, Any]:
         # Reading configuration
-        confs_path = Path(os.curdir, CONF_PATH)
 
         CONF_FOLDERS = Env.load_variables_group(prefix="project_confs")
-        defaults_path = Path(CONF_FOLDERS.get("defaults_path", confs_path))
-        base_path = Path(CONF_FOLDERS.get("base_path", confs_path))
-        projects_path = Path(CONF_FOLDERS.get("projects_path", confs_path))
-        submodules_path = Path(CONF_FOLDERS.get("submodules_path", confs_path))
+        defaults_path = Path(CONF_FOLDERS.get("defaults_path", CONF_PATH))
+        base_path = Path(CONF_FOLDERS.get("base_path", CONF_PATH))
+        projects_path = Path(CONF_FOLDERS.get("projects_path", CONF_PATH))
+        submodules_path = Path(CONF_FOLDERS.get("submodules_path", CONF_PATH))
 
         try:
             configuration, self._extended_project, _ = read_configuration(
@@ -88,10 +87,10 @@ class EndpointsLoader:
 
         # endpoints folder from extended project, if any
         if self._extended_project is not None:
-            self.load_endpoints_folder(os.path.join(os.curdir, self._extended_project))
+            self.load_endpoints_folder(Path(self._extended_project))
 
         # custom endpoints folder
-        self.load_endpoints_folder(os.path.join(os.curdir, CUSTOM_PACKAGE))
+        self.load_endpoints_folder(Path(CUSTOM_PACKAGE))
 
         # Used in swagger specs endpoint
         self.tags = EndpointsLoader.remove_unused_tags(
@@ -125,20 +124,20 @@ class EndpointsLoader:
         return False, None
 
     # Return type becomes "List[Type[Any]]" due to an unfollowed import
-    def extract_endpoints(self, base_dir: str) -> List[Type[Resource]]:  # type: ignore
+    def extract_endpoints(self, base_dir: Path) -> List[Type[Resource]]:  # type: ignore
 
         endpoints_classes = []
         # get last item of the path
         # normpath is required to strip final / if any
-        base_module = os.path.basename(os.path.normpath(base_dir))
+        base_module = base_dir.name
 
-        apis_dir = os.path.join(base_dir, "endpoints")
+        apis_dir = base_dir.joinpath("endpoints")
         apiclass_module = f"{base_module}.endpoints"
-        for epfiles in glob.glob(f"{apis_dir}/*.py"):
+        for epfile in apis_dir.glob("*.py"):
 
             # get module name (es: endpoints.filename)
-            module_file = os.path.basename(os.path.splitext(epfiles)[0])
-            module_name = f"{apiclass_module}.{module_file}"
+
+            module_name = f"{apiclass_module}.{epfile.stem}"
             # Convert module name into a module
             log.debug("Importing {}", module_name)
             module = Meta.get_module_from_string(
@@ -157,7 +156,7 @@ class EndpointsLoader:
                 ):  # pragma: no cover
                     continue
 
-                log.debug("Importing {} from {}.{}", class_name, apis_dir, module_file)
+                log.debug("Importing {} from {}", class_name, module_name)
 
                 skip, dependency = self.skip_endpoint(epclss.depends_on)
 
@@ -174,7 +173,7 @@ class EndpointsLoader:
 
         return endpoints_classes
 
-    def load_endpoints_folder(self, base_dir: str) -> None:
+    def load_endpoints_folder(self, base_dir: Path) -> None:
         # Walk folders looking for endpoints
 
         for epclss in self.extract_endpoints(base_dir):
@@ -206,6 +205,38 @@ class EndpointsLoader:
 
                 # auth.optional injected by the optional decorator in bearer.py
                 auth_optional = fn.__dict__.get("auth.optional", False)
+
+                if auth_required or auth_optional:
+                    parameters = get_type_hints(fn)
+
+                    if auth_required:
+                        expected_annotation = User
+                    else:
+                        expected_annotation = Optional[User]
+
+                    if (
+                        "user" not in parameters
+                        or parameters["user"] != expected_annotation
+                    ):  # pragma: no cover
+
+                        if "user" in parameters:
+                            log.critical(
+                                "Wrong user parameter in {}.{} (function {}), "
+                                "expected {} but found {}",
+                                epclss.__name__,
+                                method_fn,
+                                fn.__name__,
+                                expected_annotation,
+                                parameters["user"],
+                            )
+                        else:
+                            log.critical(
+                                "Missing user: {} parameter in {}.{} (function {})",
+                                expected_annotation,
+                                epclss.__name__,
+                                method_fn,
+                                fn.__name__,
+                            )
 
                 if not hasattr(fn, "uri"):  # pragma: no cover
                     print_and_exit(

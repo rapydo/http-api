@@ -1,6 +1,9 @@
+from typing import Optional
+
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import User
 
 if TESTING:
 
@@ -81,12 +84,10 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=200)
-        def get(self) -> Response:
+        def get(self, user: User) -> Response:
 
             TestAuthCache.counter += 1
-            user = self.get_user()
-            uuid = user.uuid if user else "N/A"
-            return self.response((uuid, TestAuthCache.counter))
+            return self.response((user.uuid, TestAuthCache.counter))
 
     class TestOptionalAuthCache(EndpointResource):
         """
@@ -108,16 +109,10 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=200)
-        def get(self) -> Response:
-
-            user = self.get_user()
-
-            if user:
-                uuid = user.uuid
-            else:
-                uuid = "N/A"
+        def get(self, user: Optional[User]) -> Response:
 
             TestOptionalAuthCache.counter += 1
+            uuid = user.uuid if user else "N/A"
             return self.response((uuid, TestOptionalAuthCache.counter))
 
     class TestParamAuthCache(EndpointResource):
@@ -140,12 +135,10 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=200)
-        def get(self) -> Response:
+        def get(self, user: User) -> Response:
 
             TestParamAuthCache.counter += 1
-            user = self.get_user()
-            uuid = user.uuid if user else "N/A"
-            return self.response((uuid, TestParamAuthCache.counter))
+            return self.response((user.uuid, TestParamAuthCache.counter))
 
     class TestOptionalParamAuthCache(EndpointResource):
         """
@@ -168,14 +161,8 @@ if TESTING:
             },
         )
         @decorators.cache(timeout=200)
-        def get(self) -> Response:
-
-            user = self.get_user()
-
-            if user:
-                uuid = user.uuid
-            else:
-                uuid = "N/A"
+        def get(self, user: Optional[User]) -> Response:
 
             TestOptionalParamAuthCache.counter += 1
+            uuid = user.uuid if user else "N/A"
             return self.response((uuid, TestOptionalParamAuthCache.counter))

@@ -1,7 +1,8 @@
-import json
 import re
+import warnings
 from typing import Any, Mapping, Optional, Union
 
+import orjson
 from marshmallow import ValidationError, types
 from marshmallow.utils import missing as missing_
 from webargs import fields as webargs_fields
@@ -27,26 +28,64 @@ class Field(webargs_fields.Field):
 
         kwargs.setdefault("metadata", {})
 
-        if label is not None:
+        if label is not None:  # pragma: no cover
+            # Deprecated since 2.1
+            warnings.warn(
+                "Deprecated use of field label, "
+                f'replace label="{label}" '
+                f'with metadata={{"label": "{label}"}}',
+            )
             kwargs["metadata"].setdefault("label", label)
 
-        if description is not None:
+        if description is not None:  # pragma: no cover
+            # Deprecated since 2.1
+            warnings.warn(
+                "Deprecated use of field description, "
+                f'replace description="{description}" '
+                f'with metadata={{"description": "{description}"}}',
+            )
             kwargs["metadata"].setdefault("description", description)
 
-        if autocomplete_endpoint is not None:
+        if autocomplete_endpoint is not None:  # pragma: no cover
+            # Deprecated since 2.1
+            warnings.warn(
+                f"Deprecated use of field autocomplete_endpoint, "
+                f'replace autocomplete_endpoint="{autocomplete_endpoint}" '
+                f'with metadata={{"autocomplete_endpoint": "{autocomplete_endpoint}"}}',
+            )
             kwargs["metadata"].setdefault(
                 "autocomplete_endpoint", autocomplete_endpoint
             )
             kwargs["metadata"].setdefault("autocomplete_show_id", autocomplete_show_id)
 
-        if autocomplete_id_bind is not None:
+        if autocomplete_id_bind is not None:  # pragma: no cover
+            # Deprecated since 2.1
+            warnings.warn(
+                f"Deprecated use of field autocomplete_id_bind, "
+                f'replace autocomplete_id_bind="{autocomplete_id_bind}" '
+                f'with metadata={{"autocomplete_id_bind": "{autocomplete_id_bind}"}}',
+            )
             kwargs["metadata"].setdefault("autocomplete_id_bind", autocomplete_id_bind)
 
-        if autocomplete_label_bind is not None:
+        if autocomplete_label_bind is not None:  # pragma: no cover
+            # Deprecated since 2.1
+            albtmp = autocomplete_label_bind
+            warnings.warn(
+                f"Deprecated use of field autocomplete_label_bind, "
+                f'replace autocomplete_label_bind="{autocomplete_label_bind}" '
+                f'with metadata={{"autocomplete_label_bind": "{albtmp}"}}',
+            )
             kwargs["metadata"].setdefault(
                 "autocomplete_label_bind", autocomplete_label_bind
             )
 
+        if password:  # pragma: no cover
+            # Deprecated since 2.1
+            warnings.warn(
+                f"Deprecated use of field password, "
+                f"replace password={password} "
+                f'with metadata={{"password": "{password}"}}',
+            )
         kwargs["metadata"].setdefault("password", password)
 
         super().__init__(required=required, **kwargs)
@@ -181,7 +220,7 @@ class List(webargs_fields.List, Field):
         # for example for a multi-value select
         if isinstance(value, str):
             try:
-                value = json.loads(value)
+                value = orjson.loads(value)
             except Exception:
                 pass
 
@@ -239,7 +278,7 @@ class Nested(webargs_fields.Nested, Field):
         # this is the case when requests (or pytest) send some json-dumped object
         if isinstance(value, str):
             try:
-                value = json.loads(value)
+                value = orjson.loads(value)
             except Exception as e:  # pragma: no cover
                 log.warning(e)
         # Call to untyped function "_deserialize" in typed context

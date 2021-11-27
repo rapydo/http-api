@@ -1,6 +1,6 @@
-import json
 from typing import Dict, Optional, Tuple
 
+import orjson
 import schemathesis
 import werkzeug
 from hypothesis import HealthCheck, settings
@@ -18,7 +18,7 @@ def get_auth_token(
 
     data["totp_code"] = BaseTests.generate_totp(data.get("username"))
     r = client.post("/auth/login", data=data)
-    content = json.loads(r.data.decode("utf-8"))
+    content = orjson.loads(r.data.decode("utf-8"))
 
     if r.status_code == 403:
         if isinstance(content, dict) and content.get("actions"):
@@ -71,7 +71,7 @@ else:
         r = client.get("/api/specs")
 
     assert r.status_code == 200
-    schema = json.loads(r.get_data().decode())
+    schema = orjson.loads(r.get_data().decode())
     schema = schemathesis.from_dict(schema, app=app)
 
     log.info("Starting tests...")

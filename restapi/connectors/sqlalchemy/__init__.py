@@ -28,6 +28,7 @@ from sqlalchemy.exc import (
 )
 from sqlalchemy.orm import Session, scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
+from sqlalchemy.orm.session import close_all_sessions
 
 from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
@@ -276,6 +277,11 @@ class SQLAlchemy(Connector):
             with self.app.app_context():
                 sql = text("SELECT 1")
                 db.engine.execute(sql)
+        # This is to test the connection when executed from the cli (i.e. outside flask)
+
+        else:
+            sql = text("SELECT 1")
+            db.session.execute(sql)
 
         self.db = db
         return self
@@ -318,7 +324,9 @@ class SQLAlchemy(Connector):
                 instance.db.engine.execute(sql)
 
                 instance.db.session.remove()
-                instance.db.session.close_all()
+                # Deprecated since v1.3
+                # instance.db.session.close_all()
+                close_all_sessions()
                 # massive destruction
                 log.critical("Destroy current SQL data")
                 instance.db.drop_all()

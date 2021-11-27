@@ -98,7 +98,7 @@ def create_app(
     # Flask app instance
     # template_folder = template dir for output in HTML
     microservice = Flask(
-        name, template_folder=os.path.join(ABS_RESTAPI_PATH, "templates")
+        name, template_folder=str(ABS_RESTAPI_PATH.joinpath("templates"))
     )
 
     # CORS

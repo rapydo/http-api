@@ -40,7 +40,7 @@ class LoginUnlock(EndpointResource):
                 "Invalid unlock token: this request is expired",
             )
 
-        # if token is not yet active
+        # if token is not active yet
         except ImmatureSignatureError:
             raise BadRequest("Invalid unlock token")
 

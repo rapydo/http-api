@@ -30,14 +30,14 @@ setup(
     # Remember to update mypy.additional_dependencies
     install_requires=[
         # Flask, plugins and webservers
-        "Flask==2.0.1",
+        "Flask==2.0.2",
         "Flask-RESTful==0.3.9",
         "flask-apispec==0.11.0",
         "Flask-Caching==1.10.1",
         "Flask-Cors==3.0.10",
         "Flask-SQLAlchemy==2.5.1",
-        "Flask-Migrate==3.0.1",
-        "PyJWT==2.1.0",
+        "Flask-Migrate==3.1.0",
+        "PyJWT==2.2.0",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.4",
         "meinheld==1.0.2",
@@ -53,7 +53,7 @@ setup(
         "flower==1.0.0",
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
-        "python-telegram-bot==13.6",
+        "python-telegram-bot==13.7",
         "amqp==5.0.6",
         # TOTP
         "pyotp==2.6.0",
@@ -66,24 +66,22 @@ setup(
         "plumbum",
         "maxminddb-geolite2",
         "html2text",
-        # Used by Marshmallow to serialize Decimals
-        "simplejson",
         "orjson",
-        # Temporary fix to silence deprecation warnings, to be fixed on 2.1
-        "marshmallow==3.12.2",
-        # Temporary fix because 5.0.0 requires marshmallow 3.13
-        "apispec==4.7.1",
+        "marshmallow==3.13.0",
+        "webargs==8.0.1",
+        "apispec==5.1.0",
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.1.0",
-        "sentry-sdk[flask]==1.1.0",
+        "sentry-sdk[flask]==1.3.1",
         # Tests
         "pytest-flask==1.2.0",
-        "pytest-cov==2.12.1",
+        "pytest-cov==3.0.0",
         "pytest-timeout==1.4.2",
-        "schemathesis==3.9.2",
-        "Faker==8.10.3",
-        "Telethon==1.22.0",
+        "pytest-sugar==0.9.4",
+        "schemathesis==3.10.0",
+        "Faker==9.5.0",
+        "Telethon==1.23.0",
     ],
     classifiers=[
         "Programming Language :: Python",

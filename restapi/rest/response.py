@@ -4,6 +4,7 @@ import sys
 import time
 from datetime import date, datetime
 from io import BytesIO
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, cast
 from urllib import parse as urllib_parse
 
@@ -129,23 +130,32 @@ def handle_response(response: FlaskResponse) -> FlaskResponse:
         )
         if content:
             response.data = content
-
-            try:
-                response.headers.update(headers)
-            # Back-compatibility for Werkzeug 0.16.1 as used in B2STAGE
-            except AttributeError:  # pragma: no cover
-                for k, v in headers.items():
-                    response.headers.set(k, v)
+            response.headers.update(headers)
 
     resp = str(response).replace("<Response ", "").replace(">", "")
-    log.info(
-        "{} {} {}{} -> {}",
-        BaseAuthentication.get_remote_ip(raise_warnings=False),
-        request.method,
-        url,
-        data_string,
-        resp,
+    ip = BaseAuthentication.get_remote_ip(raise_warnings=False)
+
+    is_healthcheck = (
+        ip == "127.0.0.1" and request.method == "GET" and url == "/api/status"
     )
+    if is_healthcheck:
+        log.debug(
+            "{} {} {}{} -> {} [HEALTHCHECK]",
+            ip,
+            request.method,
+            url,
+            data_string,
+            resp,
+        )
+    else:
+        log.info(
+            "{} {} {}{} -> {}",
+            ip,
+            request.method,
+            url,
+            data_string,
+            resp,
+        )
 
     return response
 
@@ -157,6 +167,8 @@ class ExtendedJSONEncoder(JSONEncoder):
         if isinstance(o, (datetime, date)):
             return o.isoformat()
         if isinstance(o, decimal.Decimal):
+            return float(o)
+        if isinstance(o, Path):
             return str(o)
         # Otherwise: TypeError: Object of type xxx is not JSON serializable
         return super().default(o)  # pragma: no cover
@@ -286,6 +298,7 @@ class ResponseMaker:
 
     @staticmethod
     def convert_model_to_schema(schema: Schema) -> List[Dict[str, Any]]:
+
         schema_fields = []
         for field, field_def in schema.declared_fields.items():
 
@@ -322,10 +335,10 @@ class ResponseMaker:
             ):
                 f["autocomplete_label_bind"] = autocomplete_label_bind
 
-            if not isinstance(field_def.default, _Missing):
-                f["default"] = field_def.default
-            elif not isinstance(field_def.missing, _Missing):  # pragma: no cover
-                f["default"] = field_def.missing
+            if not isinstance(field_def.dump_default, _Missing):
+                f["default"] = field_def.dump_default
+            elif not isinstance(field_def.load_default, _Missing):  # pragma: no cover
+                f["default"] = field_def.load_default
 
             validators: List[validate.Validator] = []
             if field_def.validate:

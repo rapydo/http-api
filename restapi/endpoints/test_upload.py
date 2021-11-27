@@ -1,7 +1,5 @@
-from pathlib import Path
-
 from restapi import decorators
-from restapi.config import TESTING, UPLOAD_PATH
+from restapi.config import TESTING, DATA_PATH
 from restapi.models import PartialSchema, fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.uploader import Uploader
@@ -29,7 +27,9 @@ if TESTING:
             # This is just to test the allowed exts without adding a new parameter..
             if not force:
                 self.set_allowed_exts(["txt"])
-            response = self.upload(subfolder=Path("fixsubfolder"), force=force)
+            response = self.upload(
+                subfolder=DATA_PATH.joinpath("fixsubfolder"), force=force
+            )
             return response
 
     class TestChunkedUpload(EndpointResource, Uploader):
@@ -58,7 +58,7 @@ if TESTING:
             if not force:
                 self.set_allowed_exts(["txt"])
 
-            path = UPLOAD_PATH.joinpath("fixed")
+            path = DATA_PATH.joinpath("fixed")
             return self.init_chunk_upload(path, name, force=force)
 
         @decorators.use_kwargs(Force)
@@ -71,7 +71,7 @@ if TESTING:
         )
         def put(self, filename: str, force: bool = False) -> Response:
 
-            path = UPLOAD_PATH.joinpath("fixed")
+            path = DATA_PATH.joinpath("fixed")
             completed, response = self.chunk_upload(path, filename)
 
             if completed:

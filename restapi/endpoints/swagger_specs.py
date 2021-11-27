@@ -1,9 +1,10 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from glom import glom
 
 from restapi import decorators
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import User
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
@@ -21,11 +22,11 @@ class NewSwaggerSpecifications(EndpointResource):
         summary="Endpoints specifications based on OpenAPI format",
         responses={200: "Endpoints JSON based on OpenAPI Specifications"},
     )
-    def get(self) -> Response:
+    def get(self, user: Optional[User]) -> Response:
 
         specs = mem.docs.spec.to_dict()
 
-        if self.get_user():
+        if user:
             # Set security requirements for endpoint
             for key, data in specs.items():
 

@@ -24,7 +24,7 @@ def inject_user(endpoint: EndpointResource, user_id: str) -> Dict[str, Any]:
     if user is None:
         raise NotFound("This user cannot be found or you are not authorized")
 
-    return {"user": user}
+    return {"target_user": user}
 
 
 class AdminSingleUser(EndpointResource):
@@ -40,11 +40,11 @@ class AdminSingleUser(EndpointResource):
         summary="Return information on a single user",
         responses={200: "User information successfully retrieved"},
     )
-    def get(self, user_id: str, user: User) -> Response:
+    def get(self, user_id: str, target_user: User, user: User) -> Response:
 
-        self.log_event(self.events.access, user)
+        self.log_event(self.events.access, target_user)
 
-        return self.response(user)
+        return self.response(target_user)
 
 
 class AdminUsers(EndpointResource):
@@ -60,7 +60,7 @@ class AdminUsers(EndpointResource):
         summary="Return the list of all defined users",
         responses={200: "List of users successfully retrieved"},
     )
-    def get(self) -> Response:
+    def get(self, user: User) -> Response:
 
         users = self.auth.get_users()
 
@@ -77,7 +77,7 @@ class AdminUsers(EndpointResource):
             409: "This user already exists",
         },
     )
-    def post(self, **kwargs: Any) -> Response:
+    def post(self, user: User, **kwargs: Any) -> Response:
 
         roles: List[str] = kwargs.pop("roles", [])
         payload = kwargs.copy()
@@ -116,7 +116,9 @@ class AdminUsers(EndpointResource):
         summary="Modify a user",
         responses={200: "User successfully modified"},
     )
-    def put(self, user_id: str, user: User, **kwargs: Any) -> Response:
+    def put(
+        self, user_id: str, target_user: User, user: User, **kwargs: Any
+    ) -> Response:
 
         if "password" in kwargs:
             unhashed_password = kwargs["password"]
@@ -133,22 +135,22 @@ class AdminUsers(EndpointResource):
 
         email_notification = kwargs.pop("email_notification", False)
 
-        self.auth.link_roles(user, roles)
+        self.auth.link_roles(target_user, roles)
 
         userdata, extra_userdata = self.auth.custom_user_properties_pre(kwargs)
 
-        prev_expiration = user.expiration
+        prev_expiration = target_user.expiration
 
         # mypy correctly raises errors because update_properties is not defined
         # in generic Connector instances, but in this case this is an instance
         # of an auth db and their implementation always contains this method
-        self.auth.db.update_properties(user, userdata)  # type: ignore
+        self.auth.db.update_properties(target_user, userdata)  # type: ignore
 
         self.auth.custom_user_properties_post(
-            user, userdata, extra_userdata, self.auth.db
+            target_user, userdata, extra_userdata, self.auth.db
         )
 
-        self.auth.save_user(user)
+        self.auth.save_user(target_user)
 
         if group_id is not None:
             group = self.auth.get_group(group_id=group_id)
@@ -156,25 +158,25 @@ class AdminUsers(EndpointResource):
                 # Can't be reached because group_id is prefiltered by marshmallow
                 raise NotFound("This group cannot be found")  # pragma: no cover
 
-            self.auth.add_user_to_group(user, group)
+            self.auth.add_user_to_group(target_user, group)
 
         if email_notification and unhashed_password is not None:
-            notify_update_credentials_to_user(user, unhashed_password)
+            notify_update_credentials_to_user(target_user, unhashed_password)
 
-        if user.expiration:
+        if target_user.expiration:
             # Set expiration on a previously non-expiring account
             # or update the expiration by reducing the validity period
             # In both cases tokens should be invalited to prevent to have tokens
             # with TTL > account validity
 
             # dt_lower (alias for date_lower_than) is a comparison fn that ignores tz
-            if prev_expiration is None or dt_lower(user.expiration, prev_expiration):
-                for token in self.auth.get_tokens(user=user):
+            if not prev_expiration or dt_lower(target_user.expiration, prev_expiration):
+                for token in self.auth.get_tokens(user=target_user):
                     # Invalidate all tokens with expiration after the account expiration
-                    if dt_lower(user.expiration, token["expiration"]):
+                    if dt_lower(target_user.expiration, token["expiration"]):
                         self.auth.invalidate_token(token=token["token"])
 
-        self.log_event(self.events.modify, user, payload)
+        self.log_event(self.events.modify, target_user, payload)
 
         return self.empty_response()
 
@@ -185,10 +187,10 @@ class AdminUsers(EndpointResource):
         summary="Delete a user",
         responses={200: "User successfully deleted"},
     )
-    def delete(self, user_id: str, user: User) -> Response:
+    def delete(self, user_id: str, target_user: User, user: User) -> Response:
 
-        self.auth.delete_user(user)
+        self.auth.delete_user(target_user)
 
-        self.log_event(self.events.delete, user)
+        self.log_event(self.events.delete, target_user)
 
         return self.empty_response()

@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from restapi import decorators
 from restapi.config import TESTING
@@ -28,11 +28,9 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def get(self) -> Response:
+        def get(self, user: User) -> Response:
 
-            if user := self.get_user():
-                return self.response({"email": user.email})
-            return self.empty_response()  # pragma: no cover
+            return self.response({"email": user.email})
 
     class TestOptionalAuthentication(EndpointResource):
         @decorators.auth.optional()
@@ -45,9 +43,9 @@ if TESTING:
                 204: "Tests executed without auth",
             },
         )
-        def get(self) -> Response:
+        def get(self, user: Optional[User]) -> Response:
 
-            if user := self.get_user():
+            if user:
                 return self.response({"email": user.email})
             return self.empty_response()
 
@@ -59,11 +57,9 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def get(self) -> Response:
+        def get(self, user: User) -> Response:
 
-            if user := self.get_user():
-                return self.response({"email": user.email})
-            return self.empty_response()  # pragma: no cover
+            return self.response({"email": user.email})
 
     class TestOptionalQueryParameterAuthentication(EndpointResource):
         @decorators.auth.optional(allow_access_token_parameter=True)
@@ -76,9 +72,9 @@ if TESTING:
                 204: "Tests executed without auth",
             },
         )
-        def get(self) -> Response:
+        def get(self, user: Optional[User]) -> Response:
 
-            if user := self.get_user():
+            if user:
                 return self.response({"email": user.email})
             return self.empty_response()
 
@@ -90,11 +86,9 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        def get(self) -> Response:
+        def get(self, user: User) -> Response:
 
-            if user := self.get_user():
-                return self.response({"email": user.email})
-            return self.empty_response()  # pragma: no cover
+            return self.response({"email": user.email})
 
     # Note: this endpoint requires a role that does not exist!
     class TestAuthenticationWithMissingRole(EndpointResource):
@@ -107,20 +101,18 @@ if TESTING:
         )
         # no cover because this endpoint will be never called
         # because it requires an Unknown Role to be accessed
-        def get(self) -> Response:  # pragma: no cover
+        def get(self, user: User) -> Response:  # pragma: no cover
 
-            if user := self.get_user():
-                return self.response({"email": user.email})
-            return self.empty_response()
+            return self.response({"email": user.email})
 
     def verify_uuid_value(endpoint: EndpointResource, uuid: str) -> Dict[str, Any]:
 
-        user = endpoint.get_user()
-        if not user or uuid != user.uuid:
+        user = endpoint.auth.get_user(user_id=uuid)
+        if not user or not endpoint.auth.is_admin(user):
             raise Unauthorized("You are not authorized")
 
         # Returned values if any will be injected into the endpoint as fn parameters
-        return {"user": user}
+        return {"target_user": user}
         # Otherwise can simply return None to inject nothing
         # return None
 
@@ -131,10 +123,10 @@ if TESTING:
         @decorators.use_kwargs({"test": fields.Bool(required=True)}, location="query")
         @decorators.endpoint(
             path="/tests/preloadcallback/<uuid>",
-            summary="Only authorized if uuid matches the user uuid",
+            summary="Only authorized if uuid corresponds to an admin user",
             description="Only enabled in testing mode",
             responses={200: "Tests executed"},
         )
-        # Note: user is injected by the preload decorator
-        def get(self, uuid: str, test: bool, user: User) -> Response:
-            return self.response({"email": user.email})
+        # Note: target_user is injected by the preload decorator
+        def get(self, uuid: str, test: bool, user: User, target_user: User) -> Response:
+            return self.response({"email": target_user.email})

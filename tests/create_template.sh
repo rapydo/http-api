@@ -44,10 +44,10 @@ elif [[ "$TEMPLATE" == "extra" ]]; then
                     -e AUTH_MAX_PASSWORD_VALIDITY=60 \
                     -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=60 \
                     -e AUTH_MAX_LOGIN_ATTEMPTS=10 \
-                    -e AUTH_LOGIN_BAN_TIME=10 \
                     -e AUTH_SECOND_FACTOR_AUTHENTICATION=1 \
                     -e AUTH_TOKEN_IP_GRACE_PERIOD=2
-
+# no longer needed because it is a default during tests now
+                    #-e AUTH_LOGIN_BAN_TIME=10 \
 else
   echo "Unknown template: ${TEMPLATE}";
   exit 1;

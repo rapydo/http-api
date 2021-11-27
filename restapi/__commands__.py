@@ -1,13 +1,14 @@
 import os
 import sys
 import time
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import click
 from flask.cli import FlaskGroup
 
 from restapi import __package__ as current_package
-from restapi.config import CUSTOM_PACKAGE, PRODUCTION
+from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE, PRODUCTION
 from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.utilities import print_and_exit
@@ -25,8 +26,8 @@ def cli() -> None:  # pragma: no cover
 # Too dangerous to launch it during tests... skipping tests
 def main(args: List[str]) -> None:  # pragma: no cover
 
-    current_app = os.getenv("FLASK_APP")
-    if current_app is None or current_app.strip() == "":
+    current_app = Env.get("FLASK_APP", "").strip()
+    if not current_app:
         os.environ["FLASK_APP"] = f"{current_package}.__main__"
 
     # Call to untyped function "FlaskGroup" in typed context
@@ -55,7 +56,7 @@ def launch() -> None:  # pragma: no cover
         "--host",
         BIND_INTERFACE,
         "--port",
-        os.getenv("FLASK_PORT", "8080"),
+        Env.get("FLASK_PORT", "8080"),
         "--reload",
         "--no-debugger",
         "--eager-loading",
@@ -85,7 +86,15 @@ def verify(service: str) -> None:
     if host != "nohost":
         wait_socket(host, port, service)
 
-    log.info("Completed successfully")
+    connector_module = Connector.get_module(service, BACKEND_PACKAGE)
+    if not connector_module:  # pragma: no cover
+        print_and_exit("Connector {} not detected", service)
+
+    c = connector_module.get_instance()  # type: ignore
+    log.info(
+        "{} successfully authenticated on {}", service, c.variables.get("host", service)
+    )
+    # log.info("Completed successfully")
 
 
 @cli.command()
@@ -158,7 +167,7 @@ def mywait() -> None:
 
         if name == "celery":
 
-            broker = variables.get("broker", "N/A")
+            broker = variables.get("broker_service", "N/A")
 
             if broker == "RABBIT":
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
@@ -172,7 +181,7 @@ def mywait() -> None:
 
             wait_socket(host, port, label)
 
-            backend = variables.get("backend", "N/a")
+            backend = variables.get("backend_service", "N/a")
             # Rabbit is no longer used as backend due to the strong limitations
             if backend == "RABBIT":  # pragma: no cover
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
@@ -240,6 +249,9 @@ def tests(
 ) -> None:  # pragma: no cover
     """Compute tests and coverage"""
 
+    # Forced TEST mode when using the restapi tests wrapper
+    os.environ["APP_MODE"] = "test"
+
     if wait:
         while initializing():
             log.debug("Waiting services initialization")
@@ -265,19 +277,25 @@ def tests(
     else:
         parameters.append(CUSTOM_PACKAGE)
 
+    test_folder = Path("tests")
     if file is not None:
-        # Can't be enabled due to mistral stuck at py38
-        # file = file.removeprefix("tests/")
-        if file.startswith("tests/"):
-            file = file[6:]
 
-        if not os.path.isfile(os.path.join("tests", file)):
+        filepath = Path(file)
+        if test_folder not in filepath.parents:
+            filepath = test_folder.joinpath(filepath)
+
+        if not filepath.is_file():
             print_and_exit("File not found: {}", file)
-        parameters.append(file)
+        parameters.append(str(filepath.relative_to(test_folder)))
     elif folder is not None:
-        if not os.path.isdir(os.path.join("tests", folder)):
+
+        folderpath = Path(folder)
+        if test_folder not in folderpath.parents:
+            folderpath = test_folder.joinpath(folderpath)
+
+        if not folderpath.is_dir():
             print_and_exit("Folder not found: {}", folder)
-        parameters.append(folder)
+        parameters.append(str(folderpath.relative_to(test_folder)))
 
     # In prod mode tests are execute with the server running.
     # Destroy test fails with alchemy due to db locks

@@ -1,7 +1,6 @@
 import inspect
 from typing import Any, Dict, Optional, Type, Union
 
-import simplejson
 from marshmallow import EXCLUDE
 from marshmallow import Schema as MarshmallowSchema
 from marshmallow import ValidationError, pre_load
@@ -33,7 +32,6 @@ class Schema(MarshmallowSchema):
     # instruct marshmallow to serialize data to a collections.OrderedDict
     class Meta:
         ordered = True
-        render_module = simplejson
 
     # NOTE: self is not used, but @pre_load cannot be static
     @pre_load

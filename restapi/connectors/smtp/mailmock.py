@@ -1,8 +1,9 @@
 import email
-import json
 from smtplib import SMTPException, SMTPServerDisconnected
 from types import TracebackType
 from typing import Optional, Tuple, Type, TypeVar
+
+import orjson
 
 from restapi.utilities.logs import LOGS_FOLDER, log
 
@@ -76,7 +77,7 @@ class SMTP:
         data = {"from": from_address, "cc": dest_addresses, "msg": msg}
         log.info("Mail mock sending email from {} to {}", from_address, dest_addresses)
         with open(json_fpath, "w+") as file:
-            file.write(json.dumps(data))
+            file.write(orjson.dumps(data).decode("UTF-8"))
         log.info("Mail mock sent email from {} to {}", from_address, dest_addresses)
         log.info("Mail mock mail written in {}", json_fpath)
 

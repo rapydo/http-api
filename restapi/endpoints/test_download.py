@@ -1,11 +1,8 @@
-from pathlib import Path
-
 from restapi import decorators
-from restapi.config import TESTING
+from restapi.config import DATA_PATH, TESTING
 from restapi.models import fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.download import Downloader
-from restapi.services.uploader import Uploader
 
 if TESTING:
 
@@ -22,20 +19,16 @@ if TESTING:
             responses={
                 200: "Tests executed",
                 206: "Sent partial content",
+                403: "Invalid file path",
                 404: "The requested file does not exist",
                 416: "Range Not Satisfiable",
             },
         )
         def get(self, folder: str, fname: str, stream: bool = False) -> Response:
+            # The same as defined in test_upload
+            subfolder = DATA_PATH.joinpath(folder)
+
             if stream:
-                fpath = Uploader.absolute_upload_file(
-                    fname,
-                    # The same defined in test_upload
-                    subfolder=Path(folder),
-                )
-                return Downloader.send_file_streamed(fpath)
+                return Downloader.send_file_streamed(fname, subfolder=subfolder)
 
-            if fname == "SPECIAL-VALUE-FOR-NONE":
-                return Downloader.download(None)
-
-            return Downloader.download(fname, subfolder=Path(folder))
+            return Downloader.send_file_content(fname, subfolder=subfolder)

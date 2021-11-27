@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, cast
 
@@ -58,7 +57,7 @@ def read_configuration(
         suggest = "Expected values: 'projects' or 'submodules/${REPOSITORY_NAME}'"
         print_and_exit("Invalid extends-from parameter: {}.\n{}", extends_from, suggest)
 
-    if not os.path.exists(extend_path):  # pragma: no cover
+    if not extend_path.exists():  # pragma: no cover
         print_and_exit("From project not found: {}", str(extend_path))
 
     extend_file = Path(f"extended_{PROJECT_CONF_FILENAME}")
@@ -94,14 +93,14 @@ def mix(base: ConfigurationType, custom: ConfigurationType) -> ConfigurationType
 
 def load_yaml_file(filepath: Path) -> ConfigurationType:
 
-    if not os.path.exists(filepath):
+    if not filepath.exists():
         raise AttributeError(f"YAML file does not exist: {filepath}")
 
     with open(filepath) as fh:
         try:
-            docs = list(yaml.load_all(fh, yaml.loader.Loader))
+            docs = list(yaml.safe_load_all(fh))
 
-            if len(docs) == 0:
+            if not docs:
                 raise AttributeError(f"YAML file is empty: {filepath}")
 
             return cast(ConfigurationType, docs[0])

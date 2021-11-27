@@ -1,5 +1,4 @@
-import json
-
+import orjson
 import pytest
 from faker import Faker
 
@@ -131,7 +130,7 @@ class TestApp(BaseTests):
         data = {
             "group": uuid,
             # very important, otherwise the default user will lose its admin role
-            "roles": json.dumps(["admin_root"]),
+            "roles": orjson.dumps(["admin_root"]).decode("UTF8"),
         }
         headers, _ = self.do_login(client, None, None)
         # Event 5: modify

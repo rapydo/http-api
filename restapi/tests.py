@@ -1,24 +1,28 @@
 import base64
-import json
 import os
 import re
 import urllib.parse
 import uuid
 from collections import namedtuple
+from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
+from pathlib import Path
+from typing import Any, Dict, Generator, List, Optional, Tuple, TypedDict, Union, cast
 
 import jwt
+import orjson
 import pyotp
 import pytest
 import pytz
 from faker import Faker
 from flask import Flask
-from flask.wrappers import Response
+from flask.testing import FlaskClient
+from werkzeug.test import TestResponse as Response
 
 from restapi.config import (
     API_URL,
     AUTH_URL,
+    CODE_DIR,
     DEFAULT_HOST,
     DEFAULT_PORT,
     JWT_SECRET_FILE,
@@ -44,16 +48,22 @@ SERVER_URI = f"http://{DEFAULT_HOST}:{DEFAULT_PORT}"
 API_URI = f"{SERVER_URI}{API_URL}"
 AUTH_URI = f"{SERVER_URI}{AUTH_URL}"
 
-# Should be:
-# from flask.testing import FlaskClient
-# but it raises Missing type parameters for generic type "FlaskClient"
-# I cannot understand how to fix this... so let's fallback to Any...
-FlaskClient = Any
-
 Event = namedtuple(
     "Event",
     ["date", "ip", "user", "event", "target_type", "target_id", "url", "payload"],
 )
+
+
+@contextmanager
+def execute_from_code_dir() -> Generator[None, None, None]:
+    """Sets the cwd within the context"""
+
+    origin = Path().absolute()
+    try:
+        os.chdir(CODE_DIR)
+        yield
+    finally:
+        os.chdir(origin)
 
 
 class BaseTests:
@@ -105,7 +115,7 @@ class BaseTests:
 
         assert r.status_code == 200
 
-        schema = json.loads(r.data.decode("utf-8"))
+        schema = orjson.loads(r.data.decode("utf-8"))
         assert isinstance(schema, list)
         for f in schema:
             assert isinstance(f, dict)
@@ -117,7 +127,7 @@ class BaseTests:
     ) -> Union[str, float, int, bool, List[Any], Dict[str, Any]]:
 
         try:
-            response = json.loads(http_out.get_data().decode())
+            response = orjson.loads(http_out.get_data().decode())
             if isinstance(
                 response,
                 (
@@ -184,7 +194,7 @@ class BaseTests:
         data["password"] = PWD
 
         r = client.post(f"{AUTH_URI}/login", data=data)
-        content = json.loads(r.data.decode("utf-8"))
+        content = orjson.loads(r.data.decode("utf-8"))
 
         if r.status_code == 403:
 
@@ -305,7 +315,7 @@ class BaseTests:
 
         # FOR DEBUGGING WHEN ADVANCED AUTH OPTIONS ARE ON
         # if r.status_code != 200:
-        #     c = json.loads(r.data.decode("utf-8"))
+        #     c = orjson.loads(r.data.decode("utf-8"))
         #     log.error(c)
 
         assert r.status_code == status_code
@@ -339,7 +349,7 @@ class BaseTests:
                 if isinstance(role, Role):
                     roles[idx] = role.value
 
-            user_data["roles"] = json.dumps(roles)
+            user_data["roles"] = orjson.dumps(roles).decode("UTF8")
 
         if data:
             user_data.update(data)
@@ -525,7 +535,7 @@ class BaseTests:
                 assert "schema" in d
                 # build a sub-schema based on d["schema"]
                 nested_data = cls.buildData(d["schema"])
-                data[key] = json.dumps(nested_data)
+                data[key] = orjson.dumps(nested_data).decode("UTF8")
             else:
                 # Reached for example with lists of custom fields. In this case
                 # the input can't be automatically set and here is simply ignored
@@ -537,7 +547,7 @@ class BaseTests:
                     data[key] = [data[key]]
 
                 # requests is unable to send lists, if not json-dumped
-                data[key] = json.dumps(data[key])
+                data[key] = orjson.dumps(data[key]).decode("UTF8")
 
         return data
 
@@ -555,7 +565,7 @@ class BaseTests:
             raise FileNotFoundError(fpath)
 
         with open(fpath) as file:
-            data = cast(MockedEmail, json.load(file))
+            data = cast(MockedEmail, orjson.loads(file.read()))
 
         if "msg" in data:
             tokens = data["msg"].split("\n\n")
@@ -598,7 +608,7 @@ class BaseTests:
                     # to skip any external url
                     if frontend_host in url:
                         # token is the last part of the url, extract as a path
-                        token = os.path.basename(url)
+                        token = Path(url).name
                         break
 
         if token:
@@ -669,8 +679,8 @@ class BaseTests:
         cls, num: int = 1, filters: Optional[Dict[str, str]] = None
     ) -> List[Event]:
 
-        fpath = "/logs/security-events.log"
-        if not os.path.exists(fpath):  # pragma: no cover
+        fpath = LOGS_FOLDER.joinpath("security-events.log")
+        if not fpath.exists():  # pragma: no cover
             return []
 
         with open(fpath) as file:
@@ -688,7 +698,7 @@ class BaseTests:
 
                 tokens = line.strip().split(" ")
 
-                payload = json.loads(" ".join(tokens[8:])) if len(tokens) >= 9 else {}
+                payload = orjson.loads(" ".join(tokens[8:])) if len(tokens) >= 9 else {}
 
                 event = Event(
                     # datetime
@@ -732,4 +742,5 @@ class BaseTests:
         if not task:
             raise AttributeError("Task not found")
 
-        return task(*args, **kwargs)
+        with execute_from_code_dir():
+            return task(*args, **kwargs)

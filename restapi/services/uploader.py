@@ -6,8 +6,8 @@ from plumbum.cmd import file
 from werkzeug.http import parse_content_range_header
 from werkzeug.utils import secure_filename
 
-from restapi.config import UPLOAD_PATH, get_backend_url
-from restapi.exceptions import BadRequest, Conflict, ServiceUnavailable
+from restapi.config import DATA_PATH, get_backend_url
+from restapi.exceptions import BadRequest, Conflict, Forbidden, ServiceUnavailable
 from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
@@ -30,25 +30,22 @@ class Uploader:
         )
 
     @staticmethod
-    def absolute_upload_file(
-        filename: str, subfolder: Optional[Path] = None, onlydir: bool = False
-    ) -> Path:
+    def validate_upload_folder(path: Path) -> None:
 
-        root_path = UPLOAD_PATH
-        if subfolder:
+        if "\x00" in str(path):
+            raise BadRequest("Invalid null byte in subfolder parameter")
 
-            if "\x00" in str(subfolder):
-                raise BadRequest("Invalid null byte in subfolder parameter")
+        if path != path.resolve():
+            log.error("Invalid path: path is relative or contains double-dots")
+            raise Forbidden("Invalid file path")
 
-            root_path = root_path.joinpath(subfolder)
-            if not root_path.exists():
-                root_path.mkdir(parents=True, exist_ok=True)
-
-        if onlydir:
-            return root_path
-
-        filename = secure_filename(filename)
-        return root_path.joinpath(filename)
+        if path != DATA_PATH and DATA_PATH not in path.parents:
+            log.error(
+                "Invalid root path: {} is expected to be a child of {}",
+                path,
+                DATA_PATH,
+            )
+            raise Forbidden("Invalid file path")
 
     @staticmethod
     def get_file_metadata(abs_file: Path) -> Dict[str, str]:
@@ -62,8 +59,8 @@ class Uploader:
             log.warning("Unknown type for '{}'", abs_file)
             return {}
 
-    # this method is used by b2stage and mistral
-    def upload(self, subfolder: Optional[Path] = None, force: bool = False) -> Response:
+    # this method is used by mistral
+    def upload(self, subfolder: Path, force: bool = False) -> Response:
 
         if "file" not in request.files:
             raise BadRequest("No files specified")
@@ -76,9 +73,14 @@ class Uploader:
         if not self.allowed_file(myfile.filename):
             raise BadRequest("File extension not allowed")
 
-        # Check file name
+        Uploader.validate_upload_folder(subfolder)
+
+        if not subfolder.exists():
+            subfolder.mkdir(parents=True, exist_ok=True)
+
         fname = secure_filename(myfile.filename)
-        abs_file = Uploader.absolute_upload_file(fname, subfolder)
+        abs_file = subfolder.joinpath(fname)
+
         log.info("File request for [{}]({})", myfile, abs_file)
 
         if abs_file.exists():
@@ -90,10 +92,7 @@ class Uploader:
 
         # Save the file
         try:
-            # On b2stage without str it fails with:
-            # 'PosixPath' object has no attribute 'write'
-            # Maybe due to Werkzeug==0.16.1?
-            myfile.save(str(abs_file))
+            myfile.save(abs_file)
             log.debug("Absolute file path should be '{}'", abs_file)
         except Exception as e:  # pragma: no cover
             log.error(e)
@@ -127,6 +126,8 @@ class Uploader:
 
         if not self.allowed_file(filename):
             raise BadRequest("File extension not allowed")
+
+        Uploader.validate_upload_folder(upload_dir)
 
         if not upload_dir.exists():
             upload_dir.mkdir(parents=True, exist_ok=True)
@@ -197,7 +198,7 @@ class Uploader:
 
         return total_length, start, stop
 
-    # Please not that chunk_upload as to be used from a PUT endpoint
+    # Please note that chunk_upload as to be used from a PUT endpoint
     # PUT request is way different compared to POST request. With PUT request
     # the file contents can be accessed using either request.data or request.stream.
     # The first one stores incoming data as string, while request.stream acts
@@ -206,6 +207,9 @@ class Uploader:
     def chunk_upload(
         self, upload_dir: Path, filename: str, chunk_size: Optional[int] = None
     ) -> Tuple[bool, Response]:
+
+        Uploader.validate_upload_folder(upload_dir)
+
         filename = secure_filename(filename)
 
         range_header = request.headers.get("Content-Range", "")

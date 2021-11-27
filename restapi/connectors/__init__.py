@@ -1,6 +1,7 @@
 import abc
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 from types import ModuleType, TracebackType
 from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
 
@@ -41,7 +42,7 @@ ExceptionsList = Optional[Tuple[Type[Exception]]]
 
 class Connector(metaclass=abc.ABCMeta):
 
-    authentication_service: str = Env.get("AUTH_SERVICE") or NO_AUTH
+    authentication_service: str = Env.get("AUTH_SERVICE", NO_AUTH)
     # Available services with associated env variables
     services: Services = {}
 
@@ -84,7 +85,7 @@ class Connector(metaclass=abc.ABCMeta):
         if Connector.authentication_service == NO_AUTH:
             log.info("No Authentication service configured")
         else:
-            log.info("Authentication service: {}", Connector.authentication_service)
+            log.debug("Authentication service: {}", Connector.authentication_service)
 
         Connector.services = Connector.load_connectors(
             ABS_RESTAPI_PATH, BACKEND_PACKAGE, Connector.services
@@ -92,13 +93,13 @@ class Connector(metaclass=abc.ABCMeta):
 
         if EXTENDED_PACKAGE != EXTENDED_PROJECT_DISABLED:
             Connector.services = Connector.load_connectors(
-                os.path.join(os.curdir, EXTENDED_PACKAGE),
+                Path(EXTENDED_PACKAGE),
                 EXTENDED_PACKAGE,
                 Connector.services,
             )
 
         Connector.services = Connector.load_connectors(
-            os.path.join(os.curdir, CUSTOM_PACKAGE), CUSTOM_PACKAGE, Connector.services
+            Path(CUSTOM_PACKAGE), CUSTOM_PACKAGE, Connector.services
         )
 
         Connector.load_models(Connector.services.keys())
@@ -149,30 +150,31 @@ class Connector(metaclass=abc.ABCMeta):
         return self.services.get(self.name) or {}
 
     @classmethod
-    def load_connectors(cls, path: str, module: str, services: Services) -> Services:
+    def load_connectors(cls, path: Path, module: str, services: Services) -> Services:
 
-        main_folder = os.path.join(path, CONNECTORS_FOLDER)
-        if not os.path.isdir(main_folder):
+        main_folder = path.joinpath(CONNECTORS_FOLDER)
+        if not main_folder.is_dir():
             log.debug("Connectors folder not found: {}", main_folder)
             return services
 
-        for connector in os.listdir(main_folder):
-            connector_path = os.path.join(path, CONNECTORS_FOLDER, connector)
-            if not os.path.isdir(connector_path):
+        for connector in main_folder.iterdir():
+            if not connector.is_dir():
                 continue
-            if connector.startswith("_"):
+
+            connector_name = connector.name
+            if connector_name.startswith("_"):
                 continue
 
             # This is the only exception... we should rename sqlalchemy as alchemy
-            if connector == "sqlalchemy":
+            if connector_name == "sqlalchemy":
                 variables = Env.load_variables_group(prefix="alchemy")
             else:
-                variables = Env.load_variables_group(prefix=connector)
+                variables = Env.load_variables_group(prefix=connector_name)
 
             if not Env.to_bool(
                 variables.get("enable_connector", True)
             ):  # pragma: no cover
-                log.debug("{} connector is disabled", connector)
+                log.debug("{} connector is disabled", connector_name)
                 continue
 
             external = False
@@ -187,12 +189,12 @@ class Connector(metaclass=abc.ABCMeta):
 
             # Celery is always enabled, if connector is enabled
             # No further check is needed on host/external
-            available = enabled or external or connector == "celery"
+            available = enabled or external or connector_name == "celery"
 
             if not available:
                 continue
 
-            connector_module = Connector.get_module(connector, module)
+            connector_module = Connector.get_module(connector_name, module)
             connector_class = Connector.get_class(connector_module)
 
             # Can't test connector misconfiguration...
@@ -210,7 +212,7 @@ class Connector(metaclass=abc.ABCMeta):
             except AttributeError as e:  # pragma: no cover
                 print_and_exit(e)
 
-            services[connector] = variables
+            services[connector_name] = variables
 
             log.debug("Got class definition for {}", connector_class)
 
@@ -219,43 +221,41 @@ class Connector(metaclass=abc.ABCMeta):
     def load_models(connectors: List[str]) -> None:
 
         for connector in connectors:
-            connector_path = os.path.join(
-                ABS_RESTAPI_PATH, CONNECTORS_FOLDER, connector
-            )
-
             # Models are strictly core-dependent. If you need to enable models starting
             # from a custom connector this function has to be refactored:
             # 1) now is checked the existence of models.py in ABS_RESTAPI_PATH/connector
             # 2) Core model is mandatory
             # 3) Connector class, used to inject models is taken from BACKEND_PACKAGE
-            if os.path.isfile(os.path.join(connector_path, "models.py")):
-                log.debug("Loading models from {}", connector)
-                base_models = Meta.import_models(
-                    connector, BACKEND_PACKAGE, mandatory=True
-                )
-                if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
-                    extended_models = {}
-                else:
-                    extended_models = Meta.import_models(connector, EXTENDED_PACKAGE)
-                custom_models = Meta.import_models(connector, CUSTOM_PACKAGE)
 
-                log.info(
-                    "Models loaded from {}: core {}, extended {}, custom {}",
-                    connector,
-                    len(base_models),
-                    len(extended_models),
-                    len(custom_models),
-                )
-                connector_module = Connector.get_module(connector, BACKEND_PACKAGE)
-                connector_class = Connector.get_class(connector_module)
-                if connector_class:
-                    connector_class.set_models(
-                        base_models, extended_models, custom_models
-                    )
-                else:  # pragma: no cover
-                    log.error("Connector class not found for {}", connector)
-            else:
+            models_path = ABS_RESTAPI_PATH.joinpath(
+                CONNECTORS_FOLDER, connector, "models.py"
+            )
+
+            if not models_path.is_file():
                 log.debug("No model found for {}", connector)
+                continue
+
+            log.debug("Loading models from {}", connector)
+            base_models = Meta.import_models(connector, BACKEND_PACKAGE, mandatory=True)
+            if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
+                extended_models = {}
+            else:
+                extended_models = Meta.import_models(connector, EXTENDED_PACKAGE)
+            custom_models = Meta.import_models(connector, CUSTOM_PACKAGE)
+
+            log.debug(
+                "Models loaded from {}: core {}, extended {}, custom {}",
+                connector,
+                len(base_models),
+                len(extended_models),
+                len(custom_models),
+            )
+            connector_module = Connector.get_module(connector, BACKEND_PACKAGE)
+            connector_class = Connector.get_class(connector_module)
+            if connector_class:
+                connector_class.set_models(base_models, extended_models, custom_models)
+            else:  # pragma: no cover
+                log.error("Connector class not found for {}", connector)
 
     @staticmethod
     def get_module(connector: str, module: str) -> Optional[ModuleType]:

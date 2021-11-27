@@ -73,19 +73,19 @@ class Credentials(Schema):
     username = fields.Email(required=True, validate=validate.Length(max=100))
     password = fields.Str(
         required=True,
-        password=True,
+        metadata={"password": True},
         # Otherwise default testing password, like test, will fail
         # validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH)
     )
     new_password = fields.Str(
         required=False,
-        password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+        metadata={"password": True},
     )
     password_confirm = fields.Str(
         required=False,
-        password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+        metadata={"password": True},
     )
     totp_code = fields.TOTP(required=False)
 
@@ -93,45 +93,53 @@ class Credentials(Schema):
 class NewPassword(Schema):
     password = fields.Str(
         required=True,
-        password=True,
+        metadata={"password": True},
         # Not needed to check the length of the current password... if set...
         # validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
     )
     new_password = fields.Str(
         required=True,
-        password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+        metadata={"password": True},
     )
     password_confirm = fields.Str(
         required=True,
-        password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+        metadata={"password": True},
     )
     totp_code = fields.TOTP(required=False)
 
 
 class MailInput(Schema):
-    subject = fields.Str(required=True, description="Subject of your email")
+    subject = fields.Str(
+        required=True, metadata={"description": "Subject of your email"}
+    )
     body = fields.Str(
         required=True,
-        description="Body of your email. You can use html code here.",
         validate=validate.Length(max=9999),
+        metadata={"description": "Body of your email. You can use html code here."},
     )
-    to = fields.Email(required=True, label="Destination email address")
+    to = fields.Email(required=True, metadata={"label": "Destination email address"})
     cc = fields.DelimitedList(
         fields.Email(),
-        label="CC - Carbon Copy",
-        description="CC email addresses (comma-delimited list)",
+        metadata={
+            "label": "CC - Carbon Copy",
+            "description": "CC email addresses (comma-delimited list)",
+        },
     )
     bcc = fields.DelimitedList(
         fields.Email(),
-        label="BCC - Blind Carbon Copy",
-        description="BCC email addresses (comma-delimited list)",
+        metadata={
+            "label": "BCC - Blind Carbon Copy",
+            "description": "BCC email addresses (comma-delimited list)",
+        },
     )
     dry_run = fields.Boolean(
         required=True,
-        label="Dry run execution",
-        description="Only simulate the email, do not send it",
+        metadata={
+            "label": "Dry run execution",
+            "description": "Only simulate the email, do not send it",
+        },
     )
 
 
@@ -218,25 +226,31 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
         )
 
     attributes["name"] = fields.Str(
-        required=is_post, validate=validate.Length(min=1), label="First Name"
+        required=is_post,
+        validate=validate.Length(min=1),
+        metadata={"label": "First Name"},
     )
     attributes["surname"] = fields.Str(
-        required=is_post, validate=validate.Length(min=1), label="Last Name"
+        required=is_post,
+        validate=validate.Length(min=1),
+        metadata={"label": "Last Name"},
     )
 
     attributes["password"] = fields.Str(
         required=is_post,
-        password=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
+        metadata={"password": True},
     )
 
     if Connector.check_availability("smtp"):
-        attributes["email_notification"] = fields.Bool(label="Notify password by email")
+        attributes["email_notification"] = fields.Bool(
+            metadata={"label": "Notify password by email"}
+        )
 
     attributes["is_active"] = fields.Bool(
-        default=True,
+        dump_default=True,
         required=False,
-        label="Activate user",
+        metadata={"label": "Activate user"},
     )
 
     roles = {r.name: r.description for r in auth.get_roles()}
@@ -248,11 +262,13 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
                 labels=[r for r in roles.values()],
             )
         ),
-        default=[auth.default_role],
+        dump_default=[auth.default_role],
         required=False,
         unique=True,
-        label="Roles",
-        description="",
+        metadata={
+            "label": "Roles",
+            "description": "",
+        },
     )
 
     group_keys = []
@@ -269,17 +285,21 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
 
     attributes["group"] = fields.Str(
         required=is_post,
-        default=default_group,
+        dump_default=default_group,
         validate=validate.OneOf(choices=group_keys, labels=group_labels),
-        label="Group",
-        description="The group to which the user belongs",
+        metadata={
+            "label": "Group",
+            "description": "The group to which the user belongs",
+        },
     )
 
     attributes["expiration"] = fields.DateTime(
         required=False,
         allow_none=True,
-        label="Account expiration",
-        description="This user will be blocked after this date",
+        metadata={
+            "label": "Account expiration",
+            "description": "This user will be blocked after this date",
+        },
     )
 
     if custom_fields := mem.customizer.get_custom_input_fields(
@@ -303,8 +323,12 @@ def admin_group_input(request: FlaskRequest) -> Type[Schema]:
 
     attributes: MarshmallowSchema = {}
 
-    attributes["shortname"] = fields.Str(required=True, description="Short name")
-    attributes["fullname"] = fields.Str(required=True, description="Full name")
+    attributes["shortname"] = fields.Str(
+        required=True, metadata={"description": "Short name"}
+    )
+    attributes["fullname"] = fields.Str(
+        required=True, metadata={"description": "Full name"}
+    )
 
     return Schema.from_dict(attributes, name="GroupDefinition")
 
@@ -312,8 +336,8 @@ def admin_group_input(request: FlaskRequest) -> Type[Schema]:
 def profile_patch_input() -> Schema:
     attributes: MarshmallowSchema = {}
 
-    attributes["name"] = fields.Str(label="First Name")
-    attributes["surname"] = fields.Str(label="Last Name")
+    attributes["name"] = fields.Str(metadata={"label": "First Name"})
+    attributes["surname"] = fields.Str(metadata={"label": "Last Name"})
     attributes["privacy_accepted"] = fields.Boolean()
 
     if custom_fields := mem.customizer.get_custom_input_fields(
@@ -369,19 +393,18 @@ def user_registration_input(request: FlaskRequest) -> Type[Schema]:
     attributes["surname"] = fields.Str(required=True)
     attributes["email"] = fields.Email(
         required=True,
-        label="Username (email address)",
+        metadata={"label": "Username (email address)"},
         validate=validate.Length(max=100),
     )
     attributes["password"] = fields.Str(
         required=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-        password=True,
+        metadata={"password": True},
     )
     attributes["password_confirm"] = fields.Str(
         required=True,
         validate=validate.Length(min=auth.MIN_PASSWORD_LENGTH),
-        password=True,
-        label="Password confirmation",
+        metadata={"label": "Password confirmation", "password": True},
     )
 
     if custom_fields := mem.customizer.get_custom_input_fields(

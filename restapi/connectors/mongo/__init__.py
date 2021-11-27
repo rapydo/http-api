@@ -88,6 +88,8 @@ def catch_db_exceptions(func: F) -> F:
     return cast(F, wrapper)
 
 
+# Use MongoDB or not? An interesting opinion against MongoDB here:
+# https://javascript.plainenglish.io/why-you-should-not-use-mongodb-for-your-project-bf0f1caa6672
 class MongoExt(Connector):
 
     DATABASE: str = "rapydo"
@@ -113,7 +115,9 @@ class MongoExt(Connector):
         if USER and PWD:
             credentials = f"{USER}:{PWD}@"
 
-        return f"mongodb://{credentials}{HOST}:{PORT}/{MongoExt.DATABASE}"
+        # This is needed to authenticate mongodb at the connect
+        auth = "?authSource=admin"
+        return f"mongodb://{credentials}{HOST}:{PORT}/{MongoExt.DATABASE}{auth}"
 
     def connect(self, **kwargs: str) -> "MongoExt":
 

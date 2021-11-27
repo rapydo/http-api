@@ -2,8 +2,6 @@ name: Test
 
 on:
   push:
-  # schedule:
-  #   - cron: "0 2 * * *"
   workflow_dispatch:
 
 jobs:
@@ -34,7 +32,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: Install
         run: |
 
@@ -62,6 +60,7 @@ jobs:
 
           mkdir ${{ matrix.template }}.${{ matrix.mode }}
           cd ${{ matrix.template }}.${{ matrix.mode }}
+          rapydo install compose
           bash ../tests/create_template.sh ${{ matrix.template }} ${RANDOM_AUTH}
 
       - name: DEV Tests
@@ -74,51 +73,46 @@ jobs:
           rapydo -e ACTIVATE_TELEGRAM=0 start
           sleep 25
           rapydo logs
-          rapydo shell --no-tty backend 'restapi tests --core --wait --destroy'
+          rapydo shell backend 'restapi tests --core --wait --destroy'
 
           LOGURU_LEVEL=WARNING rapydo list services
           # This should fail if at least one container is in Exit status
           [[ ! $(LOGURU_LEVEL=WARNING rapydo list services | grep -E "Exit|Restarting|Created") ]]
-
-          # Send coverage
-          rapydo dump
-          backend_container=$(docker-compose ps -q backend)
-          docker cp ${backend_container}:/code/coverage.xml coverage.xml
-          bash <(curl -s https://codecov.io/bash) -R submodules/http-api
 
       - name: PROD Tests
         if: ${{ matrix.mode == 'prod' }}
         run: |
           cd ${{ matrix.template }}.${{ matrix.mode }}
 
-          rapydo --production --testing --project prj init --force
+          rapydo --testing --production --project prj init --force
           rapydo pull --quiet
           bash ../tests/customize_template.sh ${{ matrix.template }}
           rapydo ssl --volatile
           rapydo start
-          # wait for all services to start (25 and 30 failed sometimes, in particular with rabbit)
-          sleep 35
+          # wait for all services to start (45 is needed in case of rabbit + neo4j)
+          sleep 45
           rapydo logs
           curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
           if [[ "${{ matrix.template }}" == "extra" ]]; then
-            rapydo -s bot logs --tail 1 | grep "Bot is ready to accept requests";
-            rapydo -s bot remove;
+            rapydo logs --tail 1 bot | grep "Bot is ready to accept requests";
+            rapydo remove bot;
           fi
-          rapydo -s proxy,backend logs --tail 20
+          rapydo logs --tail 20 proxy backend
 
           # Tests in production mode
-          rapydo shell --no-tty backend 'restapi tests --core --wait'
+          rapydo shell backend 'restapi tests --core --wait'
 
           LOGURU_LEVEL=WARNING rapydo list services
           # This should fail if at least one container is in Exit status
           # Except for frontend that is expected to be exited in prod mode
           [[ ! $(LOGURU_LEVEL=WARNING rapydo list services | grep -v frontend | grep -E "Exit|Restarting|Created") ]]
 
-          # Send coverage
-          rapydo dump
-          backend_container=$(docker-compose ps -q backend)
-          docker cp ${backend_container}:/code/coverage.xml coverage.xml
-          bash <(curl -s https://codecov.io/bash) -R submodules/http-api
+      - name: Coverage
+        uses: rapydo/actions/coverage@v1
+        with:
+          repository: ${{ matrix.template }}.${{ matrix.mode }}/submodules/http-api
+          project: prj
+          step: backend
 
       - name: Print Logs
         if: failure()

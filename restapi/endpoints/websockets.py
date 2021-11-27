@@ -12,6 +12,7 @@ from restapi import decorators
 from restapi.connectors import pushpin
 from restapi.exceptions import BadRequest
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import User
 from restapi.utilities.logs import log
 
 
@@ -25,7 +26,7 @@ class PushpinWebSocket(EndpointResource):
         description="Push to socket",
         responses={200: "Message sent"},
     )
-    def put(self, channel: str, sync: str) -> Response:
+    def put(self, channel: str, sync: str, user: User) -> Response:
 
         # Unable to use a kwargs due to conflicts with allow_access_token_parameter
         is_sync = sync == "1"
@@ -43,7 +44,7 @@ class PushpinWebSocket(EndpointResource):
         description="Open a websocket",
         responses={200: "Websocket connection accepted"},
     )
-    def post(self, channel: str) -> Response:
+    def post(self, channel: str, user: User) -> Response:
 
         try:
             # in_events = decode_websocket_events(request.get_data())
@@ -117,7 +118,7 @@ class PushpinHTTPStream(EndpointResource):
         description="Open a HTTP Stream for Long polling",
         responses={200: "HTTP Stream connection accepted"},
     )
-    def post(self, channel: str) -> Response:
+    def post(self, channel: str, user: User) -> Response:
 
         headers = {}
         headers["Grip-Hold"] = "stream"

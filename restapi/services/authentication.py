@@ -23,6 +23,7 @@ import pyotp
 import pytz
 import segno
 from cryptography.fernet import Fernet
+from cryptography.fernet import InvalidToken as InvalidFernetToken
 from flask import request
 from glom import glom
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
@@ -46,6 +47,7 @@ from restapi.exceptions import (
     Conflict,
     Forbidden,
     RestApiException,
+    ServerError,
     ServiceUnavailable,
     Unauthorized,
 )
@@ -92,6 +94,7 @@ DEFAULT_GROUP_DESCR = "Default group"
 DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE = 60
 MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE = 60
 MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE = 10
+LOGIN_BAN_TIME_MAX_TESTING_VALUE = 10
 
 
 # Produced by fill_payload
@@ -160,6 +163,15 @@ def get_max_login_attempts(val: int) -> int:
     return val
 
 
+def get_login_ban_time(val: int) -> int:
+
+    if TESTING and val:
+        # max 10 seconds, otherwise tests will hang
+        return min(val, LOGIN_BAN_TIME_MAX_TESTING_VALUE)
+
+    return val
+
+
 # ##############################################################################
 
 
@@ -216,11 +228,11 @@ class BaseAuthentication(metaclass=ABCMeta):
     )
 
     MAX_LOGIN_ATTEMPTS = get_max_login_attempts(
-        Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 0)
+        Env.get_int("AUTH_MAX_LOGIN_ATTEMPTS", 8)
     )
 
     FAILED_LOGINS_EXPIRATION: timedelta = timedelta(
-        seconds=Env.get_int("AUTH_LOGIN_BAN_TIME", 3600)
+        seconds=get_login_ban_time(Env.get_int("AUTH_LOGIN_BAN_TIME", 3600))
     )
 
     default_user: Optional[str] = None
@@ -242,11 +254,11 @@ class BaseAuthentication(metaclass=ABCMeta):
     @staticmethod
     def load_default_user() -> None:
 
-        BaseAuthentication.default_user = Env.get("AUTH_DEFAULT_USERNAME")
-        BaseAuthentication.default_password = Env.get("AUTH_DEFAULT_PASSWORD")
+        BaseAuthentication.default_user = Env.get("AUTH_DEFAULT_USERNAME", "")
+        BaseAuthentication.default_password = Env.get("AUTH_DEFAULT_PASSWORD", "")
         if (
-            BaseAuthentication.default_user is None
-            or BaseAuthentication.default_password is None
+            not BaseAuthentication.default_user
+            or not BaseAuthentication.default_password
         ):  # pragma: no cover
             print_and_exit("Default credentials are unavailable!")
 
@@ -731,7 +743,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
         if TESTING:  # pragma: no cover
             # TESTING_TOTP_HASH is set by setup-cypress github action
-            if (p := Env.get("AUTH_TESTING_TOTP_HASH")) is not None:
+            if p := Env.get("AUTH_TESTING_TOTP_HASH", ""):
                 return p
 
         if not user.mfa_hash:
@@ -739,7 +751,11 @@ class BaseAuthentication(metaclass=ABCMeta):
             user.mfa_hash = self.fernet.encrypt(random_hash.encode()).decode()
             self.save_user(user)
 
-        return self.fernet.decrypt(user.mfa_hash.encode()).decode()
+        try:
+            return self.fernet.decrypt(user.mfa_hash.encode()).decode()
+        # to test this exception change the fernet key used to encrypt mfa_hash
+        except InvalidFernetToken:
+            raise ServerError("Invalid server signature")
 
     def verify_totp(self, user: User, totp_code: Optional[str]) -> bool:
 

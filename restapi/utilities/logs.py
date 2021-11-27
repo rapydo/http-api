@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import sys
@@ -7,19 +6,36 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
+import orjson
 from loguru import logger as log
 
 from restapi.config import HOST_TYPE, PRODUCTION
 from restapi.env import Env
 
-log_level = os.getenv("LOGURU_LEVEL", "DEBUG")
-LOG_RETENTION = os.getenv("LOG_RETENTION", "180")
-FILE_LOGLEVEL = os.getenv("FILE_LOGLEVEL", "WARNING")
+log_level = Env.get("LOGURU_LEVEL", "DEBUG")
+LOG_RETENTION = Env.get("LOG_RETENTION", "180")
+FILE_LOGLEVEL = Env.get("FILE_LOGLEVEL", "WARNING")
 # FILE_LOGLEVEL = "WARNING" if not TESTING else "INFO"
 LOGS_FOLDER = Path("/logs")
 
 LOGS_PATH: Optional[str] = LOGS_FOLDER.joinpath(f"{HOST_TYPE}.log")
 EVENTS_PATH: Optional[str] = LOGS_FOLDER.joinpath("security-events.log")
+
+if Path(LOGS_PATH).exists() and not os.access(LOGS_PATH, os.W_OK):  # pragma: no cover
+    print(
+        f"\nCan't initialize logging because {LOGS_PATH} is not writeable, "
+        "backend server cannot start\n"
+    )
+    sys.exit(1)
+
+if Path(EVENTS_PATH).exists() and not os.access(
+    EVENTS_PATH, os.W_OK
+):  # pragma: no cover
+    print(
+        f"\nCan't initialize logging because {EVENTS_PATH} is not writeable, "
+        "backend server cannot start\n"
+    )
+    sys.exit(1)
 
 
 class Events(str, Enum):
@@ -108,7 +124,7 @@ fmt += "<fg #FFF>{message}</fg #FFF>"
 
 # Set the default logger with the given log level and save the log_id as static variable
 # Further call to this function will remove the previous logger (based on saved log_id)
-def set_logger(level):
+def set_logger(level: str) -> None:
 
     if hasattr(set_logger, "log_id"):
         log_id = getattr(set_logger, "log_id")
@@ -173,8 +189,8 @@ def handle_log_output(original_parameters_string: Optional[Any]) -> Dict[str, An
 
     urlencoded = False
     try:
-        parameters = json.loads(mystr)
-    except json.decoder.JSONDecodeError:
+        parameters = orjson.loads(mystr)
+    except orjson.JSONDecodeError:
         try:
             parameters = urllib.parse.parse_qs(mystr)
             urlencoded = True
@@ -247,7 +263,7 @@ def save_event_log(
     target_type, target_id = parse_event_target(target)
 
     if payload:
-        p = json.dumps(obfuscate_dict(payload, max_len=999))
+        p = orjson.dumps(obfuscate_dict(payload, max_len=999)).decode("UTF8")
     else:
         p = ""
 

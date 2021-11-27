@@ -1,10 +1,10 @@
-import json
 import socket
 import ssl
 import urllib.parse
 from typing import Any, Dict, List, Optional
 
 import certifi
+import orjson
 import pika
 import requests
 from pika.exceptions import (
@@ -228,7 +228,10 @@ class RabbitExt(Connector):
         r = requests.get(
             f"{schema}{host}:{port}/api/exchanges/{vhost}/{exchange}/bindings/source",
             auth=HTTPBasicAuth(user, password),
+            # this verify=False is needed because APIs are called on
+            # the internal docker network where the TLS certificate is invalid
             verify=False,
+            timeout=5,
         )
         response = r.json()
         if r.status_code != 200:  # pragma: no cover
@@ -278,7 +281,7 @@ class RabbitExt(Connector):
         headers: Optional[Dict[str, Any]] = None,
     ) -> bool:
         return self.send(
-            body=json.dumps(message).encode(),
+            body=orjson.dumps(message),
             routing_key=routing_key,
             exchange=exchange,
             headers=headers,

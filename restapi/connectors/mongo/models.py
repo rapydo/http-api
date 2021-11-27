@@ -5,13 +5,14 @@ Docs:
 https://pymodm.readthedocs.io
 https://docs.mongodb.com/manual/applications/data-models-relationships
 """
-import os
 
 from pymodm import MongoModel, fields
 from pymongo.operations import IndexModel
 
+from restapi.env import Env
+
 # from pymongo.write_concern import WriteConcern
-AUTH_DB = os.getenv("MONGO_DATABASE")
+AUTH_DB = Env.get("MONGO_DATABASE", "rapydo")
 
 
 ####################

@@ -3,7 +3,7 @@ import tempfile
 import time
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Union
 
 import psutil
 import pytest
@@ -12,6 +12,7 @@ from marshmallow.exceptions import ValidationError
 
 from restapi.config import get_host_type
 from restapi.connectors.smtp.notifications import get_html_template
+from restapi.decorators import inject_callback_parameters, match_types
 from restapi.env import Env
 from restapi.exceptions import (
     BadRequest,
@@ -108,7 +109,10 @@ class TestApp(BaseTests):
             name = fields.Str()
 
         f = "myfield"
-        assert ResponseMaker.get_schema_type(f, fields.Str(password=True)) == "password"
+        assert (
+            ResponseMaker.get_schema_type(f, fields.Str(metadata={"password": True}))
+            == "password"
+        )
         assert ResponseMaker.get_schema_type(f, fields.Bool()) == "boolean"
         assert ResponseMaker.get_schema_type(f, fields.Boolean()) == "boolean"
         assert ResponseMaker.get_schema_type(f, fields.Date()) == "date"
@@ -138,7 +142,7 @@ class TestApp(BaseTests):
         # assert ResponseMaker.get_schema_type(f, fields.Raw()) == "string"
         # assert ResponseMaker.get_schema_type(f, fields.TimeDelta()) == "string"
 
-        assert not ResponseMaker.is_binary(None)  # type: ignore
+        assert not ResponseMaker.is_binary(None)
         assert not ResponseMaker.is_binary("")
         assert not ResponseMaker.is_binary("application/json")
         assert ResponseMaker.is_binary("application/octet-stream")
@@ -445,17 +449,17 @@ class TestApp(BaseTests):
         with pytest.raises(
             BadRequest, match=r"Invalid null byte in subfolder parameter"
         ):
-            Uploader.absolute_upload_file("0", subfolder=Path("\x00"))
+            Uploader.validate_upload_folder(Path("\x00"))
 
         with pytest.raises(
             BadRequest, match=r"Invalid null byte in subfolder parameter"
         ):
-            Uploader.absolute_upload_file("0", subfolder=Path("/uploads/\x00"))
+            Uploader.validate_upload_folder(Path("/uploads/\x00"))
 
         with pytest.raises(
             BadRequest, match=r"Invalid null byte in subfolder parameter"
         ):
-            Uploader.absolute_upload_file("0", subfolder=Path("/uploads/AA\x00BB"))
+            Uploader.validate_upload_folder(Path("/uploads/AA\x00BB"))
 
     # #######################################
     # ####      Time
@@ -515,7 +519,7 @@ class TestApp(BaseTests):
             get_timedelta(every, "years")  # type: ignore
 
         with pytest.raises(BadRequest):
-            get_timedelta(every, faker.pystr())  # type: ignore
+            get_timedelta(every, faker.pystr())
 
         assert seconds_to_human(0) == "0 seconds"
         assert seconds_to_human(1) == "1 second"
@@ -715,3 +719,252 @@ class TestApp(BaseTests):
         # assert r["unique_delimited_list"][2] == "c "
         # Now input is trimmed
         assert r["unique_delimited_list"][2] == "c"
+
+    def test_callbackend_parameters_injection(self, faker: Faker) -> None:
+        # These functions are not executed => no cover
+        def missing_endpoint() -> None:  # pragma: no cover
+            pass
+
+        # These functions are not executed => no cover
+        def wrong_endpoint(endpoint: str) -> None:  # pragma: no cover
+            pass
+
+        # These functions are not executed => no cover
+        def ok_endpoint_no_params(
+            endpoint: EndpointResource,
+        ) -> None:  # pragma: no cover
+            pass
+
+        # These functions are not executed => no cover
+        def ok_endpoint_with_params(
+            endpoint: EndpointResource, a: str, b: Faker
+        ) -> None:  # pragma: no cover
+            pass
+
+        # Wrong callback: endpoint parameter is missing
+        injected_parameters = inject_callback_parameters(missing_endpoint, {}, {})
+        assert injected_parameters is None
+
+        # Wrong callback: endpoint parameter is missing
+        injected_parameters = inject_callback_parameters(
+            missing_endpoint,
+            {"endpoint": None},
+            {"endpoint": None},
+        )
+        assert injected_parameters is None
+
+        # Wrong callback: endpoint parameter has a wrong type
+        injected_parameters = inject_callback_parameters(wrong_endpoint, {}, {})
+        assert injected_parameters is None
+
+        # Wrong callback: endpoint parameter has a wrong type
+        injected_parameters = inject_callback_parameters(
+            wrong_endpoint,
+            {"endpoint": None},
+            {"endpoint": None},
+        )
+        assert injected_parameters is None
+
+        # Callback is good and takes no parameters
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_no_params,
+            {},
+            {},
+        )
+        assert injected_parameters is not None
+
+        # Callback is good and takes no parameters
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_no_params,
+            {"endpoint": None, "a": "abc"},
+            {"b": "aaa"},
+        )
+        assert injected_parameters is not None
+
+        # Starting from here the callback wants two parameters
+
+        # Parameters not found in kwargs / view_args
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {},
+            {},
+        )
+        assert injected_parameters is None
+
+        # Only one parameter found in kwargs / view_args
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {"a": "abc"},
+            {},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found in kwargs / view_args
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {"a": "abc"},
+            {"b": faker},
+        )
+        assert injected_parameters is not None
+
+        # Both parameters found in kwargs / view_args
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {"b": faker},
+            {"a": "abc"},
+        )
+        assert injected_parameters is not None
+
+        # Both parameters found in kwargs / view_args
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {"a": "abc", "b": faker},
+            {},
+        )
+        assert injected_parameters is not None
+
+        # Both parameters found in kwargs / view_args
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {},
+            {"a": "abc", "b": faker},
+        )
+        assert injected_parameters is not None
+
+        # Both parameters found but with wrong type (int instead of str)
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {"a": 10, "b": faker},
+            {},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (str instead of Faker)
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {"a": "abc", "b": "faker"},
+            {},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (None instead of Faker)
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {"a": "abc", "b": None},
+            {},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (None instead of str)
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {"a": None, "b": faker},
+            {},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (int instead of str)
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {},
+            {"a": 10, "b": faker},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (str instead of Faker)
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {},
+            {"a": "abc", "b": "faker"},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (None instead of Faker)
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {},
+            {"a": "abc", "b": None},
+        )
+        assert injected_parameters is None
+
+        # Both parameters found but with wrong type (None instead of str)
+        injected_parameters = inject_callback_parameters(
+            ok_endpoint_with_params,
+            {},
+            {"a": None, "b": faker},
+        )
+        assert injected_parameters is None
+
+        assert match_types(EndpointResource, EndpointResource)
+        assert not match_types(EndpointResource, "EndpointResource")
+        assert not match_types(EndpointResource, None)
+        assert not match_types(EndpointResource, type(None))
+        assert not match_types(EndpointResource, 1)
+        assert not match_types(EndpointResource, True)
+        assert not match_types(EndpointResource, False)
+        assert not match_types(EndpointResource, type(1))
+        assert not match_types(EndpointResource, [])
+        assert not match_types(EndpointResource, {})
+        assert not match_types(EndpointResource, ["test"])
+        assert not match_types(EndpointResource, {"test": 1})
+
+        assert match_types(Any, EndpointResource)
+        assert match_types(Any, "EndpointResource")
+        assert match_types(Any, None)
+        assert match_types(Any, type(None))
+        assert match_types(Any, 1)
+        assert match_types(Any, True)
+        assert match_types(Any, False)
+        assert match_types(Any, type(1))
+        assert match_types(Any, type([]))
+        assert match_types(Any, type({}))
+        assert match_types(Any, ["test"])
+        assert match_types(Any, {"test": 1})
+
+        assert not match_types(str, EndpointResource)
+        assert match_types(str, "EndpointResource")
+        assert not match_types(str, None)
+        assert not match_types(str, 1)
+        assert not match_types(str, True)
+        assert not match_types(str, False)
+        assert not match_types(str, [])
+        assert not match_types(str, {})
+        assert not match_types(str, ["test"])
+        assert not match_types(str, {"test": 1})
+
+        assert not match_types(Optional[str], EndpointResource)
+        assert match_types(Optional[str], "EndpointResource")
+        assert match_types(Optional[str], type(None))
+        assert not match_types(Optional[str], 1)
+        assert not match_types(Optional[str], [])
+        assert not match_types(Optional[str], {})
+        assert not match_types(Optional[str], ["test"])
+        assert not match_types(Optional[str], {"test": 1})
+
+        assert not match_types(List[str], EndpointResource)
+        assert not match_types(List[str], "EndpointResource")
+        assert not match_types(List[str], None)
+        assert not match_types(List[str], 1)
+        assert match_types(List[str], [])
+        assert not match_types(List[str], {})
+        assert match_types(List[str], ["test"])
+        # list args are not verifed, so [1] is currently accepted as List[str]
+        assert match_types(List[str], [1])
+        assert not match_types(List[str], {"test": 1})
+
+        assert match_types(Union[str, int], 1)
+        assert match_types(Union[str, int], "1")
+        assert not match_types(Union[str, int], [])
+
+        assert match_types(bool, True)
+        assert match_types(bool, False)
+        assert not match_types(bool, 0)
+        assert not match_types(bool, 1)
+        assert not match_types(bool, "...")
+        assert not match_types(bool, [])
+        assert not match_types(bool, [1])
+
+        # please note the "not Union" that I added for a mistake
+        # leading to a infinite recursion loop
+        # before adding as specific case in match_types
+        assert not match_types(not Union[str, int], [])
