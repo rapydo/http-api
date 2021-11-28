@@ -37,10 +37,6 @@ class RedisExt(Connector):
             host=variables.get("host", "redis.dockerized.io"),
             port=Env.to_int(variables.get("port"), 6379),
             password=variables.get("password"),
-            # Usually 0 is used by celery
-            # 1 by celery-beat BUG!? Actually celery-beat is using 0 in celery connector
-            # 2 by flask caching
-            # We use 3 here? Or keep 0 and shift the others?
             db=RedisExt.DB,
         )
         return self
