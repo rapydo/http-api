@@ -17,14 +17,16 @@ MarshmallowSchema = Dict[str, Union[fields.Field, type]]
 
 
 class User(Schema):
-    email = fields.Email()
+    # This is because Email is not typed on marshmallow
+    email = fields.Email()  # type: ignore
     name = fields.Str()
     surname = fields.Str()
 
 
 class UserWithUUID(Schema):
     uuid = fields.UUID()
-    email = fields.Email()
+    # This is because Email is not typed on marshmallow
+    email = fields.Email()  # type: ignore
     name = fields.String()
     surname = fields.String()
 
@@ -70,7 +72,10 @@ class TotalSchema(Schema):
 
 
 class Credentials(Schema):
-    username = fields.Email(required=True, validate=validate.Length(max=100))
+    # This is because Email is not typed on marshmallow
+    username = fields.Email(  # type: ignore
+        required=True, validate=validate.Length(max=100)
+    )
     password = fields.Str(
         required=True,
         metadata={"password": True},
@@ -119,16 +124,21 @@ class MailInput(Schema):
         validate=validate.Length(max=9999),
         metadata={"description": "Body of your email. You can use html code here."},
     )
-    to = fields.Email(required=True, metadata={"label": "Destination email address"})
+    # This is because Email is not typed on marshmallow
+    to = fields.Email(  # type: ignore
+        required=True, metadata={"label": "Destination email address"}
+    )
     cc = fields.DelimitedList(
-        fields.Email(),
+        # This is because Email is not typed on marshmallow
+        fields.Email(),  # type: ignore
         metadata={
             "label": "CC - Carbon Copy",
             "description": "CC email addresses (comma-delimited list)",
         },
     )
     bcc = fields.DelimitedList(
-        fields.Email(),
+        # This is because Email is not typed on marshmallow
+        fields.Email(),  # type: ignore
         metadata={
             "label": "BCC - Blind Carbon Copy",
             "description": "BCC email addresses (comma-delimited list)",
@@ -147,13 +157,15 @@ class MailOutput(Schema):
     html_body = fields.Str()
     plain_body = fields.Str()
     subject = fields.Str()
-    to = fields.Email()
-    cc = fields.List(fields.Email())
-    bcc = fields.List(fields.Email())
+    # # This is because Email is not typed on marshmallow
+    to = fields.Email()  # type: ignore
+    cc = fields.List(fields.Email())  # type: ignore
+    bcc = fields.List(fields.Email())  # type: ignore
 
 
 class LoginsSchema(Schema):
-    username = fields.Email()
+    # This is because Email is not typed on marshmallow
+    username = fields.Email()  # type: ignore
     date = fields.DateTime(format=ISO8601UTC)
     IP = fields.Str()
     location = fields.Str()
@@ -173,7 +185,8 @@ def admin_user_output(many: bool = True) -> Schema:
     attributes: MarshmallowSchema = {}
 
     attributes["uuid"] = fields.UUID()
-    attributes["email"] = fields.Email()
+    # This is because Email is not typed on marshmallow
+    attributes["email"] = fields.Email()  # type: ignore
     attributes["name"] = fields.Str()
     attributes["surname"] = fields.Str()
     attributes["first_login"] = fields.DateTime(allow_none=True, format=ISO8601UTC)
@@ -203,7 +216,8 @@ def admin_user_output(many: bool = True) -> Schema:
 def group_users_output() -> Schema:
     attributes: MarshmallowSchema = {}
 
-    attributes["email"] = fields.Email()
+    # This is because Email is not typed on marshmallow
+    attributes["email"] = fields.Email()  # type: ignore
     attributes["name"] = fields.Str()
     attributes["surname"] = fields.Str()
     attributes["roles"] = fields.List(fields.Nested(Role))
@@ -221,7 +235,8 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
 
     attributes: MarshmallowSchema = {}
     if is_post:
-        attributes["email"] = fields.Email(
+        # This is because Email is not typed on marshmallow
+        attributes["email"] = fields.Email(  # type: ignore
             required=is_post, validate=validate.Length(max=100)
         )
 
@@ -353,7 +368,8 @@ def profile_output() -> Schema:
     attributes: MarshmallowSchema = {}
 
     attributes["uuid"] = fields.UUID(required=True)
-    attributes["email"] = fields.Email(required=True)
+    # This is because Email is not typed on marshmallow
+    attributes["email"] = fields.Email(required=True)  # type: ignore
     attributes["name"] = fields.Str(required=True)
     attributes["surname"] = fields.Str(required=True)
     attributes["isAdmin"] = fields.Boolean(required=True)
@@ -391,7 +407,8 @@ def user_registration_input(request: FlaskRequest) -> Type[Schema]:
 
     attributes["name"] = fields.Str(required=True)
     attributes["surname"] = fields.Str(required=True)
-    attributes["email"] = fields.Email(
+    # This is because Email is not typed on marshmallow
+    attributes["email"] = fields.Email(  # type: ignore
         required=True,
         metadata={"label": "Username (email address)"},
         validate=validate.Length(max=100),
