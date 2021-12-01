@@ -20,14 +20,14 @@ class Schema(MarshmallowSchema):
             for k in self.declared_fields:
                 self.declared_fields[k].required = False
 
-    # Mypy does not accept the equivalence between
-    # marshmallow.fields and restapi.models.fields
-    # And cannot be blamed for that... it's a dirty implementation :-)
     @classmethod
-    def from_dict(  # type: ignore
-        cls, attributes: Dict[str, Union[fields.Field, type]], name: str
+    def from_dict(
+        cls,
+        fields: Dict[str, Union[fields.Field, type]],
+        *,
+        name: str = "GeneratedSchema",
     ) -> type:
-        return super().from_dict(attributes, name=name)  # type: ignore
+        return super().from_dict(fields, name=name)
 
     # instruct marshmallow to serialize data to a collections.OrderedDict
     class Meta:

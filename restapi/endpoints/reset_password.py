@@ -23,7 +23,10 @@ if Connector.check_availability("smtp"):
         depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_PASSWORD_RESET", "AUTH_ENABLE"]
         labels = ["authentication"]
 
-        @decorators.use_kwargs({"reset_email": fields.Email(required=True)})
+        @decorators.use_kwargs(
+            # This is because Email is not typed on marshmallow
+            {"reset_email": fields.Email(required=True)}  # type: ignore
+        )
         @decorators.endpoint(
             path="/auth/reset",
             summary="Request password reset via email",
