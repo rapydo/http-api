@@ -9,6 +9,7 @@ from restapi.utilities.logs import log
 if TESTING and Connector.check_availability("neo4j"):
 
     from neomodel import (
+        FloatProperty,
         IntegerProperty,
         StringProperty,
         StructuredNode,
@@ -24,6 +25,7 @@ if TESTING and Connector.check_availability("neo4j"):
     class Custom(StructuredNode):  # type: ignore
         custom = StringProperty(required=True, choices=CHOICES_tuple)
         myint = IntegerProperty(required=True)
+        myfloat = FloatProperty(required=True)
         # do not set it as required because:
         # ValueError: required argument ignored by UniqueIdProperty
         myuuid = UniqueIdProperty()
