@@ -490,7 +490,7 @@ class BaseTests:
                 min_value = d.get("min", 0)
                 max_value = d.get("max", 9999)
                 data[key] = cls.faker.pyint(min_value=min_value, max_value=max_value)
-            elif field_type == "date":
+            elif field_type == "datetime":
 
                 min_date = None
                 max_date = None
