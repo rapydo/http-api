@@ -86,6 +86,7 @@ class TestApp(BaseTests):
         assert schema["type"] == "object"
 
         assert "MYDATE" in schema["required"]
+        assert "MYDATETIME" in schema["required"]
         assert "myequalstr" in schema["required"]
         assert "myint_exclusive" in schema["required"]
         assert "myint_inclusive" in schema["required"]
@@ -100,6 +101,16 @@ class TestApp(BaseTests):
 
         properties = schema["properties"]
         f = "MYDATE"
+        assert f in properties
+        assert "type" in properties[f]
+        assert properties[f]["type"] == "string"
+        assert "format" in properties[f]
+        assert properties[f]["format"] == "date"
+        # min and max not set for this example
+        assert "x-minimum" not in properties[f]
+        assert "x-maximum" not in properties[f]
+
+        f = "MYDATETIME"
         assert f in properties
         assert "type" in properties[f]
         assert properties[f]["type"] == "string"
