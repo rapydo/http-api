@@ -490,6 +490,21 @@ class BaseTests:
                 min_value = d.get("min", 0)
                 max_value = d.get("max", 9999)
                 data[key] = cls.faker.pyint(min_value=min_value, max_value=max_value)
+            elif field_type == "date":
+
+                min_date = None
+                max_date = None
+
+                if min_value := d.get("min"):
+                    min_date = datetime.fromisoformat(min_value)
+
+                if max_value := d.get("max"):
+                    max_date = datetime.fromisoformat(max_value)
+
+                random_date = cls.faker.date_time_between_dates(
+                    datetime_start=min_date, datetime_end=max_date
+                )
+                data[key] = random_date.date()
             elif field_type == "datetime":
 
                 min_date = None
