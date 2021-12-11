@@ -95,8 +95,10 @@ def test_smtp(app: Flask, faker: Faker) -> None:
     # This is a special from_address, used to raise SMTPException
     assert not obj.send("body", "subject", "to_addr", "invalid1")
     # This is a special from_address, used to raise Exception
+    obj = connector.get_instance()
     assert not obj.send("body", "subject", "to_addr", "invalid2")
     # This is NOT a special from_address
+    obj = connector.get_instance()
     assert obj.send("body", "subject", "to_addr", "invalid3")
 
     # Test that cc and bcc with wrong types are ignored
