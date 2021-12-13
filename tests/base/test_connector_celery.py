@@ -110,7 +110,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
     assert "Error Stack" in body
     assert "Traceback (most recent call last):" in body
 
-    exc = "CeleryRetryTask: Force the retry of this task"
+    exc = "MyException: Force the retry of this task"
     assert exc in body
 
     # retry2 is a special value included in tasks template
