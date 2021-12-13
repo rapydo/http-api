@@ -57,14 +57,15 @@ def test_celery(app: Flask, faker: Faker) -> None:
     with pytest.raises(Ignore):
         BaseTests.send_task(app, "test_task", "wrong")
 
+    project_title = get_project_configuration("project.title", default="YourProject")
+
     mail = BaseTests.read_mock_email()
-    project_tile = get_project_configuration("project.title", default="YourProject")
 
     body = mail.get("body")
     headers = mail.get("headers")
     assert body is not None
     assert headers is not None
-    assert f"Subject: {project_tile}: Task test_task failed" in headers
+    assert f"Subject: {project_title}: Task test_task failed" in headers
     assert "this email is to notify you that a Celery task failed!" in body
     # fixed-id is a mocked value set in TESTING mode by @task in Celery connector
     assert "Task ID: fixed-id" in body
@@ -95,13 +96,12 @@ def test_celery(app: Flask, faker: Faker) -> None:
         BaseTests.send_task(app, "test_task", "retry")
 
     mail = BaseTests.read_mock_email()
-    project_tile = get_project_configuration("project.title", default="YourProject")
 
     body = mail.get("body")
     headers = mail.get("headers")
     assert body is not None
     assert headers is not None
-    assert f"Subject: {project_tile}: Task test_task failed (failure #1)" in headers
+    assert f"Subject: {project_title}: Task test_task failed (failure #1)" in headers
     assert "this email is to notify you that a Celery task failed!" in body
     # fixed-id is a mocked value set in TESTING mode by @task in Celery connector
     assert "Task ID: fixed-id" in body
@@ -120,13 +120,12 @@ def test_celery(app: Flask, faker: Faker) -> None:
         BaseTests.send_task(app, "test_task", "retry2")
 
     mail = BaseTests.read_mock_email()
-    project_tile = get_project_configuration("project.title", default="YourProject")
 
     body = mail.get("body")
     headers = mail.get("headers")
     assert body is not None
     assert headers is not None
-    assert f"Subject: {project_tile}: Task test_task failed (failure #1)" in headers
+    assert f"Subject: {project_title}: Task test_task failed (failure #1)" in headers
     assert "this email is to notify you that a Celery task failed!" in body
     # fixed-id is a mocked value set in TESTING mode by @task in Celery connector
     assert "Task ID: fixed-id" in body

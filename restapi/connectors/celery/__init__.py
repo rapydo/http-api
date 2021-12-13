@@ -117,7 +117,7 @@ def mark_task_as_retriable(
     if TESTING:
         self.request.id = "fixed-id"
         self.request.task = name
-        self.request.retries = 1
+        self.request.retries = 0
 
     task_id = self.request.id
     task_name = self.request.task
