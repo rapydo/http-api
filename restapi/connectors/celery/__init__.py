@@ -213,7 +213,7 @@ class CeleryExt(Connector):
                 }
 
             self.celery_app.conf.broker_url = self.get_rabbit_url(
-                service_vars, protocol="amqp"
+                service_vars, protocol="pyamqp"
             )
 
         elif broker == "REDIS":
