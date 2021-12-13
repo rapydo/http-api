@@ -9,7 +9,7 @@ from flask import Flask
 from restapi.config import get_project_configuration
 from restapi.connectors import Connector
 from restapi.connectors import celery as connector
-from restapi.connectors.celery import CeleryExt, Ignore
+from restapi.connectors.celery import CeleryExt, CeleryRetryTask, Ignore
 from restapi.env import Env
 from restapi.exceptions import BadRequest, ServiceUnavailable
 from restapi.server import ServerModes, create_app
@@ -89,6 +89,54 @@ def test_celery(app: Flask, faker: Faker) -> None:
     # No email is sent in case of Ignore exceptions
     with pytest.raises(FileNotFoundError):
         mail = BaseTests.read_mock_email()
+
+    # retry is a special value included in tasks template
+    with pytest.raises(CeleryRetryTask):
+        BaseTests.send_task(app, "test_task", "retry")
+
+    mail = BaseTests.read_mock_email()
+    project_tile = get_project_configuration("project.title", default="YourProject")
+
+    body = mail.get("body")
+    headers = mail.get("headers")
+    assert body is not None
+    assert headers is not None
+    assert f"Subject: {project_tile}: Task test_task failed (failure #1)" in headers
+    assert "this email is to notify you that a Celery task failed!" in body
+    # fixed-id is a mocked value set in TESTING mode by @task in Celery connector
+    assert "Task ID: fixed-id" in body
+    assert "Task name: test_task" in body
+    assert "Arguments: ('retry',)" in body
+    assert "Error Stack" in body
+    assert "Traceback (most recent call last):" in body
+
+    exc = "CeleryRetryTask: Force the retry of this task"
+    assert exc in body
+
+    # retry2 is a special value included in tasks template
+    # Can't easily import the custom exception defined in the task...
+    # a generic exception is enough here
+    with pytest.raises(Exception):
+        BaseTests.send_task(app, "test_task", "retry2")
+
+    mail = BaseTests.read_mock_email()
+    project_tile = get_project_configuration("project.title", default="YourProject")
+
+    body = mail.get("body")
+    headers = mail.get("headers")
+    assert body is not None
+    assert headers is not None
+    assert f"Subject: {project_tile}: Task test_task failed (failure #1)" in headers
+    assert "this email is to notify you that a Celery task failed!" in body
+    # fixed-id is a mocked value set in TESTING mode by @task in Celery connector
+    assert "Task ID: fixed-id" in body
+    assert "Task name: test_task" in body
+    assert "Arguments: ('retry2',)" in body
+    assert "Error Stack" in body
+    assert "Traceback (most recent call last):" in body
+
+    exc = "CeleryRetryTask: Force the retry of this task by using a custom exception"
+    assert exc in body
 
     with pytest.raises(AttributeError, match=r"Task not found"):
         BaseTests.send_task(app, "does-not-exist")
