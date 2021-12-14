@@ -287,6 +287,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     def make_login(self, username: str, password: str) -> Tuple[str, Payload, User]:
         """The method which will check if credentials are good to go"""
 
+        # add self.verify_blocked_username(username) ?
         try:
             user = self.get_user(username=username)
         except ValueError as e:  # pragma: no cover
@@ -314,23 +315,25 @@ class BaseAuthentication(metaclass=ABCMeta):
         if user.authmethod != "credentials":  # pragma: no cover
             raise BadRequest("Invalid authentication method")
 
-        # New hashing algorithm, based on bcrypt
-        if self.verify_password(password, user.password):
-            # Token expiration is capped by the user expiration date, if set
-            payload, full_payload = self.fill_payload(user, expiration=user.expiration)
-            token = self.create_token(payload)
+        if not self.verify_password(password, user.password):
+            self.log_event(
+                Events.failed_login,
+                payload={"username": username},
+                user=user,
+            )
+            self.register_failed_login(username, user=user)
+            raise Unauthorized("Invalid access credentials", is_warning=True)
 
-            self.save_login(username, user, failed=False)
-            self.log_event(Events.login, user=user)
-            return token, full_payload, user
+        # Token expiration is capped by the user expiration date, if set
+        payload, full_payload = self.fill_payload(user, expiration=user.expiration)
+        token = self.create_token(payload)
 
-        self.log_event(
-            Events.failed_login,
-            payload={"username": username},
-            user=user,
-        )
-        self.register_failed_login(username, user=user)
-        raise Unauthorized("Invalid access credentials", is_warning=True)
+        self.save_login(username, user, failed=False)
+        self.log_event(Events.login, user=user)
+        return token, full_payload, user
+
+        # add: self.verify_user_status(user)
+        # add: totp verification
 
     # #####################
     # # Password handling #

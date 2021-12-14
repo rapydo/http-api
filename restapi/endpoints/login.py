@@ -35,6 +35,8 @@ class Login(EndpointResource):
     ) -> Response:
 
         username = username.lower()
+        if not self.auth.SECOND_FACTOR_AUTHENTICATION:
+            totp_code = None
 
         # ##################################################
         # Authentication control
