@@ -40,8 +40,6 @@ class Login(EndpointResource):
 
         # ##################################################
         # Authentication control
-        self.auth.verify_blocked_username(username)
-
         token, payload, user = self.auth.make_login(username, password)
 
         self.auth.verify_user_status(user)
