@@ -67,6 +67,10 @@ RoleObj = Any
 Login = Any
 
 
+class AuthMissingTOTP(Exception):
+    pass
+
+
 def import_secret(abs_filename: Path) -> bytes:
 
     if HOST_TYPE != BACKEND_HOSTNAME and HOST_TYPE != BOT_HOSTNAME:  # pragma: no cover
@@ -285,7 +289,7 @@ class BaseAuthentication(metaclass=ABCMeta):
                 BaseAuthentication.roles.append(role)
 
     def make_login(
-        self, username: str, password: str, totp_code: Optional[str] = None
+        self, username: str, password: str, totp_code: Optional[str]
     ) -> Tuple[str, Payload, User]:
 
         self.verify_blocked_username(username)
@@ -326,8 +330,13 @@ class BaseAuthentication(metaclass=ABCMeta):
             self.register_failed_login(username, user=user)
             raise Unauthorized("Invalid access credentials", is_warning=True)
 
-        # add: self.verify_user_status(user)
-        # add: totp verification
+        self.verify_user_status(user)
+
+        if self.SECOND_FACTOR_AUTHENTICATION and not totp_code:
+            raise AuthMissingTOTP()
+
+        if totp_code:
+            self.verify_totp(user, totp_code)
 
         # Token expiration is capped by the user expiration date, if set
         payload, full_payload = self.fill_payload(user, expiration=user.expiration)

@@ -6,6 +6,7 @@ import pytz
 from restapi import decorators
 from restapi.endpoints.schemas import Credentials
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import AuthMissingTOTP
 
 
 class Login(EndpointResource):
@@ -40,25 +41,19 @@ class Login(EndpointResource):
 
         # ##################################################
         # Authentication control
-        token, payload, user = self.auth.make_login(username, password)
 
-        self.auth.verify_user_status(user)
-
-        if self.auth.SECOND_FACTOR_AUTHENTICATION:
-
-            if totp_code is None:
-                message = self.auth.check_password_validity(
-                    user,
-                    totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION,
-                )
-                message["actions"].append("TOTP")
-                message["errors"].append(
-                    "You do not provided a valid verification code"
-                )
-                if message["errors"]:
-                    return self.response(message, code=403)
-
-            self.auth.verify_totp(user, totp_code)
+        try:
+            token, payload, user = self.auth.make_login(username, password, totp_code)
+        except AuthMissingTOTP:
+            user = self.auth.get_user(username=username)
+            message = self.auth.check_password_validity(
+                user,
+                totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION,
+            )
+            message["actions"].append("TOTP")
+            message["errors"].append("You do not provided a valid verification code")
+            if message["errors"]:
+                return self.response(message, code=403)
 
         # ##################################################
         # If requested, change the password
@@ -70,7 +65,9 @@ class Login(EndpointResource):
 
             if pwd_changed:
                 password = new_password
-                token, payload, user = self.auth.make_login(username, password)
+                token, payload, user = self.auth.make_login(
+                    username, password, totp_code
+                )
 
         message = self.auth.check_password_validity(
             user, totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION
