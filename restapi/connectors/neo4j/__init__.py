@@ -23,6 +23,7 @@ from neomodel import (
     install_labels,
     remove_all_labels,
 )
+from neomodel.config import DATABASE_URL as UNINITIALIZED_DATABASE_URL
 from neomodel.exceptions import (
     DeflateError,
     DoesNotExist,
@@ -148,7 +149,14 @@ class NeoModel(Connector):
         # Fixed... to be configured?
         DATABASE = "neo4j"
         URI = f"bolt://{USER}:{PWD}@{HOST}:{PORT}/{DATABASE}"
-        config.DATABASE_URL = URI
+
+        # https://neomodel.readthedocs.io/en/latest/getting_started.html#connecting
+        # Set config.DATABASE_URL only once
+        if config.DATABASE_URL == UNINITIALIZED_DATABASE_URL:
+            config.DATABASE_URL = URI
+        # Then switch the connection via set_connection
+        db.set_connection(URI)
+
         # Ensure all DateTimes are provided with a timezone
         # before being serialised to UTC epoch
         config.FORCE_TIMEZONE = True  # default False
