@@ -7,7 +7,12 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 
 import pytz
-from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
+from neo4j.exceptions import (
+    AuthError,
+    CypherSyntaxError,
+    ServiceUnavailable,
+    TransientError,
+)
 from neobolt.addressing import AddressError as neobolt_AddressError
 from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
 from neomodel import (
@@ -150,7 +155,7 @@ class NeoModel(Connector):
         db.url = URI
         db.set_connection(URI)
 
-        # db.driver.verify_connectivity()
+        db.driver.verify_connectivity()
 
         StructuredNode.save = catch_db_exceptions(StructuredNode.save)
         NodeSet.get = catch_db_exceptions(NodeSet.get)
@@ -163,17 +168,15 @@ class NeoModel(Connector):
 
     def is_connected(self) -> bool:
 
-        return not self.disconnected
-        # if self.disconnected:
-        #     return False
+        if self.disconnected:
+            return False
 
-        # from neo4j.exceptions import TransientError
-        # try:
-        #     self.db.driver.verify_connectivity()
-        #     return True
-        # except (ServiceUnavailable, TransientError) as e:
-        #     log.error(e)
-        #     return False
+        try:
+            self.db.driver.verify_connectivity()
+            return True
+        except (ServiceUnavailable, TransientError) as e:
+            log.error(e)
+            return False
 
     def initialize(self) -> None:
 
