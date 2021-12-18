@@ -615,8 +615,8 @@ class TestApp(BaseTests):
 
         # Super trick!
         # https://clamytoe.github.io/articles/2020/Mar/12/testing-abcs-with-abstract-methods-with-pytest
-        abstractmethods = BaseAuthentication.__abstractmethods__  # type: ignore
-        BaseAuthentication.__abstractmethods__ = set()  # type: ignore
+        abstractmethods = BaseAuthentication.__abstractmethods__
+        BaseAuthentication.__abstractmethods__ = set()
 
         auth = Connector.get_authentication_instance()
         user = auth.get_user(username=BaseAuthentication.default_user)
