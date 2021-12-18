@@ -176,7 +176,7 @@ class NeoModel(Connector):
 
     def is_connected(self) -> bool:
 
-        if self.disconnected:
+        if self.disconnected or not self.db or not self.db.driver:
             return False
 
         try:
