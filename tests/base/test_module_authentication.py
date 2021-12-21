@@ -615,15 +615,15 @@ class TestApp(BaseTests):
 
         # Super trick!
         # https://clamytoe.github.io/articles/2020/Mar/12/testing-abcs-with-abstract-methods-with-pytest
-        abstractmethods = BaseAuthentication.__abstractmethods__  # type: ignore
-        BaseAuthentication.__abstractmethods__ = set()  # type: ignore
+        abstractmethods = BaseAuthentication.__abstractmethods__
+        BaseAuthentication.__abstractmethods__ = set()
 
         auth = Connector.get_authentication_instance()
         user = auth.get_user(username=BaseAuthentication.default_user)
         group = auth.get_group(name=DEFAULT_GROUP_NAME)
         role = auth.get_roles()[0]
 
-        auth = BaseAuthentication()  # type: ignore
+        auth = BaseAuthentication()
 
         assert (
             auth.get_user(username=faker.ascii_email(), user_id=faker.pystr()) is None
@@ -692,4 +692,4 @@ class TestApp(BaseTests):
 
         assert auth.flush_failed_logins(username=faker.ascii_email) is None
 
-        BaseAuthentication.__abstractmethods__ = abstractmethods  # type: ignore
+        BaseAuthentication.__abstractmethods__ = abstractmethods

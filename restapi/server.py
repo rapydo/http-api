@@ -64,7 +64,9 @@ class ServerModes(int, Enum):
 #     log.critical(request.headers)
 
 
-def teardown_handler(signal: int, frame: FrameType) -> None:  # pragma: no cover
+def teardown_handler(  # pragma: no cover
+    signal: int, frame: Optional[FrameType]
+) -> None:
 
     with lock:
 
