@@ -623,7 +623,7 @@ class TestApp(BaseTests):
         group = auth.get_group(name=DEFAULT_GROUP_NAME)
         role = auth.get_roles()[0]
 
-        auth = BaseAuthentication()
+        auth = BaseAuthentication()  # type: ignore
 
         assert (
             auth.get_user(username=faker.ascii_email(), user_id=faker.pystr()) is None
