@@ -84,6 +84,10 @@ def get_project_configuration(key: str, default: str) -> str:
 
 @lru_cache
 def get_backend_url() -> str:
+
+    # if BACKEND_URL => return BACKEND_URL
+
+    # add prefix if != "" and "/"
     if PRODUCTION:
         return f"https://{DOMAIN}"
 
@@ -93,6 +97,10 @@ def get_backend_url() -> str:
 
 @lru_cache
 def get_frontend_url() -> str:
+
+    # if FRONTEND_URL => return FRONTEND_URL
+
+    # add prefix if != "" and "/"
     protocol = "https" if PRODUCTION else "http"
 
     return f"{protocol}://{DOMAIN}"
