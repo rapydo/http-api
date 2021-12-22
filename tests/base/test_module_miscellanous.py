@@ -10,7 +10,13 @@ import pytest
 from faker import Faker
 from marshmallow.exceptions import ValidationError
 
-from restapi.config import get_host_type
+from restapi.config import (
+    DOMAIN,
+    PRODUCTION,
+    get_backend_url,
+    get_frontend_url,
+    get_host_type,
+)
 from restapi.connectors.smtp.notifications import get_html_template
 from restapi.decorators import inject_callback_parameters, match_types
 from restapi.env import Env
@@ -278,6 +284,26 @@ class TestApp(BaseTests):
         assert get_host_type("flower") == "flower"
         assert get_host_type("whateverelse") == "celery"
         assert get_host_type(faker.pystr()) == "celery"
+
+    def test_get_backend_url(self) -> None:
+
+        if PRODUCTION:
+            assert get_backend_url() == f"https://{DOMAIN}"
+        else:
+            assert get_backend_url() == f"http://{DOMAIN}:8080"
+
+        os.environ["FLASK_PORT"] = "1234"
+
+        if PRODUCTION:
+            assert get_backend_url() == f"https://{DOMAIN}"
+        else:
+            assert get_backend_url() == f"http://{DOMAIN}:1234"
+
+    def test_get_frontend_url(self) -> None:
+        if PRODUCTION:
+            assert get_frontend_url() == f"https://{DOMAIN}"
+        else:
+            assert get_frontend_url() == f"http://{DOMAIN}"
 
     # #######################################
     # ####      Timeouts
