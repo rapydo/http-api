@@ -85,22 +85,34 @@ def get_project_configuration(key: str, default: str) -> str:
 @lru_cache
 def get_backend_url() -> str:
 
-    # if BACKEND_URL => return BACKEND_URL
+    BACKEND_URL = Env.get("BACKEND_URL", "")
 
-    # add prefix if != "" and "/"
+    if BACKEND_URL:
+        return BACKEND_URL
+
+    BACKEND_PREFIX = Env.get("BACKEND_PREFIX", "").strip("/")
+    if BACKEND_PREFIX:
+        BACKEND_PREFIX = f"/{BACKEND_PREFIX}"
+
     if PRODUCTION:
-        return f"https://{DOMAIN}"
+        return f"https://{DOMAIN}{BACKEND_PREFIX}"
 
     port = Env.get("FLASK_PORT", "8080")
-    return f"http://{DOMAIN}:{port}"
+    return f"http://{DOMAIN}{BACKEND_PREFIX}:{port}"
 
 
 @lru_cache
 def get_frontend_url() -> str:
 
-    # if FRONTEND_URL => return FRONTEND_URL
+    FRONTEND_URL = Env.get("FRONTEND_URL", "")
 
-    # add prefix if != "" and "/"
+    if FRONTEND_URL:
+        return FRONTEND_URL
+
+    FRONTEND_PREFIX = Env.get("FRONTEND_PREFIX", "").strip("/")
+    if FRONTEND_PREFIX:
+        FRONTEND_PREFIX = f"/{FRONTEND_PREFIX}"
+
     protocol = "https" if PRODUCTION else "http"
 
-    return f"{protocol}://{DOMAIN}"
+    return f"{protocol}://{DOMAIN}{FRONTEND_PREFIX}"
