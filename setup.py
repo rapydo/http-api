@@ -77,7 +77,7 @@ setup(
         # Tests
         "pytest-flask==1.2.0",
         "pytest-cov==3.0.0",
-        "pytest-timeout==1.4.2",
+        "pytest-timeout==2.0.2",
         "pytest-sugar==0.9.4",
         "schemathesis==3.10.0",
         "Faker==9.5.0",
