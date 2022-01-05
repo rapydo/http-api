@@ -80,7 +80,7 @@ setup(
         "pytest-timeout==2.0.2",
         "pytest-sugar==0.9.4",
         "schemathesis==3.10.0",
-        "Faker==9.5.0",
+        "Faker==11.1.0",
         "Telethon==1.23.0",
     ],
     classifiers=[

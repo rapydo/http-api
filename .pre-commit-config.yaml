@@ -25,7 +25,7 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [
-            "git+https://github.com/rapydo/http-api.git@2.1",
+            "git+https://github.com/rapydo/http-api.git@2.2",
 
             # Extra dependencies
             "lxml",
@@ -42,7 +42,7 @@ repos:
             "celery-types",
             "mongo-types",
             "sqlalchemy-stubs",
-            "Faker==9.5.0",
+            "Faker==11.1.0",
           ]
 
         # https://mypy.readthedocs.io/en/stable/command_line.html
