@@ -54,7 +54,7 @@ setup(
         "celery-redbeat==2.0.0",
         "celerybeat-mongo==0.2.0",
         "python-telegram-bot==13.7",
-        "amqp==5.0.6",
+        "amqp==5.0.9",
         # TOTP
         "pyotp==2.6.0",
         "segno==1.3.3",
