@@ -4,6 +4,7 @@ import orjson
 import schemathesis
 import werkzeug
 from hypothesis import HealthCheck, settings
+from requests.structures import CaseInsensitiveDict
 
 from restapi.env import Env
 from restapi.server import create_app
@@ -14,7 +15,7 @@ from restapi.utilities.logs import log, set_logger
 
 def get_auth_token(
     client: werkzeug.Client, data: Dict[str, Optional[str]]
-) -> Tuple[str, Dict[str, str]]:
+) -> Tuple[str, CaseInsensitiveDict[str]]:
 
     data["totp_code"] = BaseTests.generate_totp(data.get("username"))
     r = client.post("/auth/login", data=data)
@@ -41,7 +42,9 @@ def get_auth_token(
     assert r.status_code == 200
     assert content is not None
 
-    return content, {"Authorization": f"Bearer {content}"}
+    headers: CaseInsensitiveDict[str] = CaseInsensitiveDict()
+    headers["Authorization"] = f"Bearer {content}"
+    return content, headers
 
 
 # Schemathesis is always enabled during core tests
