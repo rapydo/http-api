@@ -67,7 +67,7 @@ setup(
         "maxminddb-geolite2",
         "html2text",
         "orjson",
-        "marshmallow==3.13.0",
+        "marshmallow==3.14.1",
         "webargs==8.0.1",
         "apispec==5.1.0",
         # Web sockets and others
