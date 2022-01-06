@@ -21,7 +21,7 @@ def test_cli() -> None:
 
     response = runner.invoke(cli.verify, ["--services", "neo4j"])
     assert response.exit_code == 2
-    assert "Error: no such option: --services" in response.output
+    assert "Error: No such option: --services" in response.output
 
     response = runner.invoke(cli.verify, ["--service", "x"])
     assert response.exit_code == 1
