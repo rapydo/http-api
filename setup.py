@@ -57,7 +57,7 @@ setup(
         "amqp==5.0.9",
         # TOTP
         "pyotp==2.6.0",
-        "segno==1.3.3",
+        "segno==1.4.1",
         # Utilities
         "PyYAML==6.0",
         "loguru",
