@@ -42,7 +42,7 @@ repos:
             "celery-types",
             "mongo-types",
             "sqlalchemy-stubs",
-            "Faker==11.1.0",
+            "Faker==11.3.0",
           ]
 
         # https://mypy.readthedocs.io/en/stable/command_line.html

@@ -69,7 +69,7 @@ setup(
         "orjson",
         "marshmallow==3.14.1",
         "webargs==8.0.1",
-        "apispec==5.1.0",
+        "apispec==5.1.1",
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.1.0",
@@ -80,7 +80,7 @@ setup(
         "pytest-timeout==2.0.2",
         "pytest-sugar==0.9.4",
         "schemathesis==3.12.1",
-        "Faker==11.1.0",
+        "Faker==11.3.0",
         "Telethon==1.24.0",
     ],
     classifiers=[
