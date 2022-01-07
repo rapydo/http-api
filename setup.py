@@ -42,6 +42,9 @@ setup(
         "passlib[bcrypt]==1.7.4",
         "meinheld==1.0.2",
         "gunicorn==20.1.0",
+        "marshmallow==3.14.1",
+        "webargs==8.0.1",
+        "apispec==5.1.1",
         # DB and services drivers
         "neomodel==4.0.8",
         "psycopg2-binary",
@@ -67,9 +70,6 @@ setup(
         "maxminddb-geolite2",
         "html2text",
         "orjson",
-        "marshmallow==3.14.1",
-        "webargs==8.0.1",
-        "apispec==5.1.1",
         # Web sockets and others
         "websocket-client",
         "gripcontrol==4.1.0",
