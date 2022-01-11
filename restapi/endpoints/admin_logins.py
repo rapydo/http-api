@@ -7,7 +7,7 @@ from restapi.services.authentication import Role, User
 class AdminLogins(EndpointResource):
 
     depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
-    labels = ["admin"]
+    labels = ["management"]
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)

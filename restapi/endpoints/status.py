@@ -5,7 +5,7 @@ from restapi.services.authentication import User
 
 class Status(EndpointResource):
 
-    labels = ["helpers"]
+    labels = ["status"]
 
     @decorators.endpoint(
         path="/status",
@@ -21,12 +21,12 @@ class Status(EndpointResource):
 class AuthStatus(EndpointResource):
 
     depends_on = ["AUTH_ENABLE"]
-    labels = ["helpers"]
+    labels = ["authentication"]
 
     @decorators.auth.require()
     @decorators.endpoint(
         path="/auth/status",
-        summary="Check if the provided auth token is valid",
+        summary="Verify the validity of the provided token",
         description="Use this endpoint to verify if an auth token is valid",
         responses={200: "Auth token is valid"},
     )

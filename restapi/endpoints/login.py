@@ -18,8 +18,8 @@ class Login(EndpointResource):
     @decorators.use_kwargs(Credentials)
     @decorators.endpoint(
         path="/auth/login",
-        summary="Login with basic credentials",
-        description="Login with normal credentials (username and password)",
+        summary="Login by proving your credentials",
+        description="Login with basic credentials (username and password)",
         responses={
             200: "Credentials are valid",
             401: "Invalid access credentials",

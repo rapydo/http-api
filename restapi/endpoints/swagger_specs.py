@@ -19,7 +19,7 @@ class NewSwaggerSpecifications(EndpointResource):
     @decorators.auth.optional(allow_access_token_parameter=True)
     @decorators.endpoint(
         path="/specs",
-        summary="Endpoints specifications based on OpenAPI format",
+        summary="Endpoints specifications based on OpenAPI 2.0 format",
         responses={200: "Endpoints JSON based on OpenAPI Specifications"},
     )
     def get(self, user: Optional[User]) -> Response:

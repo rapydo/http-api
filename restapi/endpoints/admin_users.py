@@ -29,7 +29,7 @@ def inject_user(endpoint: EndpointResource, user_id: str) -> Dict[str, Any]:
 
 class AdminSingleUser(EndpointResource):
     depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
-    labels = ["admin"]
+    labels = ["management"]
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)
@@ -50,7 +50,7 @@ class AdminSingleUser(EndpointResource):
 class AdminUsers(EndpointResource):
 
     depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
-    labels = ["admin"]
+    labels = ["management"]
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)

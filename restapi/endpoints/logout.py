@@ -12,7 +12,7 @@ class Logout(EndpointResource):
     @decorators.auth.require()
     @decorators.endpoint(
         path="/auth/logout",
-        summary="Logout from current credentials",
+        summary="Logout and invalidate the current token",
         description="Invalidate current registered token",
         responses={204: "Token correctly removed"},
     )

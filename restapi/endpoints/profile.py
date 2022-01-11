@@ -51,7 +51,7 @@ class Profile(EndpointResource):
     @decorators.use_kwargs(NewPassword)
     @decorators.endpoint(
         path="/auth/profile",
-        summary="Update user password",
+        summary="Update the user password",
         responses={204: "Password updated"},
     )
     def put(
@@ -78,7 +78,7 @@ class Profile(EndpointResource):
     @decorators.use_kwargs(profile_patch_input())
     @decorators.endpoint(
         path="/auth/profile",
-        summary="Update profile information",
+        summary="Update profile attributes",
         responses={204: "Profile updated"},
     )
     def patch(self, user: User, **kwargs: Any) -> Response:

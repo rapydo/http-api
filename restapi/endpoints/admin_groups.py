@@ -20,7 +20,7 @@ def inject_group(endpoint: EndpointResource, group_id: str) -> Dict[str, Any]:
 class AdminGroups(EndpointResource):
 
     depends_on = ["AUTH_ENABLE"]
-    labels = ["admin"]
+    labels = ["management"]
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)
