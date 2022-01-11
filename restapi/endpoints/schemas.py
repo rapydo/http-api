@@ -209,7 +209,7 @@ def admin_user_output(many: bool = True) -> Schema:
     if custom_fields := mem.customizer.get_custom_output_fields(None):
         attributes.update(custom_fields)
 
-    schema = Schema.from_dict(attributes, name="UserData")
+    schema = Schema.from_dict(attributes, name="AdminUserData")
     return schema(many=many)  # type: ignore
 
 
