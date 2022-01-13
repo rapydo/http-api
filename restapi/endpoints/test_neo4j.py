@@ -9,6 +9,7 @@ from restapi.utilities.logs import log
 if TESTING and Connector.check_availability("neo4j"):
 
     from neomodel import (
+        DateProperty,
         FloatProperty,
         IntegerProperty,
         StringProperty,
@@ -29,6 +30,7 @@ if TESTING and Connector.check_availability("neo4j"):
         # do not set it as required because:
         # ValueError: required argument ignored by UniqueIdProperty
         myuuid = UniqueIdProperty()
+        mydate = DateProperty()
 
     class Output(Schema):
         val = fields.Integer()
