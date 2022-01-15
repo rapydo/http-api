@@ -8,6 +8,10 @@ from faker import Faker
 from restapi.config import DATA_PATH, PRODUCTION, get_backend_url
 from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
 
+warnings.filterwarnings(
+    "ignore", message="unclosed file <_io.BufferedReader name='/uploads"
+)
+
 
 def get_location_header(headers: Dict[str, str], expected: str) -> str:
     assert "Location" in headers
@@ -27,10 +31,6 @@ class TestUploadAndDownload(BaseTests):
     def test_simple_upload_and_download(
         self, client: FlaskClient, faker: Faker
     ) -> None:
-
-        warnings.filterwarnings(
-            "ignore", message="unclosed file <_io.BufferedReader name='/uploads"
-        )
 
         self.fcontent = faker.paragraph()
         self.save("fcontent", self.fcontent)
