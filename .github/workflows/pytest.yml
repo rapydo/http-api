@@ -73,7 +73,9 @@ jobs:
           rapydo -e ACTIVATE_TELEGRAM=0 start
           sleep 25
           rapydo logs
-          rapydo shell backend 'restapi tests --core --wait --destroy'
+          # PYTHONWARNINGS=default
+          # PYTHONWARNINGS error: Convert warnings to exceptions
+          rapydo shell backend 'PYTHONMALLOC=debug PYTHONASYNCIODEBUG=1 PYTHONWARNINGS=error PYTHONFAULTHANDLER=1 restapi tests --core --wait --destroy'
 
           LOGURU_LEVEL=WARNING rapydo list services
           # This should fail if at least one container is in Exit status
@@ -99,8 +101,9 @@ jobs:
           fi
           rapydo logs --tail 20 proxy backend
 
-          # Tests in production mode
-          rapydo shell backend 'restapi tests --core --wait'
+          # PYTHONWARNINGS=default
+          # PYTHONWARNINGS error: Convert warnings to exceptions
+          rapydo shell backend 'PYTHONMALLOC=debug PYTHONASYNCIODEBUG=1 PYTHONWARNINGS=error PYTHONFAULTHANDLER=1 restapi tests --core --wait'
 
           LOGURU_LEVEL=WARNING rapydo list services
           # This should fail if at least one container is in Exit status
