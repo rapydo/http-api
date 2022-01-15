@@ -12,45 +12,44 @@ from restapi.services.authentication import BaseAuthentication
 from restapi.tests import BaseTests
 from restapi.utilities.logs import log, set_logger
 
-
-def get_auth_token(
-    client: werkzeug.Client, data: Dict[str, Optional[str]]
-) -> Tuple[str, CaseInsensitiveDict[str]]:
-
-    data["totp_code"] = BaseTests.generate_totp(data.get("username"))
-    r = client.post("/auth/login", data=data)
-    content = orjson.loads(r.data.decode("utf-8"))
-
-    if r.status_code == 403:
-        if isinstance(content, dict) and content.get("actions"):
-            actions = content.get("actions", {})
-
-            if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
-                currentpwd = data["password"]
-                newpwd = BaseTests.faker.password(strong=True)
-                data["new_password"] = newpwd
-                data["password_confirm"] = newpwd
-                # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
-                get_auth_token(client, data)
-                # Change again to restore the default password
-                # and keep all other tests fully working
-                data["password"] = newpwd
-                data["new_password"] = currentpwd
-                data["password_confirm"] = currentpwd
-                return get_auth_token(client, data)
-
-    assert r.status_code == 200
-    assert content is not None
-
-    headers: CaseInsensitiveDict[str] = CaseInsensitiveDict()
-    headers["Authorization"] = f"Bearer {content}"
-    return content, headers
-
-
 # Schemathesis is always enabled during core tests
 if not Env.get_bool("RUN_SCHEMATHESIS"):  # pragma: no cover
     log.warning("Skipping schemathesis")
 else:
+
+    def get_auth_token(
+        client: werkzeug.Client, data: Dict[str, Optional[str]]
+    ) -> Tuple[str, CaseInsensitiveDict[str]]:
+
+        data["totp_code"] = BaseTests.generate_totp(data.get("username"))
+        r = client.post("/auth/login", data=data)
+        content = orjson.loads(r.data.decode("utf-8"))
+
+        if r.status_code == 403:
+            if isinstance(content, dict) and content.get("actions"):
+                actions = content.get("actions", {})
+
+                if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
+                    currentpwd = data["password"]
+                    newpwd = BaseTests.faker.password(strong=True)
+                    data["new_password"] = newpwd
+                    data["password_confirm"] = newpwd
+                    # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
+                    get_auth_token(client, data)
+                    # Change again to restore the default password
+                    # and keep all other tests fully working
+                    data["password"] = newpwd
+                    data["new_password"] = currentpwd
+                    data["password_confirm"] = currentpwd
+                    return get_auth_token(client, data)
+
+        assert r.status_code == 200
+        assert content is not None
+
+        headers: CaseInsensitiveDict[str] = CaseInsensitiveDict()
+        headers["Authorization"] = f"Bearer {content}"
+        return content, headers
+
     # No need to restore the logger after this test because
     # schemathesis test is the last one!
     # (just because in alphabetic order there are no other tests)
