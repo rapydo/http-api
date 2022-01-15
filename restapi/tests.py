@@ -645,7 +645,8 @@ class BaseTests:
         if wrong_secret:
             secret = cls.faker.password()
         else:
-            secret = open(JWT_SECRET_FILE, "rb").read()
+            with open(JWT_SECRET_FILE, "rb") as f:
+                secret = f.read()
 
         if wrong_algorithm:
             algorithm = "HS256"
