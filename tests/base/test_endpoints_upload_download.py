@@ -1,10 +1,11 @@
 import io
 import os
+import warnings
 from typing import Dict
 
 from faker import Faker
 
-from restapi.config import PRODUCTION, DATA_PATH, get_backend_url
+from restapi.config import DATA_PATH, PRODUCTION, get_backend_url
 from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
 
 
@@ -122,6 +123,10 @@ class TestUploadAndDownload(BaseTests):
         content = r.data.decode("utf-8")
         assert content != self.fcontent
         assert content == new_content
+
+        warnings.filterwarnings(
+            "ignore", message="unclosed file <_io.BufferedReader name='/uploads"
+        )
 
         r = client.get(
             f"{API_URI}/tests/download/{upload_folder}/{self.fname}",

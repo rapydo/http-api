@@ -250,6 +250,9 @@ def create_app(
             "ignore", message="Multiple schemas resolved to the name "
         )
 
+        # ignore warning messages on flask socket after teardown
+        warnings.filterwarnings("ignore", message="unclosed <socket.socket")
+
         mem.cache = Cache.get_instance(microservice)
 
         endpoints_loader.load_endpoints()
