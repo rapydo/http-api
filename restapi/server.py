@@ -183,24 +183,63 @@ def create_app(
         # module   # Warn once per calling module
         # once     # Warn once per Python process
         # ignore   # Never warn
+
+        # Types of warnings:
+        # Warning: This is the base class of all warning category classes
+        # UserWarning: The default category for warn().
+        # DeprecationWarning: Base category for warnings about deprecated features when
+        #                     those warnings are intended for other Python developers
+        # SyntaxWarning: Base category for warnings about dubious syntactic features.
+        # RuntimeWarning: Base category for warnings about dubious runtime features.
+        # FutureWarning: Base category for warnings about deprecated features when those
+        #                warnings are intended for end users
+        # PendingDeprecationWarning: Base category for warnings about features that will
+        #                            be deprecated in the future (ignored by default).
+        # ImportWarning: Base category for warnings triggered during the process of
+        #                importing a module
+        # UnicodeWarning: Base category for warnings related to Unicode.
+        # BytesWarning: Base category for warnings related to bytes and bytearray.
+        # ResourceWarning: Base category for warnings related to resource usage
+
         if TESTING:
-            warnings.simplefilter("error", Warning)
-            warnings.simplefilter("error", DeprecationWarning)
+            warnings.simplefilter("always", Warning)
             warnings.simplefilter("error", UserWarning)
+            warnings.simplefilter("error", DeprecationWarning)
+            warnings.simplefilter("error", SyntaxWarning)
+            warnings.simplefilter("error", RuntimeWarning)
+            warnings.simplefilter("error", FutureWarning)
+            warnings.simplefilter("error", PendingDeprecationWarning)
+            warnings.simplefilter("error", ImportWarning)
+            warnings.simplefilter("error", UnicodeWarning)
+            warnings.simplefilter("error", BytesWarning)
             warnings.simplefilter("error", ResourceWarning)
             warnings.simplefilter("default", Neo4jExperimentalWarning)
         elif PRODUCTION:
             warnings.simplefilter("ignore", Warning)
-            warnings.simplefilter("default", DeprecationWarning)
             warnings.simplefilter("always", UserWarning)
+            warnings.simplefilter("default", DeprecationWarning)
+            warnings.simplefilter("ignore", SyntaxWarning)
+            warnings.simplefilter("ignore", RuntimeWarning)
+            warnings.simplefilter("ignore", FutureWarning)
+            warnings.simplefilter("ignore", PendingDeprecationWarning)
+            warnings.simplefilter("ignore", ImportWarning)
+            warnings.simplefilter("ignore", UnicodeWarning)
+            warnings.simplefilter("ignore", BytesWarning)
             warnings.simplefilter("ignore", ResourceWarning)
             # even if ignore it is raised once
             # because of the imports executed before setting this to ignore
             warnings.simplefilter("ignore", Neo4jExperimentalWarning)
         else:
-            warnings.simplefilter("always", Warning)
-            warnings.simplefilter("always", DeprecationWarning)
+            warnings.simplefilter("default", Warning)
             warnings.simplefilter("always", UserWarning)
+            warnings.simplefilter("always", DeprecationWarning)
+            warnings.simplefilter("default", SyntaxWarning)
+            warnings.simplefilter("default", RuntimeWarning)
+            warnings.simplefilter("always", FutureWarning)
+            warnings.simplefilter("default", PendingDeprecationWarning)
+            warnings.simplefilter("default", ImportWarning)
+            warnings.simplefilter("default", UnicodeWarning)
+            warnings.simplefilter("default", BytesWarning)
             warnings.simplefilter("always", ResourceWarning)
             # even if ignore it is raised once
             # because of the imports executed before setting this to ignore
