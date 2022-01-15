@@ -3,7 +3,6 @@ The Main server factory.
 We create all the internal flask components here.
 """
 import logging
-import os
 import signal
 import sys
 import time
@@ -22,6 +21,7 @@ from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
 from flask_restful import Api
 from geolite2 import geolite2
+from neo4j.meta import ExperimentalWarning as Neo4jExperimentalWarning
 from sentry_sdk.integrations.flask import FlaskIntegration
 
 from restapi import config
@@ -175,12 +175,41 @@ def create_app(
     if mode == ServerModes.NORMAL:
 
         logging.getLogger("werkzeug").setLevel(logging.ERROR)
+
+        # warnings levels:
+        # default  # Warn once per call location
+        # error    # Convert to exceptions
+        # always   # Warn every time
+        # module   # Warn once per calling module
+        # once     # Warn once per Python process
+        # ignore   # Never warn
+        if TESTING:
+            warnings.simplefilter("error", Warning)
+            warnings.simplefilter("error", DeprecationWarning)
+            warnings.simplefilter("error", UserWarning)
+            warnings.simplefilter("error", ResourceWarning)
+            warnings.simplefilter("default", Neo4jExperimentalWarning)
+        elif PRODUCTION:
+            warnings.simplefilter("ignore", Warning)
+            warnings.simplefilter("default", DeprecationWarning)
+            warnings.simplefilter("always", UserWarning)
+            warnings.simplefilter("ignore", ResourceWarning)
+            # even if ignore it is raised once
+            # because of the imports executed before setting this to ignore
+            warnings.simplefilter("ignore", Neo4jExperimentalWarning)
+        else:
+            warnings.simplefilter("always", Warning)
+            warnings.simplefilter("always", DeprecationWarning)
+            warnings.simplefilter("always", UserWarning)
+            warnings.simplefilter("always", ResourceWarning)
+            # even if ignore it is raised once
+            # because of the imports executed before setting this to ignore
+            warnings.simplefilter("ignore", Neo4jExperimentalWarning)
+
         # ignore warning messages from apispec
         warnings.filterwarnings(
             "ignore", message="Multiple schemas resolved to the name "
         )
-        # warnings.simplefilter("always", DeprecationWarning)
-        warnings.simplefilter("error", DeprecationWarning)
 
         mem.cache = Cache.get_instance(microservice)
 
