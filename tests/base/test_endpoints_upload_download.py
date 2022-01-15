@@ -28,6 +28,10 @@ class TestUploadAndDownload(BaseTests):
         self, client: FlaskClient, faker: Faker
     ) -> None:
 
+        warnings.filterwarnings(
+            "ignore", message="unclosed file <_io.BufferedReader name='/uploads"
+        )
+
         self.fcontent = faker.paragraph()
         self.save("fcontent", self.fcontent)
         # as defined in test_upload.py for normal uploads
@@ -123,10 +127,6 @@ class TestUploadAndDownload(BaseTests):
         content = r.data.decode("utf-8")
         assert content != self.fcontent
         assert content == new_content
-
-        warnings.filterwarnings(
-            "ignore", message="unclosed file <_io.BufferedReader name='/uploads"
-        )
 
         r = client.get(
             f"{API_URI}/tests/download/{upload_folder}/{self.fname}",
