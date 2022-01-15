@@ -29,7 +29,7 @@ class TestUploadAndDownload(BaseTests):
     ) -> None:
 
         warnings.filterwarnings(
-            "ignore", message=f"unclosed file <_io.BufferedReader name='{DATA_PATH}"
+            "ignore", message="unclosed file <_io.BufferedReader name="
         )
 
         self.fcontent = faker.paragraph()
@@ -147,7 +147,7 @@ class TestUploadAndDownload(BaseTests):
     ) -> None:
 
         warnings.filterwarnings(
-            "ignore", message=f"unclosed file <_io.BufferedReader name='{DATA_PATH}"
+            "ignore", message="unclosed file <_io.BufferedReader name="
         )
 
         self.fname = self.get("fname")
