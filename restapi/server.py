@@ -179,7 +179,8 @@ def create_app(
         warnings.filterwarnings(
             "ignore", message="Multiple schemas resolved to the name "
         )
-        warnings.simplefilter("always", DeprecationWarning)
+        # warnings.simplefilter("always", DeprecationWarning)
+        warnings.simplefilter("error", DeprecationWarning)
 
         mem.cache = Cache.get_instance(microservice)
 
