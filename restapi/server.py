@@ -179,9 +179,7 @@ def create_app(
         warnings.filterwarnings(
             "ignore", message="Multiple schemas resolved to the name "
         )
-        # Set as env variable PYTHONWARNINGS
-        # (set 'always' in dev and prod mode and 'error' in test mode
-        # warnings.simplefilter("always", DeprecationWarning)
+        warnings.simplefilter("always", DeprecationWarning)
 
         mem.cache = Cache.get_instance(microservice)
 
