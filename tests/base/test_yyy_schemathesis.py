@@ -4,6 +4,7 @@ import orjson
 import schemathesis
 import werkzeug
 from hypothesis import HealthCheck, settings
+from hypothesis.database import InMemoryExampleDatabase
 from requests.structures import CaseInsensitiveDict
 
 from restapi.env import Env
@@ -16,6 +17,9 @@ from restapi.utilities.logs import log, set_logger
 if not Env.get_bool("RUN_SCHEMATHESIS"):  # pragma: no cover
     log.warning("Skipping schemathesis")
 else:
+
+    # still untyped in hypothesis
+    hypothesis_database = InMemoryExampleDatabase()  # type: ignore
 
     def get_auth_token(
         client: werkzeug.Client, data: Dict[str, Optional[str]]
@@ -83,6 +87,7 @@ else:
         deadline=None,
         suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
         max_examples=50,
+        database=hypothesis_database,
     )
     def test_no_auth(case: schemathesis.Case) -> None:
 
@@ -104,6 +109,7 @@ else:
             deadline=None,
             suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
             max_examples=50,
+            database=hypothesis_database,
         )
         def test_with_auth(case: schemathesis.Case) -> None:
 
@@ -130,6 +136,7 @@ else:
             deadline=None,
             suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
             max_examples=50,
+            database=hypothesis_database,
         )
         def test_logout(case: schemathesis.Case) -> None:
 
