@@ -212,7 +212,9 @@ def create_app(
             warnings.simplefilter("error", ImportWarning)
             warnings.simplefilter("error", UnicodeWarning)
             warnings.simplefilter("error", BytesWarning)
-            warnings.simplefilter("error", ResourceWarning)
+            # Can't set this an error due to false positives with downloads
+            # a lot of issues like: https://github.com/pallets/flask/issues/2468
+            warnings.simplefilter("always", ResourceWarning)
             warnings.simplefilter("default", Neo4jExperimentalWarning)
         elif PRODUCTION:
             warnings.simplefilter("ignore", Warning)
