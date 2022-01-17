@@ -32,7 +32,6 @@ elif [[ "$TEMPLATE" == "extra" ]]; then
   # The flag is not included in all templates to be able to also tests the cases
   # when input and output models are not extended
 
-  # -s pushpin \
   rapydo --testing create prj --current \
                     --add-optionals \
                     --extend prjbase \
@@ -40,6 +39,7 @@ elif [[ "$TEMPLATE" == "extra" ]]; then
                     --frontend no \
                     -s ftp \
                     -s bot \
+                    -s pushpin \
                     -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=1 \
                     -e AUTH_MAX_PASSWORD_VALIDITY=60 \
                     -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=60 \
