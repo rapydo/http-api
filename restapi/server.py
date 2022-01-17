@@ -252,13 +252,6 @@ def create_app(
             "ignore", message="Multiple schemas resolved to the name "
         )
 
-        # temporary fix: urllib deprecated this parameters
-        # but pubcontrol 3.2.0 did not release a fix yet
-        warnings.filterwarnings(
-            "ignore",
-            message="Using 'method_whitelist' with Retry is deprecated and will be removed in v2.0. Use 'allowed_methods' instead",
-        )
-
         # ignore warning messages on flask socket after teardown
         warnings.filterwarnings("ignore", message="unclosed <socket.socket")
 
