@@ -52,6 +52,7 @@ class Events(str, Enum):
     password_expired = "password_expired"
     change_password = "change_password"
     reset_password_request = "reset_password_request"
+    server_startup = "server_startup"
 
 
 log.level("VERBOSE", no=1, color="<fg #666>")

@@ -3,7 +3,6 @@ The Main server factory.
 We create all the internal flask components here.
 """
 import logging
-import os
 import signal
 import sys
 import time
@@ -47,7 +46,7 @@ from restapi.rest.response import (
 from restapi.services.cache import Cache
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import log
+from restapi.utilities.logs import Events, log, save_event_log
 from restapi.utilities.meta import Meta
 
 lock = Lock()
@@ -291,5 +290,11 @@ def create_app(
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
     log.info("Boot completed")
+    save_event_log(
+        event=Events.server_startup,
+        payload=None,
+        user=None,
+        target=None,
+    )
 
     return microservice
