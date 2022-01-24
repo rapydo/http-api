@@ -38,7 +38,6 @@ elif [[ "$TEMPLATE" == "extra" ]]; then
                     --auth ${AUTH} \
                     --frontend no \
                     -s ftp \
-                    -s pushpin \
                     -s bot \
                     -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=1 \
                     -e AUTH_MAX_PASSWORD_VALIDITY=60 \

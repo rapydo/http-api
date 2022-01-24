@@ -10,7 +10,13 @@ import pytest
 from faker import Faker
 from marshmallow.exceptions import ValidationError
 
-from restapi.config import get_host_type
+from restapi.config import (
+    DOMAIN,
+    PRODUCTION,
+    get_backend_url,
+    get_frontend_url,
+    get_host_type,
+)
 from restapi.connectors.smtp.notifications import get_html_template
 from restapi.decorators import inject_callback_parameters, match_types
 from restapi.env import Env
@@ -116,9 +122,9 @@ class TestApp(BaseTests):
         assert ResponseMaker.get_schema_type(f, fields.Bool()) == "boolean"
         assert ResponseMaker.get_schema_type(f, fields.Boolean()) == "boolean"
         assert ResponseMaker.get_schema_type(f, fields.Date()) == "date"
-        assert ResponseMaker.get_schema_type(f, fields.DateTime()) == "date"
-        assert ResponseMaker.get_schema_type(f, fields.AwareDateTime()) == "date"
-        assert ResponseMaker.get_schema_type(f, fields.NaiveDateTime()) == "date"
+        assert ResponseMaker.get_schema_type(f, fields.DateTime()) == "datetime"
+        assert ResponseMaker.get_schema_type(f, fields.AwareDateTime()) == "datetime"
+        assert ResponseMaker.get_schema_type(f, fields.NaiveDateTime()) == "datetime"
         assert ResponseMaker.get_schema_type(f, fields.Decimal()) == "number"
         # This is because Email is not typed on marshmallow
         assert ResponseMaker.get_schema_type(f, fields.Email()) == "email"  # type: ignore
@@ -189,27 +195,6 @@ class TestApp(BaseTests):
         assert response[1] == 200  # type: ignore
 
     # #######################################
-    # ####      Processes
-    #########################################
-    def test_processes(self) -> None:
-
-        assert not find_process("this-should-not-exist")
-        assert find_process("restapi")
-        assert find_process("dumb-init")
-        # current process is not retrieved by find_process
-        current_pid = os.getpid()
-        process = psutil.Process(current_pid)
-        assert not find_process(process.name())
-
-        start_timeout(15)
-        with pytest.raises(Timeout):
-            wait_socket("invalid", 123, service_name="test")
-
-        start_timeout(15)
-        with pytest.raises(ServiceUnavailable):
-            wait_socket("invalid", 123, service_name="test", retries=2)
-
-    # #######################################
     # ####      Meta
     #########################################
     def test_meta(self) -> None:
@@ -278,6 +263,163 @@ class TestApp(BaseTests):
         assert get_host_type("flower") == "flower"
         assert get_host_type("whateverelse") == "celery"
         assert get_host_type(faker.pystr()) == "celery"
+
+    def test_get_backend_url(self) -> None:
+
+        # bypass the lru_cache decorator
+        func = get_backend_url.__wrapped__
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}"
+        else:
+            assert func() == f"http://{DOMAIN}:8080"
+
+        os.environ["FLASK_PORT"] = "1234"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}"
+        else:
+            assert func() == f"http://{DOMAIN}:1234"
+
+        os.environ["BACKEND_URL"] = "http://mydomain/xyz"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == "http://mydomain/xyz"
+        else:
+            assert func() == "http://mydomain/xyz"
+
+        os.environ["BACKEND_PREFIX"] = "abc"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == "http://mydomain/xyz"
+        else:
+            assert func() == "http://mydomain/xyz"
+
+        os.environ["BACKEND_URL"] = ""
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}/abc"
+        else:
+            assert func() == f"http://{DOMAIN}/abc:1234"
+
+        os.environ["FLASK_PORT"] = "8080"
+        os.environ["BACKEND_PREFIX"] = ""
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}"
+        else:
+            assert func() == f"http://{DOMAIN}:8080"
+
+        os.environ["BACKEND_PREFIX"] = "/"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}"
+        else:
+            assert func() == f"http://{DOMAIN}:8080"
+
+        os.environ["BACKEND_PREFIX"] = "abc/"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}/abc"
+        else:
+            assert func() == f"http://{DOMAIN}/abc:8080"
+
+        os.environ["BACKEND_PREFIX"] = "/abc/"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}/abc"
+        else:
+            assert func() == f"http://{DOMAIN}/abc:8080"
+
+        os.environ["BACKEND_PREFIX"] = "///abc//"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}/abc"
+        else:
+            assert func() == f"http://{DOMAIN}/abc:8080"
+
+    def test_get_frontend_url(self) -> None:
+
+        # bypass the lru_cache decorator
+        func = get_frontend_url.__wrapped__
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}"
+        else:
+            assert func() == f"http://{DOMAIN}"
+
+        os.environ["FRONTEND_URL"] = "http://mydomain/xyz"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == "http://mydomain/xyz"
+        else:
+            assert func() == "http://mydomain/xyz"
+
+        os.environ["FRONTEND_PREFIX"] = "abc"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == "http://mydomain/xyz"
+        else:
+            assert func() == "http://mydomain/xyz"
+
+        os.environ["FRONTEND_URL"] = ""
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}/abc"
+        else:
+            assert func() == f"http://{DOMAIN}/abc"
+
+        os.environ["FRONTEND_PREFIX"] = ""
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}"
+        else:
+            assert func() == f"http://{DOMAIN}"
+
+        os.environ["FRONTEND_PREFIX"] = "/"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}"
+        else:
+            assert func() == f"http://{DOMAIN}"
+
+        os.environ["FRONTEND_PREFIX"] = "abc/"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}/abc"
+        else:
+            assert func() == f"http://{DOMAIN}/abc"
+
+        os.environ["FRONTEND_PREFIX"] = "/abc/"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}/abc"
+        else:
+            assert func() == f"http://{DOMAIN}/abc"
+
+        os.environ["FRONTEND_PREFIX"] = "///abc//"
+        Env.get.cache_clear()
+
+        if PRODUCTION:
+            assert func() == f"https://{DOMAIN}/abc"
+        else:
+            assert func() == f"http://{DOMAIN}/abc"
 
     # #######################################
     # ####      Timeouts
@@ -969,3 +1111,24 @@ class TestApp(BaseTests):
         # leading to a infinite recursion loop
         # before adding as specific case in match_types
         assert not match_types(not Union[str, int], [])
+
+    # #######################################
+    # ####      Processes
+    #########################################
+    def test_processes(self) -> None:
+
+        assert not find_process("this-should-not-exist")
+        assert find_process("restapi")
+        assert find_process("dumb-init")
+        # current process is not retrieved by find_process
+        current_pid = os.getpid()
+        process = psutil.Process(current_pid)
+        assert not find_process(process.name())
+
+        start_timeout(15)
+        with pytest.raises(Timeout):
+            wait_socket("invalid", 123, service_name="test")
+
+        start_timeout(15)
+        with pytest.raises(ServiceUnavailable):
+            wait_socket("invalid", 123, service_name="test", retries=2)

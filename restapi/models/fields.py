@@ -23,7 +23,7 @@ class String(fields.String):
         **kwargs: Any,
     ) -> Any:
         value = super()._deserialize(value, attr, data, **kwargs)
-        if value:
+        if value and isinstance(value, str):
             value = value.strip()
         return value
 

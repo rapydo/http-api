@@ -2,7 +2,19 @@ import ssl
 import traceback
 from datetime import timedelta
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    NoReturn,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import certifi
 from celery import Celery, states
@@ -24,6 +36,122 @@ REDBEAT_KEY_PREFIX: str = "redbeat:"
 F = TypeVar("F", bound=Callable[..., Any])
 
 
+class CeleryRetryTask(Exception):
+    pass
+
+
+def mark_task_as_failed(self: Any, name: str, exception: Exception) -> NoReturn:
+    if TESTING:
+        self.request.id = "fixed-id"
+        self.request.task = name
+
+    task_id = self.request.id
+    task_name = self.request.task
+    arguments = str(self.request.args)
+
+    # Removing username and password from urls in error stack
+    clean_error_stack = ""
+    for line in traceback.format_exc().split("\n"):
+        clean_error_stack += f"{obfuscate_url(line)}\n"
+
+    log.error("Celery task {} ({}) failed", task_id, task_name)
+    log.error("Failed task arguments: {}", arguments[0:256])
+    log.error("Task error: {}", clean_error_stack)
+
+    if Connector.check_availability("smtp"):
+        log.info("Sending error report by email", task_id, task_name)
+        send_celery_error_notification(
+            task_id, task_name, arguments, clean_error_stack, -1
+        )
+    self.update_state(
+        state=states.FAILURE,
+        meta={
+            "exc_type": type(exception).__name__,
+            "exc_message": traceback.format_exc().split("\n"),
+            # 'custom': '...'
+        },
+    )
+    self.send_event(
+        "task-failed",
+        # Retry sending the message if the connection is lost
+        retry=True,
+        exception=str(exception),
+        traceback=traceback.format_exc(),
+    )
+
+    raise Ignore(str(exception))
+
+
+def mark_task_as_failed_ignore(self: Any, name: str, exception: Exception) -> NoReturn:
+
+    if TESTING:
+        self.request.id = "fixed-id"
+        self.request.task = name
+
+    task_id = self.request.id
+    task_name = self.request.task
+    log.warning("Celery task {} ({}) failed: {}", task_id, task_name, exception)
+
+    self.update_state(
+        state=states.FAILURE,
+        meta={
+            "exc_type": type(exception).__name__,
+            "exc_message": traceback.format_exc().split("\n"),
+            # 'custom': '...'
+        },
+    )
+    self.send_event(
+        "task-failed",
+        # Retry sending the message if the connection is lost
+        retry=True,
+        exception=str(exception),
+        traceback=traceback.format_exc(),
+    )
+
+    raise exception
+
+
+def mark_task_as_retriable(
+    self: Any, name: str, exception: Exception, MAX_RETRIES: int
+) -> NoReturn:
+    if TESTING:
+        self.request.id = "fixed-id"
+        self.request.task = name
+        self.request.retries = 0
+
+    task_id = self.request.id
+    task_name = self.request.task
+    arguments = str(self.request.args)
+    retry_num = 1 + self.request.retries
+
+    # All retries attempts failed,
+    # the error will be converted to permanent
+    if retry_num > MAX_RETRIES:
+        log.critical("MAX retries reached")
+        mark_task_as_failed(self=self, name=name, exception=exception)
+
+    # Removing username and password from urls in error stack
+    clean_error_stack = ""
+    for line in traceback.format_exc().split("\n"):
+        clean_error_stack += f"{obfuscate_url(line)}\n"
+
+    log.warning(
+        "Celery task {} ({}) failed due to: {}, " "but will be retried (fail #{}/{})",
+        task_id,
+        task_name,
+        exception,
+        retry_num,
+        MAX_RETRIES,
+    )
+
+    if Connector.check_availability("smtp"):
+        log.info("Sending error report by email", task_id, task_name)
+        send_celery_error_notification(
+            task_id, task_name, arguments, clean_error_stack, retry_num
+        )
+    raise exception
+
+
 class CeleryExt(Connector):
 
     CELERYBEAT_SCHEDULER: Optional[str] = None
@@ -37,11 +165,39 @@ class CeleryExt(Connector):
     # @CeleryExt.task() [to automatically use function name]
     # or: CeleryExt.task(name="your_custom_name")
     @staticmethod
-    def task(name: Optional[str] = None) -> Callable[[F], F]:
+    def task(
+        idempotent: bool,
+        name: Optional[str] = None,
+        autoretry_for: Tuple[Type[Exception], ...] = tuple(),
+    ) -> Callable[[F], F]:
+
+        # extend autoretry_for with CeleryRetryTask
+        # duplicates will be removed by passing for set and tuple again
+        autoretry_for = tuple(set((CeleryRetryTask,) + autoretry_for))
+        MAX_RETRIES = 5
+
         def decorator(func: F) -> F:
-            # This decorated is not covered by tests because can't be tested on backend
+            # This decorator is not covered by tests because can't be tested on backend
             # However it is tested on celery so... even if not covered it is ok
-            @CeleryExt.celery_app.task(bind=True, name=name or func.__name__)
+            @CeleryExt.celery_app.task(
+                bind=True,
+                name=name or func.__name__,
+                autoretry_for=autoretry_for,
+                max_retries=MAX_RETRIES,
+                # autoretries will be delayed following via an exponential backoff
+                retry_backoff=True,
+                # retry_backoff_max=600  # default
+                # used to introduce randomness into exponential backoff delays,
+                # to prevent all tasks in the queue from being executed simultaneously.
+                # the delay value will be a random number between zero and retry_backoff
+                retry_jitter=True,
+                # If enabled, messages for this task will be acknowledged after the task
+                # has been executed, not just before (the default behavior).
+                # This means the task may be executed multiple times if the worker
+                # crashes in the middle of execution.
+                # Make sure your tasks are idempotent
+                acks_late=idempotent,
+            )
             @wraps(func)
             def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
@@ -50,73 +206,23 @@ class CeleryExt(Connector):
                         return func(self, *args, **kwargs)
                 except Ignore as ex:
 
-                    if TESTING:
-                        self.request.id = "fixed-id"
-                        self.request.task = name or func.__name__
-
-                    task_id = self.request.id
-                    task_name = self.request.task
-                    log.warning(
-                        "Celery task {} ({}) failed: {}", task_id, task_name, ex
+                    mark_task_as_failed_ignore(
+                        self=self, name=name or func.__name__, exception=ex
                     )
 
-                    self.update_state(
-                        state=states.FAILURE,
-                        meta={
-                            "exc_type": type(ex).__name__,
-                            "exc_message": traceback.format_exc().split("\n"),
-                            # 'custom': '...'
-                        },
-                    )
-                    self.send_event(
-                        "task-failed",
-                        # Retry sending the message if the connection is lost
-                        retry=True,
-                        exception=str(ex),
-                        traceback=traceback.format_exc(),
-                    )
+                except autoretry_for as ex:
 
-                    raise
+                    mark_task_as_retriable(
+                        self=self,
+                        name=name or func.__name__,
+                        exception=ex,
+                        MAX_RETRIES=MAX_RETRIES,
+                    )
                 except Exception as ex:
 
-                    if TESTING:
-                        self.request.id = "fixed-id"
-                        self.request.task = name or func.__name__
-
-                    task_id = self.request.id
-                    task_name = self.request.task
-                    arguments = str(self.request.args)
-
-                    # Removing username and password from urls in error stack
-                    clean_error_stack = ""
-                    for line in traceback.format_exc().split("\n"):
-                        clean_error_stack += f"{obfuscate_url(line)}\n"
-
-                    log.error("Celery task {} ({}) failed", task_id, task_name)
-                    log.error("Failed task arguments: {}", arguments[0:256])
-                    log.error("Task error: {}", clean_error_stack)
-
-                    if Connector.check_availability("smtp"):
-                        log.info("Sending error report by email", task_id, task_name)
-                        send_celery_error_notification(
-                            task_id, task_name, arguments, clean_error_stack
-                        )
-                    self.update_state(
-                        state=states.FAILURE,
-                        meta={
-                            "exc_type": type(ex).__name__,
-                            "exc_message": traceback.format_exc().split("\n"),
-                            # 'custom': '...'
-                        },
+                    mark_task_as_failed(
+                        self=self, name=name or func.__name__, exception=ex
                     )
-                    self.send_event(
-                        "task-failed",
-                        # Retry sending the message if the connection is lost
-                        retry=True,
-                        exception=str(ex),
-                        traceback=traceback.format_exc(),
-                    )
-                    raise Ignore(str(ex))
 
             return cast(F, wrapper)
 
@@ -213,7 +319,7 @@ class CeleryExt(Connector):
                 }
 
             self.celery_app.conf.broker_url = self.get_rabbit_url(
-                service_vars, protocol="amqp"
+                service_vars, protocol="pyamqp"
             )
 
         elif broker == "REDIS":

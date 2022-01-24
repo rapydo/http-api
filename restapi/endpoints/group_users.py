@@ -7,13 +7,14 @@ from restapi.services.authentication import Role, User
 class GroupUsers(EndpointResource):
 
     depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
-    labels = ["admin"]
+    labels = ["management"]
 
     @decorators.auth.require_all(Role.COORDINATOR)
     @decorators.marshal_with(group_users_output(), code=200)
     @decorators.endpoint(
         path="/group/users",
         summary="List of users of your group",
+        description="This endpoint is restricted to Group Coordinators",
         responses={
             200: "List of users successfully retrieved",
         },

@@ -21,7 +21,7 @@ class Timeout(Exception):
     pass
 
 
-def handler(signum: int, frame: FrameType) -> None:
+def handler(signum: int, frame: Optional[FrameType]) -> None:
     raise Timeout("Operation timeout: interrupted")
 
 

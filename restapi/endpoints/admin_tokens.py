@@ -102,7 +102,7 @@ class AdminTokens(EndpointResource):
     @decorators.preload(callback=inject_token)
     @decorators.endpoint(
         path="/admin/tokens/<token_id>",
-        summary="Remove specified token and make it invalid from now on",
+        summary="Invalidate the specified token",
         responses={
             204: "Token has been invalidated",
             404: "Specified token cannot be found",

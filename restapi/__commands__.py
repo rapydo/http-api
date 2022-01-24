@@ -90,7 +90,7 @@ def verify(service: str) -> None:
     if not connector_module:  # pragma: no cover
         print_and_exit("Connector {} not detected", service)
 
-    c = connector_module.get_instance()  # type: ignore
+    c = connector_module.get_instance()
     log.info(
         "{} successfully authenticated on {}", service, c.variables.get("host", service)
     )

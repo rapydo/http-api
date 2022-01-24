@@ -67,6 +67,10 @@ RoleObj = Any
 Login = Any
 
 
+class AuthMissingTOTP(Exception):
+    pass
+
+
 def import_secret(abs_filename: Path) -> bytes:
 
     if HOST_TYPE != BACKEND_HOSTNAME and HOST_TYPE != BOT_HOSTNAME:  # pragma: no cover
@@ -284,8 +288,11 @@ class BaseAuthentication(metaclass=ABCMeta):
             if description != ROLE_DISABLED:
                 BaseAuthentication.roles.append(role)
 
-    def make_login(self, username: str, password: str) -> Tuple[str, Payload, User]:
-        """The method which will check if credentials are good to go"""
+    def make_login(
+        self, username: str, password: str, totp_code: Optional[str]
+    ) -> Tuple[str, Payload, User]:
+
+        self.verify_blocked_username(username)
 
         try:
             user = self.get_user(username=username)
@@ -310,27 +317,34 @@ class BaseAuthentication(metaclass=ABCMeta):
 
             raise Unauthorized("Invalid access credentials", is_warning=True)
 
-        # Check if Oauth2 is enabled
+        # Currently only credentials are allowed
         if user.authmethod != "credentials":  # pragma: no cover
             raise BadRequest("Invalid authentication method")
 
-        # New hashing algorithm, based on bcrypt
-        if self.verify_password(password, user.password):
-            # Token expiration is capped by the user expiration date, if set
-            payload, full_payload = self.fill_payload(user, expiration=user.expiration)
-            token = self.create_token(payload)
+        if not self.verify_password(password, user.password):
+            self.log_event(
+                Events.failed_login,
+                payload={"username": username},
+                user=user,
+            )
+            self.register_failed_login(username, user=user)
+            raise Unauthorized("Invalid access credentials", is_warning=True)
 
-            self.save_login(username, user, failed=False)
-            self.log_event(Events.login, user=user)
-            return token, full_payload, user
+        self.verify_user_status(user)
 
-        self.log_event(
-            Events.failed_login,
-            payload={"username": username},
-            user=user,
-        )
-        self.register_failed_login(username, user=user)
-        raise Unauthorized("Invalid access credentials", is_warning=True)
+        if self.SECOND_FACTOR_AUTHENTICATION and not totp_code:
+            raise AuthMissingTOTP()
+
+        if totp_code:
+            self.verify_totp(user, totp_code)
+
+        # Token expiration is capped by the user expiration date, if set
+        payload, full_payload = self.fill_payload(user, expiration=user.expiration)
+        token = self.create_token(payload)
+
+        self.save_login(username, user, failed=False)
+        self.log_event(Events.login, user=user)
+        return token, full_payload, user
 
     # #####################
     # # Password handling #

@@ -7,7 +7,12 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 
 import pytz
-from neo4j.exceptions import AuthError, CypherSyntaxError, ServiceUnavailable
+from neo4j.exceptions import (
+    AuthError,
+    CypherSyntaxError,
+    ServiceUnavailable,
+    TransientError,
+)
 from neobolt.addressing import AddressError as neobolt_AddressError
 from neobolt.exceptions import ServiceUnavailable as neobolt_ServiceUnavailable
 from neomodel import (
@@ -18,6 +23,7 @@ from neomodel import (
     install_labels,
     remove_all_labels,
 )
+from neomodel.config import DATABASE_URL as UNINITIALIZED_DATABASE_URL
 from neomodel.exceptions import (
     DeflateError,
     DoesNotExist,
@@ -143,14 +149,21 @@ class NeoModel(Connector):
         # Fixed... to be configured?
         DATABASE = "neo4j"
         URI = f"bolt://{USER}:{PWD}@{HOST}:{PORT}/{DATABASE}"
-        config.DATABASE_URL = URI
+
+        # https://neomodel.readthedocs.io/en/latest/getting_started.html#connecting
+        # Set config.DATABASE_URL only once
+        if config.DATABASE_URL == UNINITIALIZED_DATABASE_URL:
+            config.DATABASE_URL = URI
+        # Then switch the connection via set_connection
+        db.set_connection(URI)
+
         # Ensure all DateTimes are provided with a timezone
         # before being serialised to UTC epoch
         config.FORCE_TIMEZONE = True  # default False
         db.url = URI
         db.set_connection(URI)
 
-        # db.driver.verify_connectivity()
+        db.driver.verify_connectivity()
 
         StructuredNode.save = catch_db_exceptions(StructuredNode.save)
         NodeSet.get = catch_db_exceptions(NodeSet.get)
@@ -163,17 +176,15 @@ class NeoModel(Connector):
 
     def is_connected(self) -> bool:
 
-        return not self.disconnected
-        # if self.disconnected:
-        #     return False
+        if self.disconnected or not self.db or not self.db.driver:
+            return False
 
-        # from neo4j.exceptions import TransientError
-        # try:
-        #     self.db.driver.verify_connectivity()
-        #     return True
-        # except (ServiceUnavailable, TransientError) as e:
-        #     log.error(e)
-        #     return False
+        try:
+            self.db.driver.verify_connectivity()
+            return True
+        except (ServiceUnavailable, TransientError) as e:
+            log.error(e)
+            return False
 
     def initialize(self) -> None:
 

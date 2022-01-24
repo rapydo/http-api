@@ -75,7 +75,7 @@ class Mail(Connector):
 
     def is_connected(self) -> bool:
 
-        if not self.smtp:
+        if not self.smtp or self.disconnected:
             return False
 
         try:
@@ -228,6 +228,8 @@ class Mail(Connector):
             return True
         except SMTPException as e:
             log.error("Unable to send email to {} ({})", to_address, e)
+            # Force the invalidation of this client
+            self.disconnect()
             return False
         except Exception as e:
             log.error(str(e))

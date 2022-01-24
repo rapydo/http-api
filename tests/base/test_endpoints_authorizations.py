@@ -146,23 +146,6 @@ class TestApp1(BaseTests):
             client, "DELETE", "/auth/tokens/<token>", headers, True, paths
         )
 
-        if Connector.check_availability("pushpin"):
-            paths = self.check_endpoint(
-                client, "PUT", "/api/socket/<channel>/<sync>", headers, True, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "POST", "/api/socket/<channel>", headers, True, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "PUT", "/api/stream/<channel>/<sync>", headers, True, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "POST", "/api/stream/<channel>", headers, True, paths
-            )
-
         # These are allowed to coordinators
         paths = self.check_endpoint(
             client, "GET", "/api/group/users", headers, False, paths
@@ -287,23 +270,6 @@ class TestApp1(BaseTests):
             client, "DELETE", "/auth/tokens/<token>", headers, True, paths
         )
 
-        if Connector.check_availability("pushpin"):
-            paths = self.check_endpoint(
-                client, "PUT", "/api/socket/<channel>/<sync>", headers, True, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "POST", "/api/socket/<channel>", headers, True, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "PUT", "/api/stream/<channel>/<sync>", headers, True, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "POST", "/api/stream/<channel>", headers, True, paths
-            )
-
         # These are allowed to coordinators
         paths = self.check_endpoint(
             client, "GET", "/api/group/users", headers, False, paths
@@ -421,23 +387,6 @@ class TestApp1(BaseTests):
             client, "DELETE", "/auth/tokens/<token>", headers, True, paths
         )
 
-        if Connector.check_availability("pushpin"):
-            paths = self.check_endpoint(
-                client, "PUT", "/api/socket/<channel>/<sync>", headers, True, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "POST", "/api/socket/<channel>", headers, True, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "PUT", "/api/stream/<channel>/<sync>", headers, True, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "POST", "/api/stream/<channel>", headers, True, paths
-            )
-
         # These are allowed to coordinators
         paths = self.check_endpoint(
             client, "GET", "/api/group/users", headers, True, paths
@@ -554,23 +503,6 @@ class TestApp1(BaseTests):
         paths = self.check_endpoint(
             client, "DELETE", "/auth/tokens/<token>", headers, True, paths
         )
-
-        if Connector.check_availability("pushpin"):
-            paths = self.check_endpoint(
-                client, "PUT", "/api/socket/<channel>/<sync>", headers, True, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "POST", "/api/socket/<channel>", headers, True, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "PUT", "/api/stream/<channel>/<sync>", headers, True, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "POST", "/api/stream/<channel>", headers, True, paths
-            )
 
         # These are allowed to coordinators
         paths = self.check_endpoint(
@@ -693,23 +625,6 @@ class TestApp1(BaseTests):
         paths = self.check_endpoint(
             client, "DELETE", "/auth/tokens/<token>", headers, False, paths
         )
-
-        if Connector.check_availability("pushpin"):
-            paths = self.check_endpoint(
-                client, "PUT", "/api/socket/<channel>/<sync>", headers, False, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "POST", "/api/socket/<channel>", headers, False, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "PUT", "/api/stream/<channel>/<sync>", headers, False, paths
-            )
-
-            paths = self.check_endpoint(
-                client, "POST", "/api/stream/<channel>", headers, False, paths
-            )
 
         # These are allowed to coordinators
         paths = self.check_endpoint(

@@ -32,7 +32,7 @@ class Tokens(EndpointResource):
     @decorators.marshal_with(TokenSchema(many=True), code=200)
     @decorators.endpoint(
         path="/auth/tokens",
-        summary="Retrieve all tokens emitted for logged user",
+        summary="Retrieve all emitted tokens",
         responses={200: "List of tokens"},
     )
     def get(self, user: User) -> Response:
@@ -46,7 +46,7 @@ class Tokens(EndpointResource):
     @decorators.preload(callback=inject_token)
     @decorators.endpoint(
         path="/auth/tokens/<token_id>",
-        summary="Remove specified token and make it invalid from now on",
+        summary="Invalidate the specified token",
         responses={204: "Token has been invalidated"},
     )
     def delete(self, token_id: str, token: str, user: User) -> Response:
