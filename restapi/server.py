@@ -369,7 +369,7 @@ def create_app(
     log.info("Boot completed")
     save_event_log(
         event=Events.server_startup,
-        payload=None,
+        payload={"server": name},
         user=None,
         target=None,
     )
