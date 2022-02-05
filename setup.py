@@ -75,6 +75,7 @@ setup(
         "gripcontrol==4.1.0",
         "sentry-sdk[flask]==1.3.1",
         # Tests
+        "pytest<7.0.0",
         "pytest-flask==1.2.0",
         "pytest-cov==3.0.0",
         "pytest-timeout==1.4.2",
