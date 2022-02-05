@@ -504,6 +504,21 @@ class BaseTests:
                 random_date = cls.faker.date_time_between_dates(
                     datetime_start=min_date, datetime_end=max_date
                 )
+                data[key] = random_date.date()
+            elif field_type == "datetime":
+
+                min_date = None
+                max_date = None
+
+                if min_value := d.get("min"):
+                    min_date = datetime.fromisoformat(min_value)
+
+                if max_value := d.get("max"):
+                    max_date = datetime.fromisoformat(max_value)
+
+                random_date = cls.faker.date_time_between_dates(
+                    datetime_start=min_date, datetime_end=max_date
+                )
                 data[key] = f"{random_date.isoformat()}.000Z"
             elif field_type == "email":
                 data[key] = cls.faker.ascii_email()

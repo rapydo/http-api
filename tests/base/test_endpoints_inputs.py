@@ -46,7 +46,7 @@ class TestApp(BaseTests):
         field = schema[1]
         assert len(field) == 7  # 5 mandatory fields + min + max
         assert field["key"] == "MYDATE"
-        assert field["type"] == "date"
+        assert field["type"] == "datetime"
         # Here the key is not lower cased and the label is not explicitly set
         # So the label will exactly match the key (without additiona of .title)
         assert field["label"] == field["key"]
