@@ -129,9 +129,7 @@ class Meta:
             return tasks
 
         # get all modules in package (i.e. py files)
-        # my-py does not like accessing __path__
-        path = package.__path__  # type: ignore
-        for _, module_name, ispkg in pkgutil.iter_modules(path):
+        for _, module_name, ispkg in pkgutil.iter_modules(package.__path__):
             # skip modules (i.e. subfolders)
             if ispkg:  # pragma: no cover
                 continue
