@@ -171,7 +171,7 @@ class TestApp(BaseTests):
             }
 
             # Event 4: create
-            uuid, _ = self.create_group(client, data=data)
+            new_group_uuid, _ = self.create_group(client, data=data)
 
             events = self.get_last_events(1, filters={"target_type": "Group"})
             # A new group is created
@@ -186,12 +186,13 @@ class TestApp(BaseTests):
             event_group_uuid = events[0].target_id
 
             data = {
-                "group": uuid,
+                "group": new_group_uuid,
                 # very important, otherwise the default user will lose its role
                 "roles": orjson.dumps([role]).decode("UTF8"),
             }
 
-            headers, _ = self.do_login(client, user_email, user_password)
+            # Why a new login should be required !?t
+            # headers, _ = self.do_login(client, user_email, user_password)
 
             # Event 5: modify
             r = client.put(
@@ -204,8 +205,21 @@ class TestApp(BaseTests):
             assert events[0].event == Events.modify.value
             assert events[0].user == user_email
             assert events[0].target_type == "User"
-            assert events[0].url == f"/api/admin/users/{event_target_id}"
+            assert events[0].target_id != user_uuid
+            assert events[0].url == f"/api/admin/users/{user_uuid}"
             assert "fullname" not in events[0].payload
             assert "shortname" not in events[0].payload
             assert "group" in events[0].payload
             assert events[0].payload["group"] == event_group_uuid
+
+            # Event 6: verify the assigned group
+            r = client.get(f"{API_URI}/admin/users/{user_uuid}", headers=headers)
+            assert r.status_code == 200
+            users_list = self.get_content(r)
+            assert isinstance(users_list, dict)
+            assert len(users_list) > 0
+            assert "group" in users_list
+            assert "uuid" in users_list["group"]
+            assert "fullname" in users_list["group"]
+            assert "shortname" in users_list["group"]
+            assert users_list["group"]["uuid"] == new_group_uuid
