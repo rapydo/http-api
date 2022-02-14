@@ -205,7 +205,7 @@ class TestApp(BaseTests):
             assert events[0].event == Events.modify.value
             assert events[0].user == user_email
             assert events[0].target_type == "User"
-            assert events[0].target_id != user_uuid
+            assert events[0].target_id == user_uuid
             assert events[0].url == f"/api/admin/users/{user_uuid}"
             assert "fullname" not in events[0].payload
             assert "shortname" not in events[0].payload
