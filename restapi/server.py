@@ -367,7 +367,7 @@ def create_app(
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
     log.info("Boot completed")
-    if PRODUCTION:
+    if PRODUCTION and not TESTING:
         save_event_log(
             event=Events.server_startup,
             payload={"server": name},
