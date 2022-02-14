@@ -176,7 +176,8 @@ class TestApp(BaseTests):
             events = self.get_last_events(1, filters={"target_type": "Group"})
             # A new group is created
             assert events[0].event == Events.create.value
-            assert events[0].user == user_email
+            # Created via admin utility
+            assert events[0].user == BaseAuthentication.default_user
             assert events[0].target_type == "Group"
             assert events[0].target_id != event_target_id
             assert events[0].url == "/api/admin/groups"
@@ -191,8 +192,8 @@ class TestApp(BaseTests):
                 "roles": orjson.dumps([role]).decode("UTF8"),
             }
 
-            # Why a new login should be required !?t
-            # headers, _ = self.do_login(client, user_email, user_password)
+            # a new login is required due to the use of create_group utility
+            headers, _ = self.do_login(client, user_email, user_password)
 
             # Event 5: modify
             r = client.put(
