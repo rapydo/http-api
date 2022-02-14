@@ -367,11 +367,12 @@ def create_app(
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
     log.info("Boot completed")
-    save_event_log(
-        event=Events.server_startup,
-        payload={"server": name},
-        user=None,
-        target=None,
-    )
+    if PRODUCTION:
+        save_event_log(
+            event=Events.server_startup,
+            payload={"server": name},
+            user=None,
+            target=None,
+        )
 
     return microservice
