@@ -437,15 +437,6 @@ class TestApp(BaseTests):
         )
         assert r.status_code == 204
 
-        # Staff users are not allowed to delete Admins
-        r = client.delete(f"{API_URI}/admin/users/{admin_uuid}", headers=staff_headers)
-        assert r.status_code == 404
-        content = self.get_content(r)
-        assert content == "This user cannot be found or you are not authorized"
-
-        r = client.delete(f"{API_URI}/admin/users/{user_uuid}", headers=staff_headers)
-        assert r.status_code == 204
-
         # Admin role is not allowed for Staff users
 
         tmp_schema = self.getDynamicInputSchema(client, "admin/users", admin_headers)
@@ -486,3 +477,12 @@ class TestApp(BaseTests):
         # +++ send put with role admin => fail
 
         # +++ get all => admin filtered out
+
+        # Staff users are not allowed to delete Admins
+        r = client.delete(f"{API_URI}/admin/users/{admin_uuid}", headers=staff_headers)
+        assert r.status_code == 404
+        content = self.get_content(r)
+        assert content == "This user cannot be found or you are not authorized"
+
+        r = client.delete(f"{API_URI}/admin/users/{user_uuid}", headers=staff_headers)
+        assert r.status_code == 204
