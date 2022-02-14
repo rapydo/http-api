@@ -438,7 +438,6 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
         # Admin role is not allowed for Staff users
-
         tmp_schema = self.getDynamicInputSchema(client, "admin/users", admin_headers)
         post_schema = {s["key"]: s for s in tmp_schema}
         assert "roles" in post_schema
@@ -473,10 +472,47 @@ class TestApp(BaseTests):
         assert "normal_user" in post_schema["roles"]["options"]
         assert "admin_root" not in post_schema["roles"]["options"]
 
-        # +++ send post with role admin => fail
-        # +++ send put with role admin => fail
+        # Staff can't send role admin on put
+        r = client.put(
+            f"{API_URI}/admin/users/{user_uuid}",
+            data={
+                "name": faker.name(),
+                "roles": orjson.dumps([Role.ADMIN]).decode("UTF8"),
+            },
+            headers=staff_headers,
+        )
+        assert r.status_code == 400
 
-        # +++ get all => admin filtered out
+        # Staff can't send role admin on post
+        schema = self.getDynamicInputSchema(client, "admin/users", staff_headers)
+        data = self.buildData(schema)
+
+        data["email_notification"] = True
+        data["is_active"] = True
+        data["expiration"] = None
+        data["roles"] = orjson.dumps([Role.ADMIN]).decode("UTF8")
+
+        r = client.post(f"{API_URI}/admin/users", data=data, headers=staff_headers)
+        assert r.status_code == 400
+
+        # Admin users are filtered out when asked from a Staff user
+        r = client.get(f"{API_URI}/admin/users", headers=admin_headers)
+        assert r.status_code == 200
+        users_list = self.get_content(r)
+        assert isinstance(users_list, list)
+        assert len(users_list) > 0
+        email_list = [u.get("email") for u in users_list]
+        assert staff_email in email_list
+        assert BaseAuthentication.default_user in email_list
+
+        r = client.get(f"{API_URI}/admin/users", headers=staff_headers)
+        assert r.status_code == 200
+        users_list = self.get_content(r)
+        assert isinstance(users_list, list)
+        assert len(users_list) > 0
+        email_list = [u.get("email") for u in users_list]
+        assert staff_email in email_list
+        assert BaseAuthentication.default_user not in email_list
 
         # Staff users are not allowed to delete Admins
         r = client.delete(f"{API_URI}/admin/users/{admin_uuid}", headers=staff_headers)
