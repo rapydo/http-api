@@ -23,7 +23,7 @@ class AdminGroups(EndpointResource):
     labels = ["management"]
     private = True
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.marshal_with(GroupWithMembers(many=True), code=200)
     @decorators.endpoint(
         path="/admin/groups",
@@ -61,7 +61,7 @@ class AdminGroups(EndpointResource):
 
         return self.response(groups)
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.database_transaction
     @decorators.use_kwargs(admin_group_input)
     @decorators.endpoint(
@@ -81,7 +81,7 @@ class AdminGroups(EndpointResource):
         self.log_event(self.events.create, group, kwargs)
         return self.response(group.uuid)
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.preload(callback=inject_group)
     @decorators.database_transaction
     @decorators.use_kwargs(admin_group_input)
@@ -103,7 +103,7 @@ class AdminGroups(EndpointResource):
 
         return self.empty_response()
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.preload(callback=inject_group)
     @decorators.endpoint(
         path="/admin/groups/<group_id>",

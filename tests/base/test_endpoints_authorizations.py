@@ -295,16 +295,16 @@ class TestApp1(BaseTests):
             client, "DELETE", "/api/admin/users/<user_id>", headers, False, paths
         )
         paths = self.check_endpoint(
-            client, "GET", "/api/admin/groups", headers, False, paths
+            client, "GET", "/api/admin/groups", headers, True, paths
         )
         paths = self.check_endpoint(
-            client, "POST", "/api/admin/groups", headers, False, paths
+            client, "POST", "/api/admin/groups", headers, True, paths
         )
         paths = self.check_endpoint(
-            client, "PUT", "/api/admin/groups/<group_id>", headers, False, paths
+            client, "PUT", "/api/admin/groups/<group_id>", headers, True, paths
         )
         paths = self.check_endpoint(
-            client, "DELETE", "/api/admin/groups/<group_id>", headers, False, paths
+            client, "DELETE", "/api/admin/groups/<group_id>", headers, True, paths
         )
         paths = self.check_endpoint(
             client, "GET", "/api/admin/logins", headers, False, paths

@@ -324,8 +324,6 @@ class SQLAlchemy(Connector):
                 instance.db.engine.execute(sql)
 
                 instance.db.session.remove()
-                # Deprecated since v1.3
-                # instance.db.session.close_all()
                 close_all_sessions()
                 # massive destruction
                 log.critical("Destroy current SQL data")
