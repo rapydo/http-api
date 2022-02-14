@@ -13,24 +13,19 @@ from restapi.endpoints.schemas import (
 from restapi.exceptions import NotFound
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import BaseAuthentication, Role, User
-from restapi.utilities.logs import log
 from restapi.utilities.time import date_lower_than as dt_lower
+
+# from restapi.utilities.logs import log
 
 
 def inject_user(endpoint: EndpointResource, user_id: str, user: User) -> Dict[str, Any]:
 
     target_user = endpoint.auth.get_user(user_id=user_id)
     if target_user is None:
-        log.critical("DEBUG CODE: user not found")
         raise NotFound("This user cannot be found or you are not authorized")
 
     # Non admins (i.e. Staff users) are not allowed to target Admins
     if endpoint.auth.is_admin(target_user) and not endpoint.auth.is_admin(user):
-        log.critical(
-            "DEBUG CODE: user not authorized (t={}, u={})",
-            endpoint.auth.is_admin(target_user),
-            endpoint.auth.is_admin(user),
-        )
         raise NotFound("This user cannot be found or you are not authorized")
 
     return {"target_user": target_user}

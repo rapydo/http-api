@@ -345,6 +345,8 @@ class BaseTests:
         user_data["expiration"] = None
 
         if roles:
+
+            log.critical("DEBUG CODE: creating users with role = {}", roles)
             for idx, role in enumerate(roles):
                 if isinstance(role, Role):
                     roles[idx] = role.value
