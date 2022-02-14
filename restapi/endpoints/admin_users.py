@@ -18,13 +18,17 @@ from restapi.utilities.time import date_lower_than as dt_lower
 # from restapi.utilities.logs import log
 
 
-def inject_user(endpoint: EndpointResource, user_id: str) -> Dict[str, Any]:
+def inject_user(endpoint: EndpointResource, user_id: str, user: User) -> Dict[str, Any]:
 
-    user = endpoint.auth.get_user(user_id=user_id)
-    if user is None:
+    target_user = endpoint.auth.get_user(user_id=user_id)
+    if target_user is None:
         raise NotFound("This user cannot be found or you are not authorized")
 
-    return {"target_user": user}
+    # Non admins (i.e. Staff users) are not allowed to target Admins
+    if endpoint.auth.is_admin(target_user) and not endpoint.auth.is_admin(user):
+        raise NotFound("This user cannot be found or you are not authorized")
+
+    return {"target_user": target_user}
 
 
 class AdminSingleUser(EndpointResource):
@@ -42,7 +46,6 @@ class AdminSingleUser(EndpointResource):
     )
     def get(self, user_id: str, target_user: User, user: User) -> Response:
 
-        # is not admin => filter out admins
         self.log_event(self.events.access, target_user)
 
         return self.response(target_user)
@@ -126,7 +129,6 @@ class AdminUsers(EndpointResource):
     ) -> Response:
 
         # if not admin => do not allow admin role
-        # if not admin => do no modify admins
 
         if "password" in kwargs:
             unhashed_password = kwargs["password"]
@@ -196,8 +198,6 @@ class AdminUsers(EndpointResource):
         responses={200: "User successfully deleted"},
     )
     def delete(self, user_id: str, target_user: User, user: User) -> Response:
-
-        # if not admin => do not delete admins
 
         self.auth.delete_user(target_user)
 

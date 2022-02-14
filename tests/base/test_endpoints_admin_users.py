@@ -360,3 +360,80 @@ class TestApp(BaseTests):
 
             r = client.get(f"{AUTH_URI}/logout", headers=headers)
             assert r.status_code == 204
+
+    def test_staff_restrictions(self, client: FlaskClient, faker: Faker) -> None:
+
+        if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
+            log.warning("Skipping admin/users tests")
+            return
+
+        staff_uuid, staff_data = self.create_user(client, roles=[Role.STAFF])
+        staff_email = staff_data.get("email")
+        staff_password = staff_data.get("password")
+        staff_headers, _ = self.do_login(client, staff_email, staff_password)
+
+        user_uuid, user_data = self.create_user(client, roles=[Role.USER])
+        # user_email = user_data.get("email")
+
+        admin_headers, _ = self.do_login(client, None, None)
+
+        r = client.get(f"{AUTH_URI}/profile", headers=admin_headers)
+        assert r.status_code == 200
+        content = self.get_content(r)
+        assert isinstance(content, dict)
+        admin_uuid = content.get("uuid")
+
+        # Staff users are not allowed to retrieve Admins' data
+        r = client.get(f"{API_URI}/admin/users/{user_uuid}", headers=admin_headers)
+        assert r.status_code == 200
+
+        r = client.get(f"{API_URI}/admin/users/{staff_uuid}", headers=admin_headers)
+        assert r.status_code == 200
+
+        r = client.get(f"{API_URI}/admin/users/{admin_uuid}", headers=admin_headers)
+        assert r.status_code == 200
+
+        r = client.get(f"{API_URI}/admin/users/{user_uuid}", headers=staff_headers)
+        assert r.status_code == 200
+
+        r = client.get(f"{API_URI}/admin/users/{staff_uuid}", headers=staff_headers)
+        assert r.status_code == 200
+
+        r = client.get(f"{API_URI}/admin/users/{admin_uuid}", headers=staff_headers)
+        assert r.status_code == 404
+        content = self.get_content(r)
+        assert content == "This user cannot be found or you are not authorized"
+
+        # Staff users are not allowed to edit Admins
+        edit_data = {"name": faker.name()}
+        r = client.put(
+            f"{API_URI}/admin/users/{admin_uuid}",
+            data=edit_data,
+            headers=staff_headers,
+        )
+        assert r.status_code == 404
+        content = self.get_content(r)
+        assert content == "This user cannot be found or you are not authorized"
+
+        r = client.put(
+            f"{API_URI}/admin/users/{staff_uuid}",
+            data=edit_data,
+            headers=staff_headers,
+        )
+        assert r.status_code == 204
+
+        r = client.put(
+            f"{API_URI}/admin/users/{user_uuid}",
+            data=edit_data,
+            headers=staff_headers,
+        )
+        assert r.status_code == 204
+
+        # Staff users are not allowed to delete Admins
+        r = client.delete(f"{API_URI}/admin/users/{admin_uuid}", headers=staff_headers)
+        assert r.status_code == 404
+        content = self.get_content(r)
+        assert content == "This user cannot be found or you are not authorized"
+
+        r = client.delete(f"{API_URI}/admin/users/{user_uuid}", headers=staff_headers)
+        assert r.status_code == 204
