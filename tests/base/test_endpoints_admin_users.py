@@ -4,7 +4,7 @@ from flask import escape
 
 from restapi.config import get_project_configuration
 from restapi.env import Env
-from restapi.services.authentication import BaseAuthentication
+from restapi.services.authentication import BaseAuthentication, Role
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 
@@ -18,324 +18,345 @@ class TestApp(BaseTests):
 
         project_tile = get_project_configuration("project.title", default="YourProject")
 
-        user_email = BaseAuthentication.default_user
-        user_password = BaseAuthentication.default_password
+        for role in (
+            Role.ADMIN,
+            Role.STAFF,
+        ):
+            log.warning("Testing admin/users endpoints as {}", role)
 
-        headers, _ = self.do_login(client, user_email, user_password)
-        r = client.get(f"{API_URI}/admin/users", headers=headers)
-        assert r.status_code == 200
+            if role == Role.ADMIN:
+                user_email = BaseAuthentication.default_user
+                user_password = BaseAuthentication.default_password
+            elif role == Role.STAFF:
+                _, user_data = self.create_user(client, roles=[Role.STAFF])
+                user_email = user_data.get("email")
+                user_password = user_data.get("password")
 
-        schema = self.getDynamicInputSchema(client, "admin/users", headers)
-        data = self.buildData(schema)
+            headers, _ = self.do_login(client, user_email, user_password)
+            r = client.get(f"{API_URI}/admin/users", headers=headers)
+            assert r.status_code == 200
 
-        data["email_notification"] = True
-        data["is_active"] = True
-        data["expiration"] = None
+            schema = self.getDynamicInputSchema(client, "admin/users", headers)
+            data = self.buildData(schema)
 
-        # Event 1: create
-        r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
-        assert r.status_code == 200
-        uuid = self.get_content(r)
-        assert isinstance(uuid, str)
+            data["email_notification"] = True
+            data["is_active"] = True
+            data["expiration"] = None
 
-        # A new User is created
-        events = self.get_last_events(1, filters={"target_type": "User"})
-        assert events[0].event == Events.create.value
-        assert events[0].user == user_email
-        assert events[0].target_type == "User"
-        assert events[0].url == "/api/admin/users"
-        assert "name" in events[0].payload
-        assert "surname" in events[0].payload
-        assert "email" in events[0].payload
+            # Event 1: create
+            r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
+            assert r.status_code == 200
+            uuid = self.get_content(r)
+            assert isinstance(uuid, str)
 
-        # Save it for the following tests
-        event_target_id1 = events[0].target_id
+            # A new User is created
+            events = self.get_last_events(1, filters={"target_type": "User"})
+            assert events[0].event == Events.create.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "User"
+            assert events[0].url == "/api/admin/users"
+            assert "name" in events[0].payload
+            assert "surname" in events[0].payload
+            assert "email" in events[0].payload
 
-        mail = self.read_mock_email()
-        body = mail.get("body", "")
+            # Save it for the following tests
+            event_target_id1 = events[0].target_id
 
-        # Subject: is a key in the MIMEText
-        assert body is not None
-        assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: New credentials" in mail.get("headers", "")
-        assert data.get("email", "MISSING").lower() in body
-        assert (
-            data.get("password", "MISSING") in body
-            or escape(str(data.get("password"))) in body
-        )
+            mail = self.read_mock_email()
+            body = mail.get("body", "")
 
-        # Test the differences between post and put schema
-        post_schema = {s["key"]: s for s in schema}
+            # Subject: is a key in the MIMEText
+            assert body is not None
+            assert mail.get("headers") is not None
+            assert f"Subject: {project_tile}: New credentials" in mail.get(
+                "headers", ""
+            )
+            assert data.get("email", "MISSING").lower() in body
+            assert (
+                data.get("password", "MISSING") in body
+                or escape(str(data.get("password"))) in body
+            )
 
-        tmp_schema = self.getDynamicInputSchema(
-            client, f"admin/users/{uuid}", headers, method="put"
-        )
-        put_schema = {s["key"]: s for s in tmp_schema}
+            # Test the differences between post and put schema
+            post_schema = {s["key"]: s for s in schema}
 
-        assert "email" in post_schema
-        assert post_schema["email"]["required"]
-        assert "email" not in put_schema
+            tmp_schema = self.getDynamicInputSchema(
+                client, f"admin/users/{uuid}", headers, method="put"
+            )
+            put_schema = {s["key"]: s for s in tmp_schema}
 
-        assert "name" in post_schema
-        assert post_schema["name"]["required"]
-        assert "name" in put_schema
-        assert not put_schema["name"]["required"]
+            assert "email" in post_schema
+            assert post_schema["email"]["required"]
+            assert "email" not in put_schema
 
-        assert "surname" in post_schema
-        assert post_schema["surname"]["required"]
-        assert "surname" in put_schema
-        assert not put_schema["surname"]["required"]
+            assert "name" in post_schema
+            assert post_schema["name"]["required"]
+            assert "name" in put_schema
+            assert not put_schema["name"]["required"]
 
-        assert "password" in post_schema
-        assert post_schema["password"]["required"]
-        assert "password" in put_schema
-        assert not put_schema["password"]["required"]
+            assert "surname" in post_schema
+            assert post_schema["surname"]["required"]
+            assert "surname" in put_schema
+            assert not put_schema["surname"]["required"]
 
-        assert "group" in post_schema
-        assert post_schema["group"]["required"]
-        assert "group" in put_schema
-        assert not put_schema["group"]["required"]
+            assert "password" in post_schema
+            assert post_schema["password"]["required"]
+            assert "password" in put_schema
+            assert not put_schema["password"]["required"]
 
-        # Event 2: read
-        r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
-        assert r.status_code == 200
-        users_list = self.get_content(r)
-        assert isinstance(users_list, dict)
-        assert len(users_list) > 0
-        # email is saved lowercase
-        assert users_list.get("email") == data.get("email", "MISSING").lower()
+            assert "group" in post_schema
+            assert post_schema["group"]["required"]
+            assert "group" in put_schema
+            assert not put_schema["group"]["required"]
 
-        # Access to the user
-        events = self.get_last_events(1, filters={"target_type": "User"})
-        assert events[0].event == Events.access.value
-        assert events[0].user == user_email
-        assert events[0].target_type == "User"
-        assert events[0].target_id == event_target_id1
-        assert events[0].url == f"/api/admin/users/{event_target_id1}"
-        assert len(events[0].payload) == 0
+            # Event 2: read
+            r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
+            assert r.status_code == 200
+            users_list = self.get_content(r)
+            assert isinstance(users_list, dict)
+            assert len(users_list) > 0
+            # email is saved lowercase
+            assert users_list.get("email") == data.get("email", "MISSING").lower()
 
-        # Check duplicates
-        r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
-        assert r.status_code == 409
+            # Access to the user
+            events = self.get_last_events(1, filters={"target_type": "User"})
+            assert events[0].event == Events.access.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "User"
+            assert events[0].target_id == event_target_id1
+            assert events[0].url == f"/api/admin/users/{event_target_id1}"
+            assert len(events[0].payload) == 0
 
-        # Create another user
-        data2 = self.buildData(schema)
-        data2["email_notification"] = True
-        data2["is_active"] = True
-        data2["expiration"] = None
+            # Check duplicates
+            r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
+            assert r.status_code == 409
 
-        # Event 3: create
-        r = client.post(f"{API_URI}/admin/users", data=data2, headers=headers)
-        assert r.status_code == 200
-        uuid2 = self.get_content(r)
-        assert isinstance(uuid2, str)
+            # Create another user
+            data2 = self.buildData(schema)
+            data2["email_notification"] = True
+            data2["is_active"] = True
+            data2["expiration"] = None
 
-        # Another User is created
-        events = self.get_last_events(1, filters={"target_type": "User"})
-        assert events[0].event == Events.create.value
-        assert events[0].user == user_email
-        assert events[0].target_type == "User"
-        assert events[0].target_id != event_target_id1
-        assert events[0].url == "/api/admin/users"
-        assert "name" in events[0].payload
-        assert "surname" in events[0].payload
-        assert "email" in events[0].payload
+            # Event 3: create
+            r = client.post(f"{API_URI}/admin/users", data=data2, headers=headers)
+            assert r.status_code == 200
+            uuid2 = self.get_content(r)
+            assert isinstance(uuid2, str)
 
-        # Save it for the following tests
-        event_target_id2 = events[0].target_id
+            # Another User is created
+            events = self.get_last_events(1, filters={"target_type": "User"})
+            assert events[0].event == Events.create.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "User"
+            assert events[0].target_id != event_target_id1
+            assert events[0].url == "/api/admin/users"
+            assert "name" in events[0].payload
+            assert "surname" in events[0].payload
+            assert "email" in events[0].payload
 
-        mail = self.read_mock_email()
-        body = mail.get("body", "")
-        # Subject: is a key in the MIMEText
-        assert body is not None
-        assert mail.get("headers") is not None
-        assert f"Subject: {project_tile}: New credentials" in mail.get("headers", "")
-        assert data2.get("email", "MISSING").lower() in body
-        pwd = data2.get("password", "MISSING")
-        assert pwd in body or escape(str(pwd)) in body
+            # Save it for the following tests
+            event_target_id2 = events[0].target_id
 
-        # send and invalid user_id
-        r = client.put(
-            f"{API_URI}/admin/users/invalid",
-            data={"name": faker.name()},
-            headers=headers,
-        )
-        assert r.status_code == 404
+            mail = self.read_mock_email()
+            body = mail.get("body", "")
+            # Subject: is a key in the MIMEText
+            assert body is not None
+            assert mail.get("headers") is not None
+            assert f"Subject: {project_tile}: New credentials" in mail.get(
+                "headers", ""
+            )
+            assert data2.get("email", "MISSING").lower() in body
+            pwd = data2.get("password", "MISSING")
+            assert pwd in body or escape(str(pwd)) in body
 
-        # Event 4: modify
-        r = client.put(
-            f"{API_URI}/admin/users/{uuid}",
-            data={"name": faker.name()},
-            headers=headers,
-        )
-        assert r.status_code == 204
+            # send and invalid user_id
+            r = client.put(
+                f"{API_URI}/admin/users/invalid",
+                data={"name": faker.name()},
+                headers=headers,
+            )
+            assert r.status_code == 404
 
-        # User 1 modified (same target_id as above)
-        events = self.get_last_events(1, filters={"target_type": "User"})
-        assert events[0].event == Events.modify.value
-        assert events[0].user == user_email
-        assert events[0].target_type == "User"
-        assert events[0].target_id == event_target_id1
-        assert events[0].url == f"/api/admin/users/{event_target_id1}"
-        assert "name" in events[0].payload
-        assert "surname" not in events[0].payload
-        assert "email" not in events[0].payload
-        assert "password" not in events[0].payload
+            # Event 4: modify
+            r = client.put(
+                f"{API_URI}/admin/users/{uuid}",
+                data={"name": faker.name()},
+                headers=headers,
+            )
+            assert r.status_code == 204
 
-        # email cannot be modified
-        new_data = {"email": data.get("email")}
-        r = client.put(f"{API_URI}/admin/users/{uuid2}", data=new_data, headers=headers)
-        # from webargs >= 6 this endpoint no longer return a 204 but a 400
-        # because email is an unknown field
-        # assert r.status_code == 204
-        assert r.status_code == 400
+            # User 1 modified (same target_id as above)
+            events = self.get_last_events(1, filters={"target_type": "User"})
+            assert events[0].event == Events.modify.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "User"
+            assert events[0].target_id == event_target_id1
+            assert events[0].url == f"/api/admin/users/{event_target_id1}"
+            assert "name" in events[0].payload
+            assert "surname" not in events[0].payload
+            assert "email" not in events[0].payload
+            assert "password" not in events[0].payload
 
-        # Event 5: read
-        r = client.get(f"{API_URI}/admin/users/{uuid2}", headers=headers)
-        assert r.status_code == 200
-        users_list = self.get_content(r)
-        assert isinstance(users_list, dict)
-        assert len(users_list) > 0
-        # email is not modified -> still equal to data2, not data1
-        assert users_list.get("email") != data.get("email", "MISSING").lower()
-        assert users_list.get("email") == data2.get("email", "MISSING").lower()
+            # email cannot be modified
+            new_data = {"email": data.get("email")}
+            r = client.put(
+                f"{API_URI}/admin/users/{uuid2}", data=new_data, headers=headers
+            )
+            # from webargs >= 6 this endpoint no longer return a 204 but a 400
+            # because email is an unknown field
+            # assert r.status_code == 204
+            assert r.status_code == 400
 
-        # Access to user 2
-        events = self.get_last_events(1, filters={"target_type": "User"})
-        assert events[0].event == Events.access.value
-        assert events[0].user == user_email
-        assert events[0].target_type == "User"
-        assert events[0].target_id == event_target_id2
-        assert events[0].url == f"/api/admin/users/{event_target_id2}"
-        assert len(events[0].payload) == 0
+            # Event 5: read
+            r = client.get(f"{API_URI}/admin/users/{uuid2}", headers=headers)
+            assert r.status_code == 200
+            users_list = self.get_content(r)
+            assert isinstance(users_list, dict)
+            assert len(users_list) > 0
+            # email is not modified -> still equal to data2, not data1
+            assert users_list.get("email") != data.get("email", "MISSING").lower()
+            assert users_list.get("email") == data2.get("email", "MISSING").lower()
 
-        r = client.delete(f"{API_URI}/admin/users/invalid", headers=headers)
-        assert r.status_code == 404
+            # Access to user 2
+            events = self.get_last_events(1, filters={"target_type": "User"})
+            assert events[0].event == Events.access.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "User"
+            assert events[0].target_id == event_target_id2
+            assert events[0].url == f"/api/admin/users/{event_target_id2}"
+            assert len(events[0].payload) == 0
 
-        # Event 6: delete
-        r = client.delete(f"{API_URI}/admin/users/{uuid}", headers=headers)
-        assert r.status_code == 204
+            r = client.delete(f"{API_URI}/admin/users/invalid", headers=headers)
+            assert r.status_code == 404
 
-        # User 1 is deleted (same target_id as above)
-        events = self.get_last_events(1, filters={"target_type": "User"})
-        assert events[0].event == Events.delete.value
-        assert events[0].user == user_email
-        assert events[0].target_type == "User"
-        assert events[0].target_id == event_target_id1
-        assert events[0].url == f"/api/admin/users/{event_target_id1}"
-        assert len(events[0].payload) == 0
+            # Event 6: delete
+            r = client.delete(f"{API_URI}/admin/users/{uuid}", headers=headers)
+            assert r.status_code == 204
 
-        r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
-        assert r.status_code == 404
+            # User 1 is deleted (same target_id as above)
+            events = self.get_last_events(1, filters={"target_type": "User"})
+            assert events[0].event == Events.delete.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "User"
+            assert events[0].target_id == event_target_id1
+            assert events[0].url == f"/api/admin/users/{event_target_id1}"
+            assert len(events[0].payload) == 0
 
-        # change password of user2
-        # Event 7: modify
-        newpwd = faker.password(strong=True)
-        data = {"password": newpwd, "email_notification": True}
-        r = client.put(f"{API_URI}/admin/users/{uuid2}", data=data, headers=headers)
-        assert r.status_code == 204
+            r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers)
+            assert r.status_code == 404
 
-        # User 2 modified (same target_id as above)
-        events = self.get_last_events(1, filters={"target_type": "User"})
-        assert events[0].event == Events.modify.value
-        assert events[0].user == user_email
-        assert events[0].target_type == "User"
-        assert events[0].target_id == event_target_id2
-        assert events[0].url == f"/api/admin/users/{event_target_id2}"
-        assert "name" not in events[0].payload
-        assert "surname" not in events[0].payload
-        assert "email" not in events[0].payload
-        assert "password" in events[0].payload
-        assert "email_notification" in events[0].payload
-        # Verify that the password is obfuscated in the log:
-        assert events[0].payload["password"] == OBSCURE_VALUE
+            # change password of user2
+            # Event 7: modify
+            newpwd = faker.password(strong=True)
+            data = {"password": newpwd, "email_notification": True}
+            r = client.put(f"{API_URI}/admin/users/{uuid2}", data=data, headers=headers)
+            assert r.status_code == 204
 
-        mail = self.read_mock_email()
-        # Subject: is a key in the MIMEText
-        assert mail.get("body", "") is not None
-        assert mail.get("headers", "") is not None
-        assert f"Subject: {project_tile}: Password changed" in mail.get("headers", "")
-        assert data2.get("email", "MISSING").lower() in mail.get("body", "")
-        assert newpwd in mail.get("body", "") or escape(newpwd) in mail.get("body", "")
+            # User 2 modified (same target_id as above)
+            events = self.get_last_events(1, filters={"target_type": "User"})
+            assert events[0].event == Events.modify.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "User"
+            assert events[0].target_id == event_target_id2
+            assert events[0].url == f"/api/admin/users/{event_target_id2}"
+            assert "name" not in events[0].payload
+            assert "surname" not in events[0].payload
+            assert "email" not in events[0].payload
+            assert "password" in events[0].payload
+            assert "email_notification" in events[0].payload
+            # Verify that the password is obfuscated in the log:
+            assert events[0].payload["password"] == OBSCURE_VALUE
 
-        # login with a newly created user
-        headers2, _ = self.do_login(client, data2.get("email"), newpwd)
+            mail = self.read_mock_email()
+            # Subject: is a key in the MIMEText
+            assert mail.get("body", "") is not None
+            assert mail.get("headers", "") is not None
+            assert f"Subject: {project_tile}: Password changed" in mail.get(
+                "headers", ""
+            )
+            assert data2.get("email", "MISSING").lower() in mail.get("body", "")
+            assert newpwd in mail.get("body", "") or escape(newpwd) in mail.get(
+                "body", ""
+            )
 
-        # normal users cannot access to this endpoint
-        r = client.get(f"{API_URI}/admin/users", headers=headers2)
-        assert r.status_code == 401
+            # login with a newly created user
+            headers2, _ = self.do_login(client, data2.get("email"), newpwd)
 
-        r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers2)
-        assert r.status_code == 401
+            # normal users cannot access to this endpoint
+            r = client.get(f"{API_URI}/admin/users", headers=headers2)
+            assert r.status_code == 401
 
-        r = client.post(f"{API_URI}/admin/users", data=data, headers=headers2)
-        assert r.status_code == 401
+            r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers2)
+            assert r.status_code == 401
 
-        r = client.put(
-            f"{API_URI}/admin/users/{uuid}",
-            data={"name": faker.name()},
-            headers=headers2,
-        )
-        assert r.status_code == 401
+            r = client.post(f"{API_URI}/admin/users", data=data, headers=headers2)
+            assert r.status_code == 401
 
-        r = client.delete(f"{API_URI}/admin/users/{uuid}", headers=headers2)
-        assert r.status_code == 401
+            r = client.put(
+                f"{API_URI}/admin/users/{uuid}",
+                data={"name": faker.name()},
+                headers=headers2,
+            )
+            assert r.status_code == 401
 
-        # Users are not authorized to /admin/tokens
-        # These two tests should be moved in test_endpoints_tokens.py
-        r = client.get(f"{API_URI}/admin/tokens", headers=headers2)
-        assert r.status_code == 401
-        r = client.delete(f"{API_URI}/admin/tokens/xyz", headers=headers2)
-        assert r.status_code == 401
+            r = client.delete(f"{API_URI}/admin/users/{uuid}", headers=headers2)
+            assert r.status_code == 401
 
-        # let's delete the second user
-        # Event 8: delete
-        r = client.delete(f"{API_URI}/admin/users/{uuid2}", headers=headers)
-        assert r.status_code == 204
+            # Users are not authorized to /admin/tokens
+            # These two tests should be moved in test_endpoints_tokens.py
+            r = client.get(f"{API_URI}/admin/tokens", headers=headers2)
+            assert r.status_code == 401
+            r = client.delete(f"{API_URI}/admin/tokens/xyz", headers=headers2)
+            assert r.status_code == 401
 
-        # User 2 is deleted (same target_id as above)
-        events = self.get_last_events(1, filters={"target_type": "User"})
-        assert events[0].event == Events.delete.value
-        assert events[0].user == user_email
-        assert events[0].target_type == "User"
-        assert events[0].target_id == event_target_id2
-        assert events[0].url == f"/api/admin/users/{event_target_id2}"
-        assert len(events[0].payload) == 0
+            # let's delete the second user
+            # Event 8: delete
+            r = client.delete(f"{API_URI}/admin/users/{uuid2}", headers=headers)
+            assert r.status_code == 204
 
-        # Restore the default password, if it changed due to FORCE_FIRST_PASSWORD_CHANGE
-        # or MAX_PASSWORD_VALIDITY errors
-        r = client.get(f"{AUTH_URI}/profile", headers=headers)
-        assert r.status_code == 200
-        content = self.get_content(r)
-        assert isinstance(content, dict)
-        uuid = str(content.get("uuid"))
+            # User 2 is deleted (same target_id as above)
+            events = self.get_last_events(1, filters={"target_type": "User"})
+            assert events[0].event == Events.delete.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "User"
+            assert events[0].target_id == event_target_id2
+            assert events[0].url == f"/api/admin/users/{event_target_id2}"
+            assert len(events[0].payload) == 0
 
-        data = {
-            "password": user_password,
-            # very important, otherwise the default user will lose its admin role
-            "roles": orjson.dumps(["admin_root"]).decode("UTF8"),
-        }
-        # Event 9: modify
-        r = client.put(f"{API_URI}/admin/users/{uuid}", data=data, headers=headers)
-        assert r.status_code == 204
+            # Restore the default password (changed due to FORCE_FIRST_PASSWORD_CHANGE)
+            # or MAX_PASSWORD_VALIDITY errors
+            r = client.get(f"{AUTH_URI}/profile", headers=headers)
+            assert r.status_code == 200
+            content = self.get_content(r)
+            assert isinstance(content, dict)
+            uuid = str(content.get("uuid"))
 
-        # Default user is modified
-        events = self.get_last_events(1, filters={"target_type": "User"})
-        assert events[0].event == Events.modify.value
-        assert events[0].user == user_email
-        assert events[0].target_type == "User"
-        assert events[0].target_id != event_target_id1
-        assert events[0].target_id != event_target_id2
-        assert events[0].url != f"/api/admin/users/{event_target_id1}"
-        assert events[0].url != f"/api/admin/users/{event_target_id2}"
-        assert "name" not in events[0].payload
-        assert "surname" not in events[0].payload
-        assert "email" not in events[0].payload
-        assert "password" in events[0].payload
-        assert "roles" in events[0].payload
-        assert "email_notification" not in events[0].payload
-        # Verify that the password is obfuscated in the log:
-        assert events[0].payload["password"] == OBSCURE_VALUE
+            data = {
+                "password": user_password,
+                # very important, otherwise the default user will lose its role
+                "roles": orjson.dumps([role]).decode("UTF8"),
+            }
+            # Event 9: modify
+            r = client.put(f"{API_URI}/admin/users/{uuid}", data=data, headers=headers)
+            assert r.status_code == 204
 
-        r = client.get(f"{AUTH_URI}/logout", headers=headers)
-        assert r.status_code == 204
+            # Default user is modified
+            events = self.get_last_events(1, filters={"target_type": "User"})
+            assert events[0].event == Events.modify.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "User"
+            assert events[0].target_id != event_target_id1
+            assert events[0].target_id != event_target_id2
+            assert events[0].url != f"/api/admin/users/{event_target_id1}"
+            assert events[0].url != f"/api/admin/users/{event_target_id2}"
+            assert "name" not in events[0].payload
+            assert "surname" not in events[0].payload
+            assert "email" not in events[0].payload
+            assert "password" in events[0].payload
+            assert "roles" in events[0].payload
+            assert "email_notification" not in events[0].payload
+            # Verify that the password is obfuscated in the log:
+            assert events[0].payload["password"] == OBSCURE_VALUE
+
+            r = client.get(f"{AUTH_URI}/logout", headers=headers)
+            assert r.status_code == 204
