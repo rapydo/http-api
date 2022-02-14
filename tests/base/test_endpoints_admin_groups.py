@@ -150,7 +150,6 @@ class TestApp(BaseTests):
             if role == Role.ADMIN:
                 headers, _ = self.do_login(client, None, None)
             elif role == Role.STAFF:
-                uuid, data = self.create_user(client, roles=[Role.STAFF])
                 headers, _ = self.do_login(
                     client, user_data.get("email"), user_data.get("password")
                 )
