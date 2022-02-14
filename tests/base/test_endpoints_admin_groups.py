@@ -22,12 +22,14 @@ class TestApp(BaseTests):
             log.warning("Testing admin/groups endpoints as {}", role)
 
             if role == Role.ADMIN:
-                headers, _ = self.do_login(client, None, None)
+                user_email = BaseAuthentication.default_user
+                user_password = BaseAuthentication.default_password
             elif role == Role.STAFF:
                 _, user_data = self.create_user(client, roles=[Role.STAFF])
-                headers, _ = self.do_login(
-                    client, user_data.get("email"), user_data.get("password")
-                )
+                user_email = user_data.get("email")
+                user_password = user_data.get("password")
+
+            headers, _ = self.do_login(client, user_email, user_password)
 
             r = client.get(f"{API_URI}/admin/groups", headers=headers)
             assert r.status_code == 200
@@ -40,6 +42,17 @@ class TestApp(BaseTests):
             assert r.status_code == 200
             uuid = self.get_content(r)
             assert isinstance(uuid, str)
+
+            events = self.get_last_events(1, filters={"target_type": "Group"})
+            assert events[0].event == Events.create.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "Group"
+            assert events[0].url == "/api/admin/groups"
+            assert "fullname" in events[0].payload
+            assert "shortname" in events[0].payload
+
+            # Save it for the following tests
+            event_target_id = events[0].target_id
 
             r = client.get(f"{API_URI}/admin/groups", headers=headers)
             assert r.status_code == 200
@@ -94,6 +107,16 @@ class TestApp(BaseTests):
             )
             assert r.status_code == 204
 
+            events = self.get_last_events(1, filters={"target_type": "Group"})
+            # Group modified (same target_id as above)
+            assert events[0].event == Events.modify.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "Group"
+            assert events[0].target_id == event_target_id
+            assert events[0].url == f"/api/admin/groups/{event_target_id}"
+            assert "fullname" in events[0].payload
+            assert "shortname" in events[0].payload
+
             r = client.get(f"{API_URI}/admin/groups", headers=headers)
             assert r.status_code == 200
             groups = self.get_content(r)
@@ -111,6 +134,15 @@ class TestApp(BaseTests):
             # Event 3: delete
             r = client.delete(f"{API_URI}/admin/groups/{uuid}", headers=headers)
             assert r.status_code == 204
+
+            events = self.get_last_events(1, filters={"target_type": "Group"})
+            # Group is deleted (same target_id as above)
+            assert events[0].event == Events.delete.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "Group"
+            assert events[0].target_id == event_target_id
+            assert events[0].url == f"/api/admin/groups/{event_target_id}"
+            assert len(events[0].payload) == 0
 
             r = client.get(f"{API_URI}/admin/groups", headers=headers)
             assert r.status_code == 200
@@ -141,80 +173,39 @@ class TestApp(BaseTests):
             # Event 4: create
             uuid, _ = self.create_group(client, data=data)
 
+            events = self.get_last_events(1, filters={"target_type": "Group"})
+            # A new group is created
+            assert events[0].event == Events.create.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "Group"
+            assert events[0].target_id != event_target_id
+            assert events[0].url == "/api/admin/groups"
+            assert "fullname" in events[0].payload
+            assert "shortname" in events[0].payload
+            # Save it for the following tests
+            event_group_uuid = events[0].target_id
+
             data = {
                 "group": uuid,
                 # very important, otherwise the default user will lose its role
                 "roles": orjson.dumps([role]).decode("UTF8"),
             }
 
-            if role == Role.ADMIN:
-                headers, _ = self.do_login(client, None, None)
-            elif role == Role.STAFF:
-                headers, _ = self.do_login(
-                    client, user_data.get("email"), user_data.get("password")
-                )
+            headers, _ = self.do_login(client, user_email, user_password)
+
             # Event 5: modify
             r = client.put(
                 f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers
             )
             assert r.status_code == 204
 
-    def test_events_file(self) -> None:
-
-        if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
-            log.warning("Skipping admin/users tests")
-            return
-
-        events = self.get_last_events(4, filters={"target_type": "Group"})
-
-        # A new group is created
-        INDEX = 0
-        assert events[INDEX].event == Events.create.value
-        assert events[INDEX].user == BaseAuthentication.default_user
-        assert events[INDEX].target_type == "Group"
-        assert events[INDEX].url == "/api/admin/groups"
-        assert "fullname" in events[INDEX].payload
-        assert "shortname" in events[INDEX].payload
-
-        # Group modified (same target_id as above)
-        INDEX = 1
-        assert events[INDEX].event == Events.modify.value
-        assert events[INDEX].user == BaseAuthentication.default_user
-        assert events[INDEX].target_type == "Group"
-        assert events[INDEX].target_id == events[0].target_id
-        assert events[INDEX].url == f"/api/admin/groups/{events[0].target_id}"
-        assert "fullname" in events[INDEX].payload
-        assert "shortname" in events[INDEX].payload
-
-        # Group is deleted (same target_id as above)
-        INDEX = 2
-        assert events[INDEX].event == Events.delete.value
-        assert events[INDEX].user == BaseAuthentication.default_user
-        assert events[INDEX].target_type == "Group"
-        assert events[INDEX].target_id == events[0].target_id
-        assert events[INDEX].url == f"/api/admin/groups/{events[0].target_id}"
-        assert len(events[INDEX].payload) == 0
-
-        # A new group is created
-        INDEX = 3
-        assert events[INDEX].event == Events.create.value
-        assert events[INDEX].user == BaseAuthentication.default_user
-        assert events[INDEX].target_type == "Group"
-        assert events[INDEX].target_id != events[0].target_id
-        assert events[INDEX].url == "/api/admin/groups"
-        assert "fullname" in events[INDEX].payload
-        assert "shortname" in events[INDEX].payload
-        group_uuid = events[INDEX].target_id
-
-        events = self.get_last_events(1, filters={"target_type": "User"})
-
-        # User modified, payload contains the created group
-        INDEX = 0
-        assert events[INDEX].event == Events.modify.value
-        assert events[INDEX].user == BaseAuthentication.default_user
-        assert events[INDEX].target_type == "User"
-        assert events[INDEX].url == f"/api/admin/users/{events[INDEX].target_id}"
-        assert "fullname" not in events[INDEX].payload
-        assert "shortname" not in events[INDEX].payload
-        assert "group" in events[INDEX].payload
-        assert events[INDEX].payload["group"] == group_uuid
+            events = self.get_last_events(1, filters={"target_type": "User"})
+            # User modified, payload contains the created group
+            assert events[0].event == Events.modify.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "User"
+            assert events[0].url == f"/api/admin/users/{event_target_id}"
+            assert "fullname" not in events[0].payload
+            assert "shortname" not in events[0].payload
+            assert "group" in events[0].payload
+            assert events[0].payload["group"] == event_group_uuid
