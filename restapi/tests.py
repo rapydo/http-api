@@ -346,7 +346,6 @@ class BaseTests:
 
         if roles:
 
-            log.critical("DEBUG CODE: creating users with role = {}", roles)
             for idx, role in enumerate(roles):
                 if isinstance(role, Role):
                     roles[idx] = role.value
@@ -355,6 +354,7 @@ class BaseTests:
 
         if data:
             user_data.update(data)
+        log.critical("DEBUG CODE: creating users with role = {}", user_data["roles"])
         r = client.post(f"{API_URI}/admin/users", data=user_data, headers=admin_headers)
         assert r.status_code == 200
         uuid = cls.get_content(r)
