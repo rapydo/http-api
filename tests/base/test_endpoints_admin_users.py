@@ -405,10 +405,12 @@ class TestApp(BaseTests):
         assert content == "This user cannot be found or you are not authorized"
 
         # Staff users are not allowed to edit Admins
-        edit_data = {"name": faker.name()}
         r = client.put(
             f"{API_URI}/admin/users/{admin_uuid}",
-            data=edit_data,
+            data={
+                "name": faker.name(),
+                "roles": orjson.dumps([Role.STAFF]).decode("UTF8"),
+            },
             headers=staff_headers,
         )
         assert r.status_code == 404
@@ -417,14 +419,20 @@ class TestApp(BaseTests):
 
         r = client.put(
             f"{API_URI}/admin/users/{staff_uuid}",
-            data=edit_data,
+            data={
+                "name": faker.name(),
+                "roles": orjson.dumps([Role.STAFF]).decode("UTF8"),
+            },
             headers=staff_headers,
         )
         assert r.status_code == 204
 
         r = client.put(
             f"{API_URI}/admin/users/{user_uuid}",
-            data=edit_data,
+            data={
+                "name": faker.name(),
+                "roles": orjson.dumps([Role.USER]).decode("UTF8"),
+            },
             headers=staff_headers,
         )
         assert r.status_code == 204
