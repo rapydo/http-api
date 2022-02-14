@@ -437,3 +437,44 @@ class TestApp(BaseTests):
 
         r = client.delete(f"{API_URI}/admin/users/{user_uuid}", headers=staff_headers)
         assert r.status_code == 204
+
+        # Admin role is not allowed for Staff users
+
+        tmp_schema = self.getDynamicInputSchema(client, "admin/users", admin_headers)
+        post_schema = {s["key"]: s for s in tmp_schema}
+        assert "roles" in post_schema
+        assert "options" in post_schema["roles"]
+        assert "normal_user" in post_schema["roles"]["options"]
+        assert "admin_root" in post_schema["roles"]["options"]
+
+        tmp_schema = self.getDynamicInputSchema(
+            client, f"admin/users/{user_uuid}", admin_headers, method="put"
+        )
+        put_schema = {s["key"]: s for s in tmp_schema}
+
+        assert "roles" in put_schema
+        assert "options" in post_schema["roles"]
+        assert "normal_user" in post_schema["roles"]["options"]
+        assert "admin_root" in post_schema["roles"]["options"]
+
+        tmp_schema = self.getDynamicInputSchema(client, "admin/users", staff_headers)
+        post_schema = {s["key"]: s for s in tmp_schema}
+        assert "roles" in post_schema
+        assert "options" in post_schema["roles"]
+        assert "normal_user" in post_schema["roles"]["options"]
+        assert "admin_root" not in post_schema["roles"]["options"]
+
+        tmp_schema = self.getDynamicInputSchema(
+            client, f"admin/users/{user_uuid}", staff_headers, method="put"
+        )
+        put_schema = {s["key"]: s for s in tmp_schema}
+
+        assert "roles" in put_schema
+        assert "options" in post_schema["roles"]
+        assert "normal_user" in post_schema["roles"]["options"]
+        assert "admin_root" not in post_schema["roles"]["options"]
+
+        # +++ send post with role admin => fail
+        # +++ send put with role admin => fail
+
+        # +++ get all => admin filtered out

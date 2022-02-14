@@ -10,7 +10,7 @@ from restapi.endpoints.schemas import (
     admin_user_post_input,
     admin_user_put_input,
 )
-from restapi.exceptions import NotFound
+from restapi.exceptions import Forbidden, NotFound
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import BaseAuthentication, Role, User
 from restapi.utilities.time import date_lower_than as dt_lower
@@ -68,8 +68,6 @@ class AdminUsers(EndpointResource):
 
         users = self.auth.get_users()
 
-        # if not admin => filter out admins
-
         return self.response(users)
 
     @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
@@ -85,9 +83,13 @@ class AdminUsers(EndpointResource):
     )
     def post(self, user: User, **kwargs: Any) -> Response:
 
-        # if not admin => do not allow admin role
-
         roles: List[str] = kwargs.pop("roles", [])
+
+        # The role is already refused by webards... This is an additional check
+        # to improve the security, but can't be reached
+        if not self.auth.is_admin(user) and Role.ADMIN in roles:  # pragma: no cover
+            raise Forbidden("This role is not allowed")
+
         payload = kwargs.copy()
         group_id = kwargs.pop("group")
 
@@ -128,8 +130,6 @@ class AdminUsers(EndpointResource):
         self, user_id: str, target_user: User, user: User, **kwargs: Any
     ) -> Response:
 
-        # if not admin => do not allow admin role
-
         if "password" in kwargs:
             unhashed_password = kwargs["password"]
             kwargs["password"] = BaseAuthentication.get_password_hash(
@@ -140,6 +140,11 @@ class AdminUsers(EndpointResource):
 
         payload = kwargs.copy()
         roles: List[str] = kwargs.pop("roles", [])
+
+        # The role is already refused by webards... This is an additional check
+        # to improve the security, but can't be reached
+        if not self.auth.is_admin(user) and Role.ADMIN in roles:  # pragma: no cover
+            raise Forbidden("This role is not allowed")
 
         group_id = kwargs.pop("group", None)
 

@@ -4,6 +4,8 @@ from typing import Dict, Type, TypedDict, Union
 from restapi.connectors import Connector
 from restapi.customizer import FlaskRequest
 from restapi.models import ISO8601UTC, Schema, fields, validate
+from restapi.rest.bearer import HTTPTokenAuth
+from restapi.services.authentication import Role as RoleEnum
 from restapi.utilities.globals import mem
 
 auth = Connector.get_authentication_instance()
@@ -233,6 +235,16 @@ def group_users_output() -> Schema:
 # be created with empty request
 def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
 
+    if request:
+        _, token = HTTPTokenAuth.get_authorization_token(
+            allow_access_token_parameter=False
+        )
+        _, _, _, user = auth.verify_token(token)
+
+        is_admin = auth.is_admin(user)
+    else:
+        is_admin = False
+
     attributes: MarshmallowSchema = {}
     if is_post:
         # This is because Email is not typed on marshmallow
@@ -269,6 +281,8 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
     )
 
     roles = {r.name: r.description for r in auth.get_roles()}
+    if not is_admin and RoleEnum.ADMIN.value in roles:
+        roles.pop(RoleEnum.ADMIN.value)
 
     attributes["roles"] = fields.List(
         fields.Str(
