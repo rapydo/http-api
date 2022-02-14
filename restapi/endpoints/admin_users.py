@@ -68,6 +68,14 @@ class AdminUsers(EndpointResource):
 
         users = self.auth.get_users()
 
+        # Filter out admin users when requested from a Staff user
+        if not self.auth.is_admin(user):
+            users = [
+                u
+                for u in users
+                if Role.ADMIN.value not in self.auth.get_roles_from_user(u)
+            ]
+
         return self.response(users)
 
     @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
