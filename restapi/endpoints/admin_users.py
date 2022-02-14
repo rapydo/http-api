@@ -32,7 +32,7 @@ class AdminSingleUser(EndpointResource):
     labels = ["management"]
     private = True
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.preload(callback=inject_user)
     @decorators.marshal_with(admin_user_output(many=False), code=200)
     @decorators.endpoint(
@@ -42,6 +42,7 @@ class AdminSingleUser(EndpointResource):
     )
     def get(self, user_id: str, target_user: User, user: User) -> Response:
 
+        # is not admin => filter out admins
         self.log_event(self.events.access, target_user)
 
         return self.response(target_user)
@@ -53,7 +54,7 @@ class AdminUsers(EndpointResource):
     labels = ["management"]
     private = True
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.marshal_with(admin_user_output(many=True), code=200)
     @decorators.endpoint(
         path="/admin/users",
@@ -64,9 +65,11 @@ class AdminUsers(EndpointResource):
 
         users = self.auth.get_users()
 
+        # if not admin => filter out admins
+
         return self.response(users)
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.database_transaction
     @decorators.use_kwargs(admin_user_post_input)
     @decorators.endpoint(
@@ -78,6 +81,8 @@ class AdminUsers(EndpointResource):
         },
     )
     def post(self, user: User, **kwargs: Any) -> Response:
+
+        # if not admin => do not allow admin role
 
         roles: List[str] = kwargs.pop("roles", [])
         payload = kwargs.copy()
@@ -107,7 +112,7 @@ class AdminUsers(EndpointResource):
 
         return self.response(user.uuid)
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.preload(callback=inject_user)
     @decorators.database_transaction
     @decorators.use_kwargs(admin_user_put_input)
@@ -119,6 +124,9 @@ class AdminUsers(EndpointResource):
     def put(
         self, user_id: str, target_user: User, user: User, **kwargs: Any
     ) -> Response:
+
+        # if not admin => do not allow admin role
+        # if not admin => do no modify admins
 
         if "password" in kwargs:
             unhashed_password = kwargs["password"]
@@ -180,7 +188,7 @@ class AdminUsers(EndpointResource):
 
         return self.empty_response()
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.preload(callback=inject_user)
     @decorators.endpoint(
         path="/admin/users/<user_id>",
@@ -188,6 +196,8 @@ class AdminUsers(EndpointResource):
         responses={200: "User successfully deleted"},
     )
     def delete(self, user_id: str, target_user: User, user: User) -> Response:
+
+        # if not admin => do not delete admins
 
         self.auth.delete_user(target_user)
 
