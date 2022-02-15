@@ -3,6 +3,7 @@ from faker import Faker
 from flask import escape
 
 from restapi.config import get_project_configuration
+from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
@@ -18,11 +19,21 @@ class TestApp(BaseTests):
 
         project_tile = get_project_configuration("project.title", default="YourProject")
 
+        auth = Connector.get_authentication_instance()
+        staff_role_enabled = Role.STAFF.value not in [r.name for r in auth.get_roles()]
+
         for role in (
             Role.ADMIN,
             Role.STAFF,
         ):
-            log.warning("Testing admin/users endpoints as {}", role)
+
+            if not staff_role_enabled:  # pragma: no cover
+                log.warning(
+                    "Skipping tests of admin/users endpoints, role Staff not enabled"
+                )
+                continue
+            else:
+                log.warning("Testing admin/users endpoints as {}", role)
 
             if role == Role.ADMIN:
                 user_email = BaseAuthentication.default_user
@@ -365,6 +376,15 @@ class TestApp(BaseTests):
 
         if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping admin/users tests")
+            return
+
+        auth = Connector.get_authentication_instance()
+        staff_role_enabled = Role.STAFF.value not in [r.name for r in auth.get_roles()]
+
+        if not staff_role_enabled:  # pragma: no cover
+            log.warning(
+                "Skipping tests of admin/users restrictions, role Staff not enabled"
+            )
             return
 
         staff_uuid, staff_data = self.create_user(client, roles=[Role.STAFF])

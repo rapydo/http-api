@@ -2,6 +2,7 @@ import orjson
 import pytest
 from faker import Faker
 
+from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.services.authentication import BaseAuthentication, Role
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
@@ -15,11 +16,22 @@ class TestApp(BaseTests):
             log.warning("Skipping admin/groups tests")
             return
 
+        staff_role_enabled = True
+
+        auth = Connector.get_authentication_instance()
+        staff_role_enabled = Role.STAFF.value not in [r.name for r in auth.get_roles()]
         for role in (
             Role.ADMIN,
             Role.STAFF,
         ):
-            log.warning("Testing admin/groups endpoints as {}", role)
+
+            if not staff_role_enabled:  # pragma: no cover
+                log.warning(
+                    "Skipping tests of admin/groups endpoints, role Staff not enabled"
+                )
+                continue
+            else:
+                log.warning("Testing admin/groups endpoints as {}", role)
 
             if role == Role.ADMIN:
                 user_email = BaseAuthentication.default_user
