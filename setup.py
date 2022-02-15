@@ -29,7 +29,6 @@ setup(
     """,
     # Remember to update mypy.additional_dependencies
     install_requires=[
-        "setuptools==60.8.2",
         # Flask, plugins and webservers
         "Flask==2.0.2",
         "Flask-RESTful==0.3.9",
