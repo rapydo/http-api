@@ -16,10 +16,8 @@ class TestApp(BaseTests):
             log.warning("Skipping admin/groups tests")
             return
 
-        staff_role_enabled = True
-
         auth = Connector.get_authentication_instance()
-        staff_role_enabled = Role.STAFF.value not in [r.name for r in auth.get_roles()]
+        staff_role_enabled = Role.STAFF.value in [r.name for r in auth.get_roles()]
         for role in (
             Role.ADMIN,
             Role.STAFF,

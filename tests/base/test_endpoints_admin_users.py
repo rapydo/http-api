@@ -20,7 +20,7 @@ class TestApp(BaseTests):
         project_tile = get_project_configuration("project.title", default="YourProject")
 
         auth = Connector.get_authentication_instance()
-        staff_role_enabled = Role.STAFF.value not in [r.name for r in auth.get_roles()]
+        staff_role_enabled = Role.STAFF.value in [r.name for r in auth.get_roles()]
 
         for role in (
             Role.ADMIN,
@@ -379,7 +379,7 @@ class TestApp(BaseTests):
             return
 
         auth = Connector.get_authentication_instance()
-        staff_role_enabled = Role.STAFF.value not in [r.name for r in auth.get_roles()]
+        staff_role_enabled = Role.STAFF.value in [r.name for r in auth.get_roles()]
 
         if not staff_role_enabled:  # pragma: no cover
             log.warning(
