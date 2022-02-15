@@ -21,7 +21,7 @@ setup(
         ]
     },
     # python_requires=">=3.9.0",
-    # Due to mistral & b2stage/sdc (also removed str.removeprefix)
+    # Due to mistral (also removed str.removeprefix)
     python_requires=">=3.8.0",
     entry_points=f"""
         [console_scripts]
@@ -29,6 +29,7 @@ setup(
     """,
     # Remember to update mypy.additional_dependencies
     install_requires=[
+        "setuptools==60.8.2",
         # Flask, plugins and webservers
         "Flask==2.0.2",
         "Flask-RESTful==0.3.9",
