@@ -141,6 +141,18 @@ class TestApp(BaseTests):
             # Check duplicates
             r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
             assert r.status_code == 409
+            assert (
+                self.get_content(r)
+                == f"A User already exists with email: {data['email']}"
+            )
+
+            data["email"] = BaseAuthentication.default_user
+            r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
+            assert r.status_code == 409
+            assert (
+                self.get_content(r)
+                == f"A User already exists with email: {BaseAuthentication.default_user}"
+            )
 
             # Create another user
             data2 = self.buildData(schema)
@@ -392,8 +404,7 @@ class TestApp(BaseTests):
         staff_password = staff_data.get("password")
         staff_headers, _ = self.do_login(client, staff_email, staff_password)
 
-        user_uuid, user_data = self.create_user(client, roles=[Role.USER])
-        # user_email = user_data.get("email")
+        user_uuid, _ = self.create_user(client, roles=[Role.USER])
 
         admin_headers, _ = self.do_login(client, None, None)
 
