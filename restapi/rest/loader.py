@@ -72,12 +72,12 @@ class EndpointsLoader:
         projects_path = Path(CONF_FOLDERS.get("projects_path", CONF_PATH))
         submodules_path = Path(CONF_FOLDERS.get("submodules_path", CONF_PATH))
 
-        if HOST_TYPE == DOCS:  # pragma: no cover
-            return load_yaml_file(
-                filepath=defaults_path.joinpath(PROJECTS_DEFAULTS_FILE)
-            )
-
         try:
+            if HOST_TYPE == DOCS:  # pragma: no cover
+                return load_yaml_file(
+                    filepath=defaults_path.joinpath(PROJECTS_DEFAULTS_FILE)
+                )
+
             configuration, self._extended_project, _ = read_configuration(
                 default_file_path=defaults_path,
                 base_project_path=base_path,
