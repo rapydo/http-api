@@ -34,9 +34,13 @@ release = "2.2"
 extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx.ext.coverage",
 ]
+
+autosummary_generate = True  # Turn on sphinx.ext.autosummary
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

@@ -6,10 +6,17 @@
 Welcome to RAPyDo HTTP-APIs's documentation!
 ============================================
 
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:
+
+   restapi
+
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
 
 
 Indices and tables
