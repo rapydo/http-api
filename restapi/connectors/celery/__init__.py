@@ -20,7 +20,7 @@ import certifi
 from celery import Celery, states
 from celery.exceptions import Ignore
 
-from restapi.config import CUSTOM_PACKAGE, SSL_CERTIFICATE, TESTING
+from restapi.config import CUSTOM_PACKAGE, DOCS, HOST_TYPE, SSL_CERTIFICATE, TESTING
 from restapi.connectors import Connector, ExceptionsList
 from restapi.connectors.rabbitmq import RabbitExt
 from restapi.connectors.redis import RedisExt
@@ -283,6 +283,9 @@ class CeleryExt(Connector):
         variables = self.variables.copy()
         variables.update(kwargs)
         broker = variables.get("broker_service")
+
+        if HOST_TYPE == DOCS:  # pragma: no cover
+            broker = "RABBIT"
 
         if broker is None:  # pragma: no cover
             print_and_exit("Unable to start Celery, missing broker service")

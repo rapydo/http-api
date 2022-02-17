@@ -52,10 +52,6 @@ def get_host_type(HOSTNAME: str) -> str:
 
 HOST_TYPE = get_host_type(HOSTNAME)
 
-if HOST_TYPE == DOCS:
-    os.environ["CELERY_BROKER_SERVICE"] = "RABBIT"
-    os.environ["TELEGRAM_API_KEY"] = "UNSET"
-
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8080"
 DATA_PATH: Path = Path(Env.get("DATA_PATH", "/uploads"))

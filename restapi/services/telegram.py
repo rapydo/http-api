@@ -51,32 +51,34 @@ class Bot:
 
     # Startup workflow: init -> load_commands -> start
     def __init__(self) -> None:
-        self.commands: Dict[str, str] = {}
-        self.variables = Env.load_variables_group(prefix="telegram")
-        if not self.variables.get("api_key"):  # pragma: no cover
-            raise ServiceUnavailable("Missing API KEY")
-        self.updater = Updater(
-            self.variables.get("api_key"),
-            # Starting from v13 use_context is True by default
-            # use_context=True,
-            workers=Env.to_int(self.variables.get("workers"), default=1),
-        )
 
-        # Inline keyboard callback
-        self.updater.dispatcher.add_handler(
-            CallbackQueryHandler(self.inline_keyboard_button)
-        )
+        if HOST_TYPE != DOCS:
+            self.commands: Dict[str, str] = {}
+            self.variables = Env.load_variables_group(prefix="telegram")
+            if not self.variables.get("api_key"):  # pragma: no cover
+                raise ServiceUnavailable("Missing API KEY")
+            self.updater = Updater(
+                self.variables.get("api_key"),
+                # Starting from v13 use_context is True by default
+                # use_context=True,
+                workers=Env.to_int(self.variables.get("workers"), default=1),
+            )
 
-        # Errors
-        self.updater.dispatcher.add_error_handler(self.error_callback)
+            # Inline keyboard callback
+            self.updater.dispatcher.add_handler(
+                CallbackQueryHandler(self.inline_keyboard_button)
+            )
 
-        self.admins = Bot.get_ids(self.variables.get("admins"))
-        if not self.admins:  # pragma: no cover
-            print_and_exit("No admin list")
+            # Errors
+            self.updater.dispatcher.add_error_handler(self.error_callback)
 
-        self.users = Bot.get_ids(self.variables.get("users"))
+            self.admins = Bot.get_ids(self.variables.get("admins"))
+            if not self.admins:  # pragma: no cover
+                print_and_exit("No admin list")
 
-        self.api = BotApiClient(self.variables)
+            self.users = Bot.get_ids(self.variables.get("users"))
+
+            self.api = BotApiClient(self.variables)
 
     # Startup workflow: init -> load_commands -> start
     def load_commands(self) -> None:
@@ -499,5 +501,4 @@ class BotApiClient:
         return out
 
 
-if HOST_TYPE != DOCS:
-    bot = Bot()
+bot = Bot()
