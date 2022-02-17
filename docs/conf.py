@@ -40,7 +40,7 @@ extensions = [
 ]
 
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
-autodoc_mock_imports = ["restapi.services.bot"]
+autodoc_mock_imports = ["restapi.services.bot", "restapi.services.telegram"]
 
 
 # Add any paths that contain templates here, relative to this directory.
