@@ -17,7 +17,13 @@ from telegram.ext import (
 )
 from telegram.ext.utils.types import BD, CD, UD
 
-from restapi.config import CUSTOM_PACKAGE, EXTENDED_PACKAGE, EXTENDED_PROJECT_DISABLED
+from restapi.config import (
+    CUSTOM_PACKAGE,
+    DOCS,
+    EXTENDED_PACKAGE,
+    EXTENDED_PROJECT_DISABLED,
+    HOST_TYPE,
+)
 from restapi.env import Env
 from restapi.exceptions import RestApiException, ServerError, ServiceUnavailable
 from restapi.models import validate
@@ -493,4 +499,5 @@ class BotApiClient:
         return out
 
 
-bot = Bot()
+if HOST_TYPE != DOCS:
+    bot = Bot()
