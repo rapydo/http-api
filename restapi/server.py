@@ -148,8 +148,10 @@ def create_app(
     endpoints_loader = EndpointsLoader()
 
     if HOST_TYPE == DOCS:  # pragma: no cover
+        log.critical("Creating mocked configuration")
+        mem.configuration = {}
+
         log.critical("Loading Mocked Initializer and Customizer classes")
-        mem.configuration = endpoints_loader.load_configuration()
         from restapi.mocks import Customizer, Initializer
 
         mem.initializer = Initializer

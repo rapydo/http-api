@@ -12,16 +12,12 @@ from attr import s as ClassOfAttributes
 from flask_restful import Resource
 
 from restapi import decorators
-from restapi.config import ABS_RESTAPI_PATH, CONF_PATH, CUSTOM_PACKAGE, DOCS, HOST_TYPE
+from restapi.config import ABS_RESTAPI_PATH, CONF_PATH, CUSTOM_PACKAGE
 from restapi.env import Env
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.services.authentication import User
 from restapi.utilities import print_and_exit
-from restapi.utilities.configuration import (
-    PROJECTS_DEFAULTS_FILE,
-    load_yaml_file,
-    read_configuration,
-)
+from restapi.utilities.configuration import read_configuration
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
@@ -73,11 +69,6 @@ class EndpointsLoader:
         submodules_path = Path(CONF_FOLDERS.get("submodules_path", CONF_PATH))
 
         try:
-            if HOST_TYPE == DOCS:  # pragma: no cover
-                return load_yaml_file(
-                    filepath=defaults_path.joinpath(PROJECTS_DEFAULTS_FILE)
-                )
-
             configuration, self._extended_project, _ = read_configuration(
                 default_file_path=defaults_path,
                 base_project_path=base_path,
