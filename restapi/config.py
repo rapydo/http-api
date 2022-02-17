@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -25,9 +26,13 @@ FLOWER_HOSTNAME = "flower"
 CELERYBEAT_HOSTNAME = "celery-beat"
 BOT_HOSTNAME = "telegram-bot"
 CELERY_HOSTNAME = "celery"
+DOCS = "docs-generation"
 
 
 def get_host_type(HOSTNAME: str) -> str:
+
+    if HOSTNAME == DOCS:
+        return DOCS
 
     if HOSTNAME == BACKEND_HOSTNAME:
         return BACKEND_HOSTNAME
@@ -46,6 +51,10 @@ def get_host_type(HOSTNAME: str) -> str:
 
 
 HOST_TYPE = get_host_type(HOSTNAME)
+
+if HOST_TYPE == DOCS:
+    os.environ["CELERY_BROKER_SERVICE"] = "RABBIT"
+    os.environ["TELEGRAM_API_KEY"] = "UNSET"
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = "8080"

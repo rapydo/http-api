@@ -27,7 +27,9 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 from restapi import config
 from restapi.config import (
     ABS_RESTAPI_PATH,
+    DOCS,
     FORCE_PRODUCTION_TESTS,
+    HOST_TYPE,
     PRODUCTION,
     SENTRY_URL,
     TESTING,
@@ -146,14 +148,23 @@ def create_app(
     endpoints_loader = EndpointsLoader()
     mem.configuration = endpoints_loader.load_configuration()
 
-    mem.initializer = Meta.get_class("initialization", "Initializer")
-    if not mem.initializer:  # pragma: no cover
-        print_and_exit("Invalid Initializer class")
+    if HOST_TYPE == DOCS:  # pragma: no cover
+        from restapi.mocks import Customizer, Initializer
 
-    customizer = Meta.get_class("customization", "Customizer")
-    if not customizer:  # pragma: no cover
-        print_and_exit("Invalid Customizer class")
-    mem.customizer = customizer()
+        mem.initializer = Initializer
+        mem.customizer = Customizer()
+
+        log.critical(mem.customizer)
+    else:
+
+        mem.initializer = Meta.get_class("initialization", "Initializer")
+        if not mem.initializer:  # pragma: no cover
+            print_and_exit("Invalid Initializer class")
+
+        customizer = Meta.get_class("customization", "Customizer")
+        if not customizer:  # pragma: no cover
+            print_and_exit("Invalid Customizer class")
+        mem.customizer = customizer()
 
     if not isinstance(mem.customizer, BaseCustomizer):  # pragma: no cover
         print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
