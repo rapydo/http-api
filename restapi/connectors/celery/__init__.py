@@ -188,7 +188,7 @@ class CeleryExt(Connector):
         :param autoretry_for: A tuple of exception classes. If any of these exceptions
             are raised during the execution of the task,
             the task will automatically be retried.
-            `class::CeleryRetryTask` exeption is alwaysed added to the list
+            :class:`CeleryRetryTask` exeption is always added to the list
         """
         # extend autoretry_for with CeleryRetryTask
         # duplicates will be removed by passing for set and tuple again
