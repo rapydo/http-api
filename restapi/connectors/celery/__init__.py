@@ -178,15 +178,17 @@ class CeleryExt(Connector):
         autoretry_for: Tuple[Type[Exception], ...] = tuple(),
     ) -> Callable[[F], F]:
         """
-        Wrapper of the celery task decorator for a smooth integration in RAPyDo
-        Parameters
-        ---------
-        idempotent
-            A string to assign to the `name` instance attribute.
-        name
-            A string to assign to the `name` instance attribute.
-        autoretry_for
-            A string to assign to the `name` instance attribute.
+        Wrapper of the celery task decorator for a smooth integration in RAPyDo.
+
+        :param idempotent: A flag to specify if the task is idempotent or not.
+            If idempotent (i.e. will not cause unintended effects even if called
+            multiple times with the same arguments),
+            celery will be configured with `acks_late` flag
+        :param name: The name of the task, the default is the decorated function name
+        :param autoretry_for: A tuple of exception classes. If any of these exceptions
+            are raised during the execution of the task,
+            the task will automatically be retried.
+            `class::CeleryRetryTask` exeption is alwaysed added to the list
         """
         # extend autoretry_for with CeleryRetryTask
         # duplicates will be removed by passing for set and tuple again
