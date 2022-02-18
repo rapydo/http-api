@@ -1,3 +1,8 @@
+"""
+MongoDB connector with automatic integration in rapydo framework,
+based on pymodm and pymongo
+"""
+
 import re
 from datetime import datetime, timedelta
 from functools import wraps

@@ -1,3 +1,7 @@
+"""
+Celery connector with automatic integration in rapydo framework
+"""
+
 import ssl
 import traceback
 from datetime import timedelta
@@ -153,6 +157,9 @@ def mark_task_as_retriable(
 
 
 class CeleryExt(Connector):
+    """
+    Main connector class
+    """
 
     CELERYBEAT_SCHEDULER: Optional[str] = None
     celery_app: Celery = Celery("RAPyDo")
@@ -170,7 +177,17 @@ class CeleryExt(Connector):
         name: Optional[str] = None,
         autoretry_for: Tuple[Type[Exception], ...] = tuple(),
     ) -> Callable[[F], F]:
-
+        """
+        Wrapper of the celery task decorator for a smooth integration in RAPyDo
+        Parameters
+        ---------
+        idempotent
+            A string to assign to the `name` instance attribute.
+        name
+            A string to assign to the `name` instance attribute.
+        autoretry_for
+            A string to assign to the `name` instance attribute.
+        """
         # extend autoretry_for with CeleryRetryTask
         # duplicates will be removed by passing for set and tuple again
         autoretry_for = tuple(set((CeleryRetryTask,) + autoretry_for))

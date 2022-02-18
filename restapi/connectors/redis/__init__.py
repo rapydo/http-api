@@ -1,3 +1,7 @@
+"""
+Redis connector with automatic integration in rapydo framework
+"""
+
 from typing import Optional
 
 from redis import StrictRedis

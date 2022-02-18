@@ -1,3 +1,7 @@
+"""
+RabbitMQ connector with automatic integration in rapydo framework, based on pika
+"""
+
 import socket
 import ssl
 import urllib.parse

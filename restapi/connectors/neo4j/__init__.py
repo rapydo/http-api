@@ -1,4 +1,6 @@
-""" Neo4j GraphDB flask connector """
+"""
+Neo4j connector with automatic integration in rapydo framework, based on neomodel
+"""
 
 import re
 import socket
