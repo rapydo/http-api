@@ -175,8 +175,9 @@ CALL {{
     MERGE (:{self.label} {{
         {properties}
     }}
+    )
 }} IN TRANSACTIONS OF {chunk_size} ROWS
-)"""
+"""
 
         self.cypher_exec(cypher)
 
