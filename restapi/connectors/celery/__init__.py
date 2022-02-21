@@ -296,7 +296,7 @@ class CeleryExt(Connector):
         if user and pwd:
             creds = f"{user}:{pwd}@"
 
-        return f"{protocol}://{creds}{host}:{port}?uuidRepresentation=standard"
+        return f"{protocol}://{creds}{host}:{port}/?uuidRepresentation=standard"
 
     def connect(self, **kwargs: str) -> "CeleryExt":
 
