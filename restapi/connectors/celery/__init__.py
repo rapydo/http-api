@@ -296,7 +296,7 @@ class CeleryExt(Connector):
         if user and pwd:
             creds = f"{user}:{pwd}@"
 
-        return f"{protocol}://{creds}{host}:{port}/?uuidRepresentation=standard"
+        return f"{protocol}://{creds}{host}:{port}"
 
     def connect(self, **kwargs: str) -> "CeleryExt":
 
@@ -480,7 +480,9 @@ class CeleryExt(Connector):
 
                 import mongoengine
 
-                m = mongoengine.connect(SCHEDULER_DB, host=url)
+                m = mongoengine.connect(
+                    SCHEDULER_DB, host=url, uuidRepresentation="standard"
+                )
                 log.info("Celery-beat connected to MongoDB: {}", m)
             elif backend == "REDIS":
 
