@@ -160,7 +160,7 @@ class MongoExt(Connector):
         from pymongo import MongoClient
 
         uri = self._get_uri(self.variables)
-        client = MongoClient(uri)
+        client = MongoClient(uri, uuidRepresentation="standard")
 
         system_dbs = ["admin", "local", "config"]
         for db in client.list_database_names():
