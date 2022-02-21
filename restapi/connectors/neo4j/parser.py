@@ -172,6 +172,7 @@ class NodeDump(DataDump):
         cypher = f"""
 LOAD CSV WITH HEADERS FROM 'file:///{self.filename}' AS line FIELDTERMINATOR '\t'
 CALL {{
+    WITH line
     MERGE (:{self.label} {{
         {properties}
     }}
@@ -245,6 +246,7 @@ class RelationDump(DataDump):
         cypher = f"""
 LOAD CSV WITH HEADERS FROM 'file:///{self.filename}' AS line FIELDTERMINATOR '\t'
 CALL {{
+    WITH line
     MATCH (node1: {self.label1} {{{self.key1}: line.{field1}}})
     MATCH (node2: {self.label2} {{{self.key2}: line.{field2}}})
     MERGE (node1)-[:{self.relation} {{{properties}}}]->(node2)
