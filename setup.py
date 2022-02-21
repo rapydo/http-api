@@ -48,7 +48,8 @@ setup(
         # DB and services drivers
         "neomodel==4.0.8",
         "psycopg2-binary",
-        "pymodm",
+        "pymodm==0.4.3",
+        "pymongo==3.12.3",
         "PyMySQL",
         "redis",
         "pika",
