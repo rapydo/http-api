@@ -183,12 +183,13 @@ class CeleryExt(Connector):
         :param idempotent: A flag to specify if the task is idempotent or not.
             If idempotent (i.e. will not cause unintended effects even if called
             multiple times with the same arguments),
-            celery will be configured with `acks_late` flag
-        :param name: The name of the task, the default is the decorated function name
+            celery will be configured with `acks_late` flag.
+        :param name: The name of the task,
+            the default, if not specified, is the name of the decorated function.
         :param autoretry_for: A tuple of exception classes. If any of these exceptions
             are raised during the execution of the task,
             the task will automatically be retried.
-            :class:`CeleryRetryTask` exeption is always added to the list
+            :class:`CeleryRetryTask` exeption is always added to the list.
         """
         # extend autoretry_for with CeleryRetryTask
         # duplicates will be removed by passing for set and tuple again
