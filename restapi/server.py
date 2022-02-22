@@ -222,7 +222,8 @@ def create_app(
             warnings.simplefilter("error", SyntaxWarning)
             warnings.simplefilter("error", RuntimeWarning)
             warnings.simplefilter("error", FutureWarning)
-            warnings.simplefilter("error", PendingDeprecationWarning)
+            # warnings about features that will be deprecated in the future
+            warnings.simplefilter("default", PendingDeprecationWarning)
             warnings.simplefilter("error", ImportWarning)
             warnings.simplefilter("error", UnicodeWarning)
             warnings.simplefilter("error", BytesWarning)
