@@ -317,6 +317,8 @@ def tests(
 
 @cli.command()
 def bot() -> None:
+    """Start the bot server"""
+
     # as is required to prevent name collision with the function bot()
     from restapi.services.telegram import bot as telegram_bot
 
@@ -327,6 +329,7 @@ def bot() -> None:
 
 @cli.command()
 def clearcache() -> None:
+    """Clear all data from the endpoints cache"""
     from restapi.server import create_app
     from restapi.services.cache import Cache
 

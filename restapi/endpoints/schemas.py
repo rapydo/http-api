@@ -235,15 +235,7 @@ def group_users_output() -> Schema:
 # be created with empty request
 def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
 
-    if request:
-        _, token = HTTPTokenAuth.get_authorization_token(
-            allow_access_token_parameter=False
-        )
-        _, _, _, user = auth.verify_token(token)
-
-        is_admin = auth.is_admin(user)
-    else:
-        is_admin = False
+    is_admin = HTTPTokenAuth.is_session_user_admin(request, auth)
 
     attributes: MarshmallowSchema = {}
     if is_post:

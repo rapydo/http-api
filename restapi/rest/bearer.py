@@ -10,14 +10,19 @@ Note that anyone can validate a token as it is a bearer token:
 there is no client id nor is client authentication required.
 """
 
-import sys
 from functools import wraps
 from typing import Any, Callable, Iterable, Optional, Tuple, Union, cast
 
 from flask import request
 
+from restapi.customizer import FlaskRequest
 from restapi.env import Env
-from restapi.services.authentication import ALL_ROLES, ANY_ROLE, Role
+from restapi.services.authentication import (
+    ALL_ROLES,
+    ANY_ROLE,
+    BaseAuthentication,
+    Role,
+)
 from restapi.types import EndpointFunction
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
@@ -71,6 +76,18 @@ class HTTPTokenAuth:
             return HTTPAUTH_SCHEME, token
 
         return None, None
+
+    @staticmethod
+    def is_session_user_admin(request: FlaskRequest, auth: BaseAuthentication) -> bool:
+        if not request:
+            return False
+
+        _, token = HTTPTokenAuth.get_authorization_token(
+            allow_access_token_parameter=False
+        )
+        _, _, _, user = auth.verify_token(token)
+
+        return auth.is_admin(user)
 
     @staticmethod
     def optional(
