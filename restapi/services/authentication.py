@@ -244,6 +244,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     roles: List[str] = []
     roles_data: Dict[str, str] = {}
     default_role: str = Role.USER.value
+    role_descriptions: Dict[str, str] = {}
 
     # This is to let inform mypy about the existence of self.db
     def __init__(self) -> None:  # pragma: no cover
@@ -279,6 +280,10 @@ class BaseAuthentication(metaclass=ABCMeta):
         BaseAuthentication.default_role = BaseAuthentication.roles_data.pop(
             "default", ""
         )
+
+        BaseAuthentication.role_descriptions = glom(
+            mem.configuration, "variables.roles_descriptions", default=empty_dict
+        ).copy()
 
         if not BaseAuthentication.default_role:  # pragma: no cover
             print_and_exit("Default role not available!")

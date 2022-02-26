@@ -289,6 +289,7 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
         metadata={
             "label": "Roles",
             "description": "",
+            "extra_descriptions": auth.role_descriptions,
         },
     )
 
