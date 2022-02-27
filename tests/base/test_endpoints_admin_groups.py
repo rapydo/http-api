@@ -1,3 +1,5 @@
+from typing import Set
+
 import orjson
 import pytest
 from faker import Faker
@@ -199,7 +201,8 @@ class TestApp(BaseTests):
             data = {
                 "group": new_group_uuid,
                 # very important, otherwise the default user will lose its role
-                "roles": orjson.dumps([role]).decode("UTF8"),
+                # add coordinator to enforce the role and use it for additional tests
+                "roles": orjson.dumps([role, "coordinator"]).decode("UTF8"),
             }
 
             # a new login is required due to the use of create_group utility
@@ -234,3 +237,23 @@ class TestApp(BaseTests):
             assert "fullname" in users_list["group"]
             assert "shortname" in users_list["group"]
             assert users_list["group"]["uuid"] == new_group_uuid
+
+            # Verify coordinators:
+            r = client.get(f"{API_URI}/admin/groups", headers=headers)
+            assert r.status_code == 200
+            groups = self.get_content(r)
+            assert isinstance(groups, list)
+            assert len(groups) > 0
+
+            # Extract all coordinators:
+            coordinators: Set[str] = set()
+            for group in groups:
+                for coordinator in group["coordinators"]:
+                    coordinators.add(coordinator["email"])
+
+            assert user_email in coordinators
+
+            if role == Role.ADMIN:
+                assert BaseAuthentication.default_user in coordinators
+            else:
+                assert BaseAuthentication.default_user not in coordinators
