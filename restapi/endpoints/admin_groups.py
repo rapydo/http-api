@@ -37,6 +37,7 @@ class AdminGroups(EndpointResource):
 
         groups: List[Dict[str, Any]] = []
 
+        is_admin = self.auth.is_admin(user)
         for g in self.auth.get_groups():
 
             if Connector.authentication_service == "mongo":
@@ -47,7 +48,12 @@ class AdminGroups(EndpointResource):
                 members = UserModel.objects.raw({"belongs_to": g.id}).all()
             else:
                 members = list(g.members)
-            coordinators = [u for u in members if self.auth.is_coordinator(u)]
+            coordinators = [
+                u
+                for u in members
+                if self.auth.is_coordinator(u)
+                and (is_admin or not self.auth.is_admin(u))
+            ]
 
             groups.append(
                 {
