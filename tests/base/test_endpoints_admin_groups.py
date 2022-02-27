@@ -201,8 +201,8 @@ class TestApp(BaseTests):
             data = {
                 "group": new_group_uuid,
                 # very important, otherwise the default user will lose its role
-                # add coordinator to enforce the role and use it for additional tests
-                "roles": orjson.dumps([role, "coordinator"]).decode("UTF8"),
+                # adding coordinator to enforce the role and use it for additional tests
+                "roles": orjson.dumps([role, "group_coordinator"]).decode("UTF8"),
             }
 
             # a new login is required due to the use of create_group utility
