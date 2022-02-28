@@ -1,3 +1,4 @@
+import warnings
 from typing import Dict, Optional, Tuple
 
 import orjson
@@ -13,9 +14,13 @@ from restapi.services.authentication import BaseAuthentication
 from restapi.tests import BaseTests
 from restapi.utilities.logs import log, set_logger
 
+# Remove me in a near future, this is due to schemathesis
+warnings.filterwarnings(
+    "ignore", message="A private pytest class or function was used."
+)
+
 # Schemathesis is always enabled during core tests
-# if not Env.get_bool("RUN_SCHEMATHESIS"):  # pragma: no cover
-if True:  # pragma: no cover
+if not Env.get_bool("RUN_SCHEMATHESIS"):  # pragma: no cover
     log.warning("Skipping schemathesis")
 else:
 
