@@ -113,7 +113,7 @@ class TestApp(BaseTests):
             client, roles=[Role.ADMIN, Role.COORDINATOR], data={"group": group1_uuid}
         )
 
-        # Verify as Admin AND Coordinator
+        # Verify as Admin AND Coordinator (Expected: all members, including admins)
         headers, _ = self.do_login(client, user4_data["email"], user4_data["password"])
 
         r = client.get(f"{API_URI}/group/users", headers=headers)
@@ -128,7 +128,7 @@ class TestApp(BaseTests):
         assert user3_data["email"] not in members
         assert user4_data["email"] in members
 
-        # Verify as Coordinator only
+        # Verify as Coordinator only (Expected: admins to be filtered out)
         headers, _ = self.do_login(client, user1_data["email"], user1_data["password"])
 
         r = client.get(f"{API_URI}/group/users", headers=headers)
@@ -137,9 +137,9 @@ class TestApp(BaseTests):
         assert isinstance(response, list)
         members = {r["email"] for r in response}
 
-        assert len(members) == 3
+        assert len(members) == 2
 
         assert user1_data["email"] in members
         assert user2_data["email"] in members
         assert user3_data["email"] not in members
-        assert user4_data["email"] in members
+        assert user4_data["email"] not in members

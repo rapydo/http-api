@@ -23,4 +23,11 @@ class GroupUsers(EndpointResource):
 
         group = self.auth.get_user_group(user)
 
-        return self.response(self.auth.get_group_members(group))
+        members = self.auth.get_group_members(group)
+
+        if self.auth.is_admin(user):
+            return self.response(members)
+
+        # Requested by a non-admin, filtering out admins
+        members = [m for m in members if not self.auth.is_admin(m)]
+        return self.response(members)
