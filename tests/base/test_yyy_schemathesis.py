@@ -1,11 +1,3 @@
-import warnings
-
-if True:
-    # Remove me in a near future, this is due to schemathesis
-    warnings.filterwarnings(
-        "ignore", message="A private pytest class or function was used."
-    )
-
 from typing import Dict, Optional, Tuple
 
 import orjson

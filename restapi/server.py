@@ -231,6 +231,13 @@ def create_app(
             # a lot of issues like: https://github.com/pallets/flask/issues/2468
             warnings.simplefilter("always", ResourceWarning)
             warnings.simplefilter("default", Neo4jExperimentalWarning)
+
+            # Remove me in a near future, this is due to hypothesis with pytest 7
+            # https://github.com/HypothesisWorks/hypothesis/issues/3222
+            warnings.filterwarnings(
+                "ignore", message="A private pytest class or function was used."
+            )
+
         elif PRODUCTION:
             warnings.simplefilter("ignore", Warning)
             warnings.simplefilter("always", UserWarning)
