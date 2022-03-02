@@ -1,3 +1,6 @@
+"""
+Set of modules for the connection and handling of external services
+"""
 import abc
 import os
 from datetime import datetime, timedelta

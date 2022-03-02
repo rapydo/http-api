@@ -1,6 +1,5 @@
 """
-The Main server factory.
-We create all the internal flask components here.
+The Main server factory. All internal flask components are created here
 """
 import logging
 import signal

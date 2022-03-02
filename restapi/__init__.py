@@ -1,3 +1,6 @@
+"""
+RAPyDo core module for HTTP Restful APIs
+"""
 import sys
 
 __version__ = "2.2"

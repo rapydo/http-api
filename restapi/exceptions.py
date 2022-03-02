@@ -1,8 +1,5 @@
 """
-
-Generalization of Exceptions
-to handle services known errors
-
+Set of Exceptions used to raise HTTP error statuses from endpoints
 """
 from typing import Union
 

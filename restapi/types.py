@@ -1,3 +1,7 @@
+"""
+Python hints definitions
+"""
+
 from typing import Any, Callable, Dict, Optional, Tuple, TypeVar, Union
 
 from flask import Response as FlaskResponse

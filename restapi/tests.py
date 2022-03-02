@@ -1,3 +1,6 @@
+"""
+Base class for unit tests
+"""
 import base64
 import os
 import re

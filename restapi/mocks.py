@@ -1,3 +1,6 @@
+"""
+Mock classes used to replace customization classes when building the documentation
+"""
 from typing import Tuple
 
 from restapi.connectors import Connector
