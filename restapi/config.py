@@ -1,4 +1,3 @@
-import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -21,6 +20,7 @@ REMOVE_DATA_AT_INIT_TIME: bool = False
 HOSTNAME: str = Env.get("HOSTNAME", "backend-server")
 # hostnames as defined in backend.yml
 
+MAIN_SERVER_NAME = "REST_API"
 BACKEND_HOSTNAME = "backend-server"
 FLOWER_HOSTNAME = "flower"
 CELERYBEAT_HOSTNAME = "celery-beat"

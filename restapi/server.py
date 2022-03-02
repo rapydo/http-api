@@ -30,6 +30,7 @@ from restapi.config import (
     DOCS,
     FORCE_PRODUCTION_TESTS,
     HOST_TYPE,
+    MAIN_SERVER_NAME,
     PRODUCTION,
     SENTRY_URL,
     TESTING,
@@ -389,7 +390,7 @@ def create_app(
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
     log.info("Boot completed")
-    if PRODUCTION and not TESTING:
+    if PRODUCTION and not TESTING and name == MAIN_SERVER_NAME:
         save_event_log(
             event=Events.server_startup,
             payload={"server": name},
