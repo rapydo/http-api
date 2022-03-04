@@ -213,12 +213,17 @@ def notify_update_credentials_to_user(user: User, unhashed_password: str) -> Non
 
 
 def send_celery_error_notification(
-    task_id: str, task_name: str, arguments: str, error_stack: Any
+    task_id: str, task_name: str, arguments: str, error_stack: Any, retry_num: int
 ) -> None:
+
+    if retry_num > 0:
+        subject = f"Task {task_name} failed (failure #{retry_num})"
+    else:
+        subject = f"Task {task_name} failed"
 
     # no return value since it is a send_async
     send_notification(
-        subject=f"Task {task_name} failed",
+        subject=subject,
         template="celery_error_notification.html",
         to_address=None,
         data={

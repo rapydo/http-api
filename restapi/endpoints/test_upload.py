@@ -1,5 +1,5 @@
 from restapi import decorators
-from restapi.config import TESTING, DATA_PATH
+from restapi.config import DATA_PATH, TESTING
 from restapi.models import PartialSchema, fields
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.uploader import Uploader

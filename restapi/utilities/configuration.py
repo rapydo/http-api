@@ -43,19 +43,19 @@ def read_configuration(
         # Mix default and custom configuration
         return mix(base_configuration, custom_configuration), None, None
 
-    extends_from = project.get("extends-from", "projects")
+    extends_from = project.get("extends_from", "projects")
 
     if extends_from == "projects":
         extend_path = projects_path
     elif extends_from.startswith("submodules/"):  # pragma: no cover
         repository_name = (extends_from.split("/")[1]).strip()
         if repository_name == "":
-            print_and_exit("Invalid repository name in extends-from, name is empty")
+            print_and_exit("Invalid repository name in extends_from, name is empty")
 
         extend_path = submodules_path
     else:  # pragma: no cover
         suggest = "Expected values: 'projects' or 'submodules/${REPOSITORY_NAME}'"
-        print_and_exit("Invalid extends-from parameter: {}.\n{}", extends_from, suggest)
+        print_and_exit("Invalid extends_from parameter: {}.\n{}", extends_from, suggest)
 
     if not extend_path.exists():  # pragma: no cover
         print_and_exit("From project not found: {}", str(extend_path))

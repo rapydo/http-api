@@ -56,12 +56,6 @@ class TestNeo4j(BaseTests):
     @staticmethod
     def test_connector(app: Flask, faker: Faker) -> None:
 
-        with pytest.raises(ServiceUnavailable):
-            connector.get_instance(host="invalidhostname", port="123")
-
-        with pytest.raises(ServiceUnavailable):
-            connector.get_instance(user="invaliduser")
-
         obj = connector.get_instance()
         assert obj is not None
 
@@ -138,6 +132,12 @@ class TestNeo4j(BaseTests):
 
         with connector.get_instance() as obj:
             assert obj is not None
+
+        with pytest.raises(ServiceUnavailable):
+            connector.get_instance(host="invalidhostname", port="123")
+
+        with pytest.raises(ServiceUnavailable):
+            connector.get_instance(user="invaliduser")
 
     @staticmethod
     def test_parser() -> None:

@@ -13,12 +13,16 @@ from restapi.rest.definition import EndpointResource, Response
 
 class ProfileActivation(EndpointResource):
     depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION", "AUTH_ENABLE"]
-    labels = ["base", "profile"]
+    labels = ["profile"]
 
     @decorators.endpoint(
         path="/auth/profile/activate/<token>",
         summary="Activate your account by providing the activation token",
-        responses={200: "Account successfully activated", 400: "Invalid token"},
+        responses={
+            200: "Account successfully activated",
+            400: "Invalid token",
+            403: "Account temporarily blocked due to the number of failed logins",
+        },
     )
     def put(self, token: str) -> Response:
 
@@ -77,11 +81,17 @@ class ProfileActivation(EndpointResource):
 
         return self.response("Account activated")
 
-    @decorators.use_kwargs({"username": fields.Email(required=True)})
+    @decorators.use_kwargs(
+        # This is because Email is not typed on marshmallow
+        {"username": fields.Email(required=True)}  # type: ignore
+    )
     @decorators.endpoint(
         path="/auth/profile/activate",
         summary="Ask a new activation link",
-        responses={200: "A new activation link has been sent"},
+        responses={
+            200: "A new activation link has been sent",
+            403: "Account temporarily blocked due to the number of failed logins",
+        },
     )
     def post(self, username: str) -> Response:
 

@@ -20,10 +20,10 @@ def inject_group(endpoint: EndpointResource, group_id: str) -> Dict[str, Any]:
 class AdminGroups(EndpointResource):
 
     depends_on = ["AUTH_ENABLE"]
-    labels = ["admin"]
+    labels = ["management"]
     private = True
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.marshal_with(GroupWithMembers(many=True), code=200)
     @decorators.endpoint(
         path="/admin/groups",
@@ -37,6 +37,7 @@ class AdminGroups(EndpointResource):
 
         groups: List[Dict[str, Any]] = []
 
+        is_admin = self.auth.is_admin(user)
         for g in self.auth.get_groups():
 
             if Connector.authentication_service == "mongo":
@@ -47,7 +48,12 @@ class AdminGroups(EndpointResource):
                 members = UserModel.objects.raw({"belongs_to": g.id}).all()
             else:
                 members = list(g.members)
-            coordinators = [u for u in members if self.auth.is_coordinator(u)]
+            coordinators = [
+                u
+                for u in members
+                if self.auth.is_coordinator(u)
+                and (is_admin or not self.auth.is_admin(u))
+            ]
 
             groups.append(
                 {
@@ -61,7 +67,7 @@ class AdminGroups(EndpointResource):
 
         return self.response(groups)
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.database_transaction
     @decorators.use_kwargs(admin_group_input)
     @decorators.endpoint(
@@ -81,7 +87,7 @@ class AdminGroups(EndpointResource):
         self.log_event(self.events.create, group, kwargs)
         return self.response(group.uuid)
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.preload(callback=inject_group)
     @decorators.database_transaction
     @decorators.use_kwargs(admin_group_input)
@@ -103,7 +109,7 @@ class AdminGroups(EndpointResource):
 
         return self.empty_response()
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.preload(callback=inject_group)
     @decorators.endpoint(
         path="/admin/groups/<group_id>",

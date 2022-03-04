@@ -21,7 +21,7 @@ class Cache:
                 "CACHE_REDIS_HOST": redis.get("host"),
                 "CACHE_REDIS_PORT": redis.get("port"),
                 "CACHE_REDIS_PASSWORD": redis.get("password"),
-                # Usually 0=celery, 1=celery-beat
+                # Usually 1=celery, 3=celery-beat
                 "CACHE_REDIS_DB": "2",
                 # "CACHE_REDIS_URL": redis.get(""),
             }

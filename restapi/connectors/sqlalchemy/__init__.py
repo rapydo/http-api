@@ -1,9 +1,6 @@
-""" Wrapper for the existing Flask-SQLalchemy
-
-NOTE: Flask Sqlalchemy needs to have models defined on existing instance;
-for this reason we create the sql instance where models are defined.
-
-For future lazy alchemy: http://flask.pocoo.org/snippets/22/
+"""
+SQLalchemy connector based on Flask-SQLalchemy, with automatic integration in
+rapydo framework
 """
 
 import re
@@ -324,8 +321,6 @@ class SQLAlchemy(Connector):
                 instance.db.engine.execute(sql)
 
                 instance.db.session.remove()
-                # Deprecated since v1.3
-                # instance.db.session.close_all()
                 close_all_sessions()
                 # massive destruction
                 log.critical("Destroy current SQL data")

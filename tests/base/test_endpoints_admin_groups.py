@@ -1,9 +1,12 @@
+from typing import Set
+
 import orjson
 import pytest
 from faker import Faker
 
+from restapi.connectors import Connector
 from restapi.env import Env
-from restapi.services.authentication import BaseAuthentication
+from restapi.services.authentication import BaseAuthentication, Role
 from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import Events, log
 
@@ -12,187 +15,245 @@ class TestApp(BaseTests):
     def test_admin_groups(self, client: FlaskClient, faker: Faker) -> None:
 
         if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
-            log.warning("Skipping admin/users tests")
+            log.warning("Skipping admin/groups tests")
             return
 
-        headers, _ = self.do_login(client, None, None)
+        auth = Connector.get_authentication_instance()
+        staff_role_enabled = Role.STAFF.value in [r.name for r in auth.get_roles()]
+        for role in (
+            Role.ADMIN,
+            Role.STAFF,
+        ):
 
-        r = client.get(f"{API_URI}/admin/groups", headers=headers)
-        assert r.status_code == 200
+            if not staff_role_enabled:  # pragma: no cover
+                log.warning(
+                    "Skipping tests of admin/groups endpoints, role Staff not enabled"
+                )
+                continue
+            else:
+                log.warning("Testing admin/groups endpoints as {}", role)
 
-        schema = self.getDynamicInputSchema(client, "admin/groups", headers)
-        data = self.buildData(schema)
+            if role == Role.ADMIN:
+                user_email = BaseAuthentication.default_user
+                user_password = BaseAuthentication.default_password
+            elif role == Role.STAFF:
+                _, user_data = self.create_user(client, roles=[Role.STAFF])
+                user_email = user_data.get("email")
+                user_password = user_data.get("password")
 
-        # Event 1: create
-        r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
-        assert r.status_code == 200
-        uuid = self.get_content(r)
-        assert isinstance(uuid, str)
+            headers, _ = self.do_login(client, user_email, user_password)
 
-        r = client.get(f"{API_URI}/admin/groups", headers=headers)
-        assert r.status_code == 200
-        groups = self.get_content(r)
-        assert isinstance(groups, list)
-        assert len(groups) > 0
+            r = client.get(f"{API_URI}/admin/groups", headers=headers)
+            assert r.status_code == 200
 
-        assert "uuid" in groups[0]
-        assert "shortname" in groups[0]
-        assert "fullname" in groups[0]
-        assert "members" in groups[0]
-        assert len(groups[0]["members"]) > 0
-        assert "coordinators" in groups[0]
+            schema = self.getDynamicInputSchema(client, "admin/groups", headers)
+            data = self.buildData(schema)
 
-        fullname = None
-        for g in groups:
-            if g.get("uuid") == uuid:
+            # Event 1: create
+            r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
+            assert r.status_code == 200
+            uuid = self.get_content(r)
+            assert isinstance(uuid, str)
 
-                fullname = g.get("fullname")
-                break
-        else:  # pragma: no cover
-            pytest.fail("Group not found")
+            events = self.get_last_events(1, filters={"target_type": "Group"})
+            assert events[0].event == Events.create.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "Group"
+            assert events[0].url == "/api/admin/groups"
+            assert "fullname" in events[0].payload
+            assert "shortname" in events[0].payload
 
-        assert fullname is not None
+            # Save it for the following tests
+            event_target_id = events[0].target_id
 
-        newdata = {
-            "shortname": faker.company(),
-            "fullname": faker.company(),
-        }
+            r = client.get(f"{API_URI}/admin/groups", headers=headers)
+            assert r.status_code == 200
+            groups = self.get_content(r)
+            assert isinstance(groups, list)
+            assert len(groups) > 0
 
-        # Test the differences between post and put schema
-        post_schema = {s["key"]: s for s in schema}
+            assert "uuid" in groups[0]
+            assert "shortname" in groups[0]
+            assert "fullname" in groups[0]
+            assert "members" in groups[0]
+            assert len(groups[0]["members"]) > 0
+            assert "coordinators" in groups[0]
 
-        tmp_schema = self.getDynamicInputSchema(
-            client, f"admin/groups/{uuid}", headers, method="put"
-        )
-        put_schema = {s["key"]: s for s in tmp_schema}
+            fullname = None
+            for g in groups:
+                if g.get("uuid") == uuid:
 
-        assert "shortname" in post_schema
-        assert post_schema["shortname"]["required"]
-        assert "shortname" in put_schema
-        assert put_schema["shortname"]["required"]
+                    fullname = g.get("fullname")
+                    break
+            else:  # pragma: no cover
+                pytest.fail("Group not found")
 
-        assert "fullname" in post_schema
-        assert post_schema["fullname"]["required"]
-        assert "fullname" in put_schema
-        assert put_schema["fullname"]["required"]
+            assert fullname is not None
 
-        # Event 2: modify
-        r = client.put(f"{API_URI}/admin/groups/{uuid}", data=newdata, headers=headers)
-        assert r.status_code == 204
+            newdata = {
+                "shortname": faker.company(),
+                "fullname": faker.company(),
+            }
 
-        r = client.get(f"{API_URI}/admin/groups", headers=headers)
-        assert r.status_code == 200
-        groups = self.get_content(r)
-        assert isinstance(groups, list)
-        for g in groups:
-            if g.get("uuid") == uuid:
+            # Test the differences between post and put schema
+            post_schema = {s["key"]: s for s in schema}
 
-                assert g.get("fullname") == newdata.get("fullname")
-                assert g.get("fullname") != data.get("fullname")
-                assert g.get("fullname") != fullname
+            tmp_schema = self.getDynamicInputSchema(
+                client, f"admin/groups/{uuid}", headers, method="put"
+            )
+            put_schema = {s["key"]: s for s in tmp_schema}
 
-        r = client.put(f"{API_URI}/admin/groups/xyz", data=data, headers=headers)
-        assert r.status_code == 404
+            assert "shortname" in post_schema
+            assert post_schema["shortname"]["required"]
+            assert "shortname" in put_schema
+            assert put_schema["shortname"]["required"]
 
-        # Event 3: delete
-        r = client.delete(f"{API_URI}/admin/groups/{uuid}", headers=headers)
-        assert r.status_code == 204
+            assert "fullname" in post_schema
+            assert post_schema["fullname"]["required"]
+            assert "fullname" in put_schema
+            assert put_schema["fullname"]["required"]
 
-        r = client.get(f"{API_URI}/admin/groups", headers=headers)
-        assert r.status_code == 200
-        groups = self.get_content(r)
-        assert isinstance(groups, list)
-        for g in groups:
-            if g.get("uuid") == uuid:  # pragma: no cover
-                pytest.fail("Group not deleted!")
+            # Event 2: modify
+            r = client.put(
+                f"{API_URI}/admin/groups/{uuid}", data=newdata, headers=headers
+            )
+            assert r.status_code == 204
 
-        r = client.delete(f"{API_URI}/admin/groups/xyz", headers=headers)
-        assert r.status_code == 404
+            events = self.get_last_events(1, filters={"target_type": "Group"})
+            # Group modified (same target_id as above)
+            assert events[0].event == Events.modify.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "Group"
+            assert events[0].target_id == event_target_id
+            assert events[0].url == f"/api/admin/groups/{event_target_id}"
+            assert "fullname" in events[0].payload
+            assert "shortname" in events[0].payload
 
-        # Create a group and assign it to the main user
-        # Profile and AdminUsers will react to this change
-        # Very important: admin_groups must be tested before admin_users and profile
+            r = client.get(f"{API_URI}/admin/groups", headers=headers)
+            assert r.status_code == 200
+            groups = self.get_content(r)
+            assert isinstance(groups, list)
+            for g in groups:
+                if g.get("uuid") == uuid:
 
-        r = client.get(f"{AUTH_URI}/profile", headers=headers)
-        assert r.status_code == 200
-        content = self.get_content(r)
-        assert isinstance(content, dict)
-        user_uuid = content.get("uuid")
+                    assert g.get("fullname") == newdata.get("fullname")
+                    assert g.get("fullname") != data.get("fullname")
+                    assert g.get("fullname") != fullname
 
-        data = {
-            "fullname": "Default group",
-            "shortname": faker.company(),
-        }
+            r = client.put(f"{API_URI}/admin/groups/xyz", data=data, headers=headers)
+            assert r.status_code == 404
 
-        # Event 4: create
-        uuid, _ = self.create_group(client, data=data)
+            # Event 3: delete
+            r = client.delete(f"{API_URI}/admin/groups/{uuid}", headers=headers)
+            assert r.status_code == 204
 
-        data = {
-            "group": uuid,
-            # very important, otherwise the default user will lose its admin role
-            "roles": orjson.dumps(["admin_root"]).decode("UTF8"),
-        }
-        headers, _ = self.do_login(client, None, None)
-        # Event 5: modify
-        r = client.put(f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers)
-        assert r.status_code == 204
+            events = self.get_last_events(1, filters={"target_type": "Group"})
+            # Group is deleted (same target_id as above)
+            assert events[0].event == Events.delete.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "Group"
+            assert events[0].target_id == event_target_id
+            assert events[0].url == f"/api/admin/groups/{event_target_id}"
+            assert len(events[0].payload) == 0
 
-    def test_events_file(self) -> None:
+            r = client.get(f"{API_URI}/admin/groups", headers=headers)
+            assert r.status_code == 200
+            groups = self.get_content(r)
+            assert isinstance(groups, list)
+            for g in groups:
+                if g.get("uuid") == uuid:  # pragma: no cover
+                    pytest.fail("Group not deleted!")
 
-        if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
-            log.warning("Skipping admin/users tests")
-            return
+            r = client.delete(f"{API_URI}/admin/groups/xyz", headers=headers)
+            assert r.status_code == 404
 
-        events = self.get_last_events(4, filters={"target_type": "Group"})
+            # Create a group and assign it to the main user
+            # Profile and AdminUsers will react to this change
+            # Very important: admin_groups must be tested before admin_users and profile
 
-        # A new group is created
-        INDEX = 0
-        assert events[INDEX].event == Events.create.value
-        assert events[INDEX].user == BaseAuthentication.default_user
-        assert events[INDEX].target_type == "Group"
-        assert events[INDEX].url == "/api/admin/groups"
-        assert "fullname" in events[INDEX].payload
-        assert "shortname" in events[INDEX].payload
+            r = client.get(f"{AUTH_URI}/profile", headers=headers)
+            assert r.status_code == 200
+            content = self.get_content(r)
+            assert isinstance(content, dict)
+            user_uuid = content.get("uuid")
 
-        # Group modified (same target_id as above)
-        INDEX = 1
-        assert events[INDEX].event == Events.modify.value
-        assert events[INDEX].user == BaseAuthentication.default_user
-        assert events[INDEX].target_type == "Group"
-        assert events[INDEX].target_id == events[0].target_id
-        assert events[INDEX].url == f"/api/admin/groups/{events[0].target_id}"
-        assert "fullname" in events[INDEX].payload
-        assert "shortname" in events[INDEX].payload
+            data = {
+                "fullname": "Default group",
+                "shortname": faker.company(),
+            }
 
-        # Group is deleted (same target_id as above)
-        INDEX = 2
-        assert events[INDEX].event == Events.delete.value
-        assert events[INDEX].user == BaseAuthentication.default_user
-        assert events[INDEX].target_type == "Group"
-        assert events[INDEX].target_id == events[0].target_id
-        assert events[INDEX].url == f"/api/admin/groups/{events[0].target_id}"
-        assert len(events[INDEX].payload) == 0
+            # Event 4: create
+            new_group_uuid, _ = self.create_group(client, data=data)
 
-        # A new group is created
-        INDEX = 3
-        assert events[INDEX].event == Events.create.value
-        assert events[INDEX].user == BaseAuthentication.default_user
-        assert events[INDEX].target_type == "Group"
-        assert events[INDEX].target_id != events[0].target_id
-        assert events[INDEX].url == "/api/admin/groups"
-        assert "fullname" in events[INDEX].payload
-        assert "shortname" in events[INDEX].payload
-        group_uuid = events[INDEX].target_id
+            events = self.get_last_events(1, filters={"target_type": "Group"})
+            # A new group is created
+            assert events[0].event == Events.create.value
+            # Created via admin utility
+            assert events[0].user == BaseAuthentication.default_user
+            assert events[0].target_type == "Group"
+            assert events[0].target_id != event_target_id
+            assert events[0].url == "/api/admin/groups"
+            assert "fullname" in events[0].payload
+            assert "shortname" in events[0].payload
+            # Save it for the following tests
+            event_group_uuid = events[0].target_id
 
-        events = self.get_last_events(1, filters={"target_type": "User"})
+            data = {
+                "group": new_group_uuid,
+                # very important, otherwise the default user will lose its role
+                # adding coordinator to enforce the role and use it for additional tests
+                "roles": orjson.dumps([role, "group_coordinator"]).decode("UTF8"),
+            }
 
-        # User modified, payload contains the created group
-        INDEX = 0
-        assert events[INDEX].event == Events.modify.value
-        assert events[INDEX].user == BaseAuthentication.default_user
-        assert events[INDEX].target_type == "User"
-        assert events[INDEX].url == f"/api/admin/users/{events[INDEX].target_id}"
-        assert "fullname" not in events[INDEX].payload
-        assert "shortname" not in events[INDEX].payload
-        assert "group" in events[INDEX].payload
-        assert events[INDEX].payload["group"] == group_uuid
+            # a new login is required due to the use of create_group utility
+            headers, _ = self.do_login(client, user_email, user_password)
+
+            # Event 5: modify
+            r = client.put(
+                f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers
+            )
+            assert r.status_code == 204
+
+            events = self.get_last_events(1, filters={"target_type": "User"})
+            # User modified, payload contains the created group
+            assert events[0].event == Events.modify.value
+            assert events[0].user == user_email
+            assert events[0].target_type == "User"
+            assert events[0].target_id == user_uuid
+            assert events[0].url == f"/api/admin/users/{user_uuid}"
+            assert "fullname" not in events[0].payload
+            assert "shortname" not in events[0].payload
+            assert "group" in events[0].payload
+            assert events[0].payload["group"] == event_group_uuid
+
+            # Event 6: verify the assigned group
+            r = client.get(f"{API_URI}/admin/users/{user_uuid}", headers=headers)
+            assert r.status_code == 200
+            users_list = self.get_content(r)
+            assert isinstance(users_list, dict)
+            assert len(users_list) > 0
+            assert "group" in users_list
+            assert "uuid" in users_list["group"]
+            assert "fullname" in users_list["group"]
+            assert "shortname" in users_list["group"]
+            assert users_list["group"]["uuid"] == new_group_uuid
+
+            # Verify coordinators:
+            r = client.get(f"{API_URI}/admin/groups", headers=headers)
+            assert r.status_code == 200
+            groups = self.get_content(r)
+            assert isinstance(groups, list)
+            assert len(groups) > 0
+
+            # Extract all coordinators:
+            coordinators: Set[str] = set()
+            for group in groups:
+                for coordinator in group["coordinators"]:
+                    coordinators.add(coordinator["email"])
+
+            assert user_email in coordinators
+
+            if role == Role.ADMIN:
+                assert BaseAuthentication.default_user in coordinators
+            else:
+                assert BaseAuthentication.default_user not in coordinators

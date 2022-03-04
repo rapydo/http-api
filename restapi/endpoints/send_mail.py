@@ -13,7 +13,7 @@ from restapi.services.authentication import Role, User
 class SendMail(EndpointResource):
 
     depends_on = ["AUTH_ENABLE"]
-    labels = ["admin"]
+    labels = ["management"]
     private = True
 
     @decorators.auth.require_all(Role.ADMIN)

@@ -10,7 +10,7 @@ from restapi.endpoints.schemas import (
     admin_user_post_input,
     admin_user_put_input,
 )
-from restapi.exceptions import NotFound
+from restapi.exceptions import Forbidden, NotFound
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import BaseAuthentication, Role, User
 from restapi.utilities.time import date_lower_than as dt_lower
@@ -18,21 +18,25 @@ from restapi.utilities.time import date_lower_than as dt_lower
 # from restapi.utilities.logs import log
 
 
-def inject_user(endpoint: EndpointResource, user_id: str) -> Dict[str, Any]:
+def inject_user(endpoint: EndpointResource, user_id: str, user: User) -> Dict[str, Any]:
 
-    user = endpoint.auth.get_user(user_id=user_id)
-    if user is None:
+    target_user = endpoint.auth.get_user(user_id=user_id)
+    if target_user is None:
         raise NotFound("This user cannot be found or you are not authorized")
 
-    return {"target_user": user}
+    # Non admins (i.e. Staff users) are not allowed to target Admins
+    if endpoint.auth.is_admin(target_user) and not endpoint.auth.is_admin(user):
+        raise NotFound("This user cannot be found or you are not authorized")
+
+    return {"target_user": target_user}
 
 
 class AdminSingleUser(EndpointResource):
     depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
-    labels = ["admin"]
+    labels = ["management"]
     private = True
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.preload(callback=inject_user)
     @decorators.marshal_with(admin_user_output(many=False), code=200)
     @decorators.endpoint(
@@ -50,10 +54,10 @@ class AdminSingleUser(EndpointResource):
 class AdminUsers(EndpointResource):
 
     depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
-    labels = ["admin"]
+    labels = ["management"]
     private = True
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.marshal_with(admin_user_output(many=True), code=200)
     @decorators.endpoint(
         path="/admin/users",
@@ -64,9 +68,17 @@ class AdminUsers(EndpointResource):
 
         users = self.auth.get_users()
 
+        # Filter out admin users when requested from a Staff user
+        if not self.auth.is_admin(user):
+            users = [
+                u
+                for u in users
+                if Role.ADMIN.value not in self.auth.get_roles_from_user(u)
+            ]
+
         return self.response(users)
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.database_transaction
     @decorators.use_kwargs(admin_user_post_input)
     @decorators.endpoint(
@@ -80,6 +92,12 @@ class AdminUsers(EndpointResource):
     def post(self, user: User, **kwargs: Any) -> Response:
 
         roles: List[str] = kwargs.pop("roles", [])
+
+        # The role is already refused by webards... This is an additional check
+        # to improve the security, but can't be reached
+        if not self.auth.is_admin(user) and Role.ADMIN in roles:  # pragma: no cover
+            raise Forbidden("This role is not allowed")
+
         payload = kwargs.copy()
         group_id = kwargs.pop("group")
 
@@ -107,7 +125,7 @@ class AdminUsers(EndpointResource):
 
         return self.response(user.uuid)
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.preload(callback=inject_user)
     @decorators.database_transaction
     @decorators.use_kwargs(admin_user_put_input)
@@ -130,6 +148,11 @@ class AdminUsers(EndpointResource):
 
         payload = kwargs.copy()
         roles: List[str] = kwargs.pop("roles", [])
+
+        # The role is already refused by webards... This is an additional check
+        # to improve the security, but can't be reached
+        if not self.auth.is_admin(user) and Role.ADMIN in roles:  # pragma: no cover
+            raise Forbidden("This role is not allowed")
 
         group_id = kwargs.pop("group", None)
 
@@ -180,7 +203,7 @@ class AdminUsers(EndpointResource):
 
         return self.empty_response()
 
-    @decorators.auth.require_all(Role.ADMIN)
+    @decorators.auth.require_any(Role.ADMIN, Role.STAFF)
     @decorators.preload(callback=inject_user)
     @decorators.endpoint(
         path="/admin/users/<user_id>",

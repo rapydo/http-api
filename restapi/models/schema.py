@@ -20,14 +20,14 @@ class Schema(MarshmallowSchema):
             for k in self.declared_fields:
                 self.declared_fields[k].required = False
 
-    # Mypy does not accept the equivalence between
-    # marshmallow.fields and restapi.models.fields
-    # And cannot be blamed for that... it's a dirty implementation :-)
     @classmethod
-    def from_dict(  # type: ignore
-        cls, attributes: Dict[str, Union[fields.Field, type]], name: str
+    def from_dict(
+        cls,
+        fields: Dict[str, Union[fields.Field, type]],
+        *,
+        name: str = "GeneratedSchema",
     ) -> type:
-        return super().from_dict(attributes, name=name)  # type: ignore
+        return super().from_dict(fields, name=name)
 
     # instruct marshmallow to serialize data to a collections.OrderedDict
     class Meta:
@@ -118,10 +118,15 @@ class Neo4jSchema(Schema):
                     self.declared_fields[attribute] = fields.Boolean()
                 elif isinstance(prop, properties.IntegerProperty):
                     self.declared_fields[attribute] = fields.Integer()
+                elif isinstance(prop, properties.FloatProperty):
+                    self.declared_fields[attribute] = fields.Float()
                 elif isinstance(prop, properties.EmailProperty):
-                    self.declared_fields[attribute] = fields.Email()
+                    # This is because Nested is not typed on marshmallow
+                    self.declared_fields[attribute] = fields.Email()  # type: ignore
                 elif isinstance(prop, properties.DateTimeProperty):
                     self.declared_fields[attribute] = fields.AwareDateTime()
+                elif isinstance(prop, properties.DateProperty):
+                    self.declared_fields[attribute] = fields.Date()
                 elif isinstance(prop, properties.UniqueIdProperty):
                     self.declared_fields[attribute] = fields.Str()
                 else:  # pragma: no cover

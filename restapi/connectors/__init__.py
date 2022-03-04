@@ -1,3 +1,6 @@
+"""
+Set of modules for the connection and handling of external services
+"""
 import abc
 import os
 from datetime import datetime, timedelta
@@ -435,7 +438,12 @@ class Connector(metaclass=abc.ABCMeta):
             obj = obj.connect(**kwargs)
         except exceptions as e:
             log.error("{} raised {}: {}", obj.name, e.__class__.__name__, e)
-            raise ServiceUnavailable({"Service Unavailable": "Internal server error"})
+            raise ServiceUnavailable(
+                {
+                    "Service Unavailable": "This service is temporarily unavailable, "
+                    "please retry in a few minutes"
+                }
+            )
 
         obj.connection_time = datetime.now()
 

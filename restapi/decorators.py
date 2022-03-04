@@ -1,3 +1,7 @@
+"""
+Decorators used to configure endpoints with metadata, authentication, caching
+, pagination, input validation, output serialization, etc
+"""
 import inspect
 from functools import wraps
 from typing import (

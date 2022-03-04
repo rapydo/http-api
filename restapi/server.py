@@ -1,9 +1,7 @@
 """
-The Main server factory.
-We create all the internal flask components here.
+The Main server factory. All internal flask components are created here
 """
 import logging
-import os
 import signal
 import sys
 import time
@@ -22,12 +20,16 @@ from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
 from flask_restful import Api
 from geolite2 import geolite2
+from neo4j.meta import ExperimentalWarning as Neo4jExperimentalWarning
 from sentry_sdk.integrations.flask import FlaskIntegration
 
 from restapi import config
 from restapi.config import (
     ABS_RESTAPI_PATH,
+    DOCS,
     FORCE_PRODUCTION_TESTS,
+    HOST_TYPE,
+    MAIN_SERVER_NAME,
     PRODUCTION,
     SENTRY_URL,
     TESTING,
@@ -47,7 +49,7 @@ from restapi.rest.response import (
 from restapi.services.cache import Cache
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
-from restapi.utilities.logs import log
+from restapi.utilities.logs import Events, log, save_event_log
 from restapi.utilities.meta import Meta
 
 lock = Lock()
@@ -64,7 +66,9 @@ class ServerModes(int, Enum):
 #     log.critical(request.headers)
 
 
-def teardown_handler(signal: int, frame: FrameType) -> None:  # pragma: no cover
+def teardown_handler(  # pragma: no cover
+    signal: int, frame: Optional[FrameType]
+) -> None:
 
     with lock:
 
@@ -142,16 +146,28 @@ def create_app(
         log.info("Production server mode is ON")
 
     endpoints_loader = EndpointsLoader()
-    mem.configuration = endpoints_loader.load_configuration()
 
-    mem.initializer = Meta.get_class("initialization", "Initializer")
-    if not mem.initializer:  # pragma: no cover
-        print_and_exit("Invalid Initializer class")
+    if HOST_TYPE == DOCS:  # pragma: no cover
+        log.critical("Creating mocked configuration")
+        mem.configuration = {}
 
-    customizer = Meta.get_class("customization", "Customizer")
-    if not customizer:  # pragma: no cover
-        print_and_exit("Invalid Customizer class")
-    mem.customizer = customizer()
+        log.critical("Loading Mocked Initializer and Customizer classes")
+        from restapi.mocks import Customizer, Initializer
+
+        mem.initializer = Initializer
+        mem.customizer = Customizer()
+
+    else:
+
+        mem.configuration = endpoints_loader.load_configuration()
+        mem.initializer = Meta.get_class("initialization", "Initializer")
+        if not mem.initializer:  # pragma: no cover
+            print_and_exit("Invalid Initializer class")
+
+        customizer = Meta.get_class("customization", "Customizer")
+        if not customizer:  # pragma: no cover
+            print_and_exit("Invalid Customizer class")
+        mem.customizer = customizer()
 
     if not isinstance(mem.customizer, BaseCustomizer):  # pragma: no cover
         print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
@@ -173,11 +189,93 @@ def create_app(
     if mode == ServerModes.NORMAL:
 
         logging.getLogger("werkzeug").setLevel(logging.ERROR)
+
+        # warnings levels:
+        # default  # Warn once per call location
+        # error    # Convert to exceptions
+        # always   # Warn every time
+        # module   # Warn once per calling module
+        # once     # Warn once per Python process
+        # ignore   # Never warn
+
+        # Types of warnings:
+        # Warning: This is the base class of all warning category classes
+        # UserWarning: The default category for warn().
+        # DeprecationWarning: Base category for warnings about deprecated features when
+        #                     those warnings are intended for other Python developers
+        # SyntaxWarning: Base category for warnings about dubious syntactic features.
+        # RuntimeWarning: Base category for warnings about dubious runtime features.
+        # FutureWarning: Base category for warnings about deprecated features when those
+        #                warnings are intended for end users
+        # PendingDeprecationWarning: Base category for warnings about features that will
+        #                            be deprecated in the future (ignored by default).
+        # ImportWarning: Base category for warnings triggered during the process of
+        #                importing a module
+        # UnicodeWarning: Base category for warnings related to Unicode.
+        # BytesWarning: Base category for warnings related to bytes and bytearray.
+        # ResourceWarning: Base category for warnings related to resource usage
+
+        if TESTING:
+            warnings.simplefilter("always", Warning)
+            warnings.simplefilter("error", UserWarning)
+            warnings.simplefilter("error", DeprecationWarning)
+            warnings.simplefilter("error", SyntaxWarning)
+            warnings.simplefilter("error", RuntimeWarning)
+            warnings.simplefilter("error", FutureWarning)
+            # warnings about features that will be deprecated in the future
+            warnings.simplefilter("default", PendingDeprecationWarning)
+            warnings.simplefilter("error", ImportWarning)
+            warnings.simplefilter("error", UnicodeWarning)
+            warnings.simplefilter("error", BytesWarning)
+            # Can't set this an error due to false positives with downloads
+            # a lot of issues like: https://github.com/pallets/flask/issues/2468
+            warnings.simplefilter("always", ResourceWarning)
+            warnings.simplefilter("default", Neo4jExperimentalWarning)
+
+            # Remove me in a near future, this is due to hypothesis with pytest 7
+            # https://github.com/HypothesisWorks/hypothesis/issues/3222
+            warnings.filterwarnings(
+                "ignore", message="A private pytest class or function was used."
+            )
+
+        elif PRODUCTION:
+            warnings.simplefilter("ignore", Warning)
+            warnings.simplefilter("always", UserWarning)
+            warnings.simplefilter("default", DeprecationWarning)
+            warnings.simplefilter("ignore", SyntaxWarning)
+            warnings.simplefilter("ignore", RuntimeWarning)
+            warnings.simplefilter("ignore", FutureWarning)
+            warnings.simplefilter("ignore", PendingDeprecationWarning)
+            warnings.simplefilter("ignore", ImportWarning)
+            warnings.simplefilter("ignore", UnicodeWarning)
+            warnings.simplefilter("ignore", BytesWarning)
+            warnings.simplefilter("ignore", ResourceWarning)
+            # even if ignore it is raised once
+            # because of the imports executed before setting this to ignore
+            warnings.simplefilter("ignore", Neo4jExperimentalWarning)
+        else:
+            warnings.simplefilter("default", Warning)
+            warnings.simplefilter("always", UserWarning)
+            warnings.simplefilter("always", DeprecationWarning)
+            warnings.simplefilter("default", SyntaxWarning)
+            warnings.simplefilter("default", RuntimeWarning)
+            warnings.simplefilter("always", FutureWarning)
+            warnings.simplefilter("default", PendingDeprecationWarning)
+            warnings.simplefilter("default", ImportWarning)
+            warnings.simplefilter("default", UnicodeWarning)
+            warnings.simplefilter("default", BytesWarning)
+            warnings.simplefilter("always", ResourceWarning)
+            # even if ignore it is raised once
+            # because of the imports executed before setting this to ignore
+            warnings.simplefilter("ignore", Neo4jExperimentalWarning)
+
         # ignore warning messages from apispec
         warnings.filterwarnings(
             "ignore", message="Multiple schemas resolved to the name "
         )
-        warnings.simplefilter("always", DeprecationWarning)
+
+        # ignore warning messages on flask socket after teardown
+        warnings.filterwarnings("ignore", message="unclosed <socket.socket")
 
         mem.cache = Cache.get_instance(microservice)
 
@@ -291,5 +389,12 @@ def create_app(
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
     log.info("Boot completed")
+    if PRODUCTION and not TESTING and name == MAIN_SERVER_NAME:
+        save_event_log(
+            event=Events.server_startup,
+            payload={"server": name},
+            user=None,
+            target=None,
+        )
 
     return microservice

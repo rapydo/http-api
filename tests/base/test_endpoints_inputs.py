@@ -13,7 +13,7 @@ class TestApp(BaseTests):
         # valid inputs for endpoints with inputs defined by marshamallow schemas
         schema = self.getDynamicInputSchema(client, "tests/inputs", {})
         # Expected number of fields
-        assert len(schema) == 13
+        assert len(schema) == 14
         for field in schema:
 
             # Always in the schema
@@ -44,9 +44,20 @@ class TestApp(BaseTests):
         assert "max" not in field
 
         field = schema[1]
-        assert len(field) == 7  # 5 mandatory fields + min + max
+        assert len(field) == 5  # 5 mandatory fields, min and max not set
         assert field["key"] == "MYDATE"
         assert field["type"] == "date"
+        # Here the key is not lower cased and the label is not explicitly set
+        # So the label will exactly match the key (without additiona of .title)
+        assert field["label"] == field["key"]
+        assert field["label"] != field["key"].title()
+        assert field["description"] == field["label"]
+        assert field["required"]
+
+        field = schema[2]
+        assert len(field) == 7  # 5 mandatory fields + min + max
+        assert field["key"] == "MYDATETIME"
+        assert field["type"] == "datetime"
         # Here the key is not lower cased and the label is not explicitly set
         # So the label will exactly match the key (without additiona of .title)
         assert field["label"] == field["key"]
@@ -56,7 +67,7 @@ class TestApp(BaseTests):
         assert "min" in field
         assert "max" in field
 
-        field = schema[2]
+        field = schema[3]
         assert len(field) == 7  # 5 mandatory fields + min + max
         assert field["key"] == "myint_exclusive"
         assert field["type"] == "int"
@@ -71,7 +82,7 @@ class TestApp(BaseTests):
         assert "max" in field
         assert field["max"] == 9
 
-        field = schema[3]
+        field = schema[4]
         assert len(field) == 7  # 5 mandatory fields + min + max
         assert field["key"] == "myint_inclusive"
         assert field["type"] == "int"
@@ -87,7 +98,7 @@ class TestApp(BaseTests):
         assert "max" in field
         assert field["max"] == 10
 
-        field = schema[4]
+        field = schema[5]
         assert len(field) == 6  # 5 mandatory fields + options
         assert field["key"] == "myselect"
         assert field["type"] == "string"
@@ -103,7 +114,7 @@ class TestApp(BaseTests):
         assert field["options"]["a"] == "A"
         assert field["options"]["b"] == "B"
 
-        field = schema[5]
+        field = schema[6]
         assert len(field) == 6  # 5 mandatory fields + options
         assert field["key"] == "myselect2"
         assert field["type"] == "string"
@@ -119,7 +130,7 @@ class TestApp(BaseTests):
         assert field["options"]["a"] == "a"
         assert field["options"]["b"] == "b"
 
-        field = schema[6]
+        field = schema[7]
         assert len(field) == 6  # 5 mandatory fields + max
         assert field["key"] == "mymaxstr"
         assert field["type"] == "string"
@@ -130,7 +141,7 @@ class TestApp(BaseTests):
         assert "max" in field
         assert field["max"] == 7
 
-        field = schema[7]
+        field = schema[8]
         assert len(field) == 7  # 5 mandatory fields + min + max
         assert field["key"] == "myequalstr"
         assert field["type"] == "string"
@@ -142,7 +153,7 @@ class TestApp(BaseTests):
         assert field["min"] == 6
         assert field["max"] == 6
 
-        field = schema[8]
+        field = schema[9]
         assert len(field) == 6  # 5 mandatory fields + schema
         assert field["key"] == "mynested"
         assert field["type"] == "nested"
@@ -151,7 +162,7 @@ class TestApp(BaseTests):
         assert field["required"]
         assert "schema" in field
 
-        field = schema[9]
+        field = schema[10]
         assert len(field) == 6  # 5 mandatory fields + schema
         assert field["key"] == "mynullablenested"
         assert field["type"] == "nested"
@@ -160,7 +171,7 @@ class TestApp(BaseTests):
         assert field["required"]
         assert "schema" in field
 
-        field = schema[10]
+        field = schema[11]
         assert len(field) == 5  # 5 mandatory fields
         assert field["key"] == "mylist"
         assert field["type"] == "string[]"
@@ -168,7 +179,7 @@ class TestApp(BaseTests):
         assert field["description"] == field["label"]
         assert field["required"]
 
-        field = schema[11]
+        field = schema[12]
         assert len(field) == 5  # 5 mandatory fields
         assert field["key"] == "mylist2"
         # The list is defined as List(CustomInt) and CustomInt is resolved as int
@@ -177,7 +188,7 @@ class TestApp(BaseTests):
         assert field["description"] == field["label"]
         assert field["required"]
 
-        field = schema[12]
+        field = schema[13]
         assert len(field) == 5  # 5 mandatory fields
         assert field["key"] == "mylist3"
         # The type is key[] ... should be something more explicative like FieldName[]

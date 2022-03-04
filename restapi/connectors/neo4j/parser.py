@@ -170,15 +170,15 @@ class NodeDump(DataDump):
         properties: str = self.get_properties(self.fields)
 
         cypher = f"""
-USING PERIODIC COMMIT {chunk_size}
-LOAD CSV WITH HEADERS
-FROM 'file:///{self.filename}'
-AS line
-FIELDTERMINATOR '\t'
-
-MERGE (:{self.label} {{
-    {properties}
-}})"""
+LOAD CSV WITH HEADERS FROM 'file:///{self.filename}' AS line FIELDTERMINATOR '\t'
+CALL {{
+    WITH line
+    MERGE (:{self.label} {{
+        {properties}
+    }}
+    )
+}} IN TRANSACTIONS OF {chunk_size} ROWS
+"""
 
         self.cypher_exec(cypher)
 
@@ -244,15 +244,13 @@ class RelationDump(DataDump):
         properties: str = self.get_properties(self.fields[2:])
 
         cypher = f"""
-USING PERIODIC COMMIT {chunk_size}
-LOAD CSV WITH HEADERS
-FROM 'file:///{self.filename}'
-AS line
-FIELDTERMINATOR '\t'
-
-MATCH (node1: {self.label1} {{{self.key1}: line.{field1}}})
-MATCH (node2: {self.label2} {{{self.key2}: line.{field2}}})
-MERGE (node1)-[:{self.relation} {{{properties}}}]->(node2)
+LOAD CSV WITH HEADERS FROM 'file:///{self.filename}' AS line FIELDTERMINATOR '\t'
+CALL {{
+    WITH line
+    MATCH (node1: {self.label1} {{{self.key1}: line.{field1}}})
+    MATCH (node2: {self.label2} {{{self.key2}: line.{field2}}})
+    MERGE (node1)-[:{self.relation} {{{properties}}}]->(node2)
+}} IN TRANSACTIONS OF {chunk_size} ROWS
 """
 
         self.cypher_exec(cypher)

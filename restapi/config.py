@@ -1,3 +1,6 @@
+"""
+Configuration variables set for the server instance
+"""
 from functools import lru_cache
 from pathlib import Path
 
@@ -20,14 +23,19 @@ REMOVE_DATA_AT_INIT_TIME: bool = False
 HOSTNAME: str = Env.get("HOSTNAME", "backend-server")
 # hostnames as defined in backend.yml
 
+MAIN_SERVER_NAME = "REST_API"
 BACKEND_HOSTNAME = "backend-server"
 FLOWER_HOSTNAME = "flower"
 CELERYBEAT_HOSTNAME = "celery-beat"
 BOT_HOSTNAME = "telegram-bot"
 CELERY_HOSTNAME = "celery"
+DOCS = "docs-generation"
 
 
 def get_host_type(HOSTNAME: str) -> str:
+
+    if HOSTNAME == DOCS:
+        return DOCS
 
     if HOSTNAME == BACKEND_HOSTNAME:
         return BACKEND_HOSTNAME
@@ -84,15 +92,35 @@ def get_project_configuration(key: str, default: str) -> str:
 
 @lru_cache
 def get_backend_url() -> str:
+
+    BACKEND_URL = Env.get("BACKEND_URL", "")
+
+    if BACKEND_URL:
+        return BACKEND_URL
+
+    BACKEND_PREFIX = Env.get("BACKEND_PREFIX", "").strip("/")
+    if BACKEND_PREFIX:
+        BACKEND_PREFIX = f"/{BACKEND_PREFIX}"
+
     if PRODUCTION:
-        return f"https://{DOMAIN}"
+        return f"https://{DOMAIN}{BACKEND_PREFIX}"
 
     port = Env.get("FLASK_PORT", "8080")
-    return f"http://{DOMAIN}:{port}"
+    return f"http://{DOMAIN}{BACKEND_PREFIX}:{port}"
 
 
 @lru_cache
 def get_frontend_url() -> str:
+
+    FRONTEND_URL = Env.get("FRONTEND_URL", "")
+
+    if FRONTEND_URL:
+        return FRONTEND_URL
+
+    FRONTEND_PREFIX = Env.get("FRONTEND_PREFIX", "").strip("/")
+    if FRONTEND_PREFIX:
+        FRONTEND_PREFIX = f"/{FRONTEND_PREFIX}"
+
     protocol = "https" if PRODUCTION else "http"
 
-    return f"{protocol}://{DOMAIN}"
+    return f"{protocol}://{DOMAIN}{FRONTEND_PREFIX}"

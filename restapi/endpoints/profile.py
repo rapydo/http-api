@@ -2,8 +2,9 @@ from typing import Any, Optional
 
 from restapi import decorators
 from restapi.endpoints.schemas import NewPassword, profile_output, profile_patch_input
+from restapi.exceptions import Unauthorized
 from restapi.rest.definition import EndpointResource, Response
-from restapi.services.authentication import User
+from restapi.services.authentication import AuthMissingTOTP, User
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
@@ -50,7 +51,7 @@ class Profile(EndpointResource):
     @decorators.use_kwargs(NewPassword)
     @decorators.endpoint(
         path="/auth/profile",
-        summary="Update user password",
+        summary="Update the user password",
         responses={204: "Password updated"},
     )
     def put(
@@ -61,11 +62,11 @@ class Profile(EndpointResource):
         user: User,
         totp_code: Optional[str] = None,
     ) -> Response:
-        """Update password for current user"""
-        if self.auth.SECOND_FACTOR_AUTHENTICATION:
-            self.auth.verify_totp(user, totp_code)
 
-        self.auth.make_login(user.email, password)
+        try:
+            self.auth.make_login(user.email, password, totp_code)
+        except AuthMissingTOTP:
+            raise Unauthorized("Verification code is missing")
 
         self.auth.change_password(user, password, new_password, password_confirm)
 
@@ -77,7 +78,7 @@ class Profile(EndpointResource):
     @decorators.use_kwargs(profile_patch_input())
     @decorators.endpoint(
         path="/auth/profile",
-        summary="Update profile information",
+        summary="Update profile attributes",
         responses={204: "Profile updated"},
     )
     def patch(self, user: User, **kwargs: Any) -> Response:

@@ -1,6 +1,9 @@
+"""
+Utilities to work with environment variables
+"""
 import os
 from functools import lru_cache
-from typing import Dict, Optional, Union
+from typing import Dict, Union
 
 
 class Env:

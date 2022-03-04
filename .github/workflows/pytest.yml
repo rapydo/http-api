@@ -73,6 +73,7 @@ jobs:
           rapydo -e ACTIVATE_TELEGRAM=0 start
           sleep 25
           rapydo logs
+
           rapydo shell backend 'restapi tests --core --wait --destroy'
 
           LOGURU_LEVEL=WARNING rapydo list services
@@ -99,7 +100,6 @@ jobs:
           fi
           rapydo logs --tail 20 proxy backend
 
-          # Tests in production mode
           rapydo shell backend 'restapi tests --core --wait'
 
           LOGURU_LEVEL=WARNING rapydo list services

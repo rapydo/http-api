@@ -1,3 +1,8 @@
+"""
+MongoDB connector with automatic integration in rapydo framework,
+based on pymodm and pymongo
+"""
+
 import re
 from datetime import datetime, timedelta
 from functools import wraps
@@ -155,7 +160,7 @@ class MongoExt(Connector):
         from pymongo import MongoClient
 
         uri = self._get_uri(self.variables)
-        client = MongoClient(uri)
+        client = MongoClient(uri, uuidRepresentation="standard")
 
         system_dbs = ["admin", "local", "config"]
         for db in client.list_database_names():

@@ -6,6 +6,7 @@ import pytz
 from restapi import decorators
 from restapi.endpoints.schemas import Credentials
 from restapi.rest.definition import EndpointResource, Response
+from restapi.services.authentication import AuthMissingTOTP
 
 
 class Login(EndpointResource):
@@ -17,8 +18,8 @@ class Login(EndpointResource):
     @decorators.use_kwargs(Credentials)
     @decorators.endpoint(
         path="/auth/login",
-        summary="Login with basic credentials",
-        description="Login with normal credentials (username and password)",
+        summary="Login by proving your credentials",
+        description="Login with basic credentials (username and password)",
         responses={
             200: "Credentials are valid",
             401: "Invalid access credentials",
@@ -35,30 +36,24 @@ class Login(EndpointResource):
     ) -> Response:
 
         username = username.lower()
+        if not self.auth.SECOND_FACTOR_AUTHENTICATION:
+            totp_code = None
 
         # ##################################################
         # Authentication control
-        self.auth.verify_blocked_username(username)
 
-        token, payload, user = self.auth.make_login(username, password)
-
-        self.auth.verify_user_status(user)
-
-        if self.auth.SECOND_FACTOR_AUTHENTICATION:
-
-            if totp_code is None:
-                message = self.auth.check_password_validity(
-                    user,
-                    totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION,
-                )
-                message["actions"].append("TOTP")
-                message["errors"].append(
-                    "You do not provided a valid verification code"
-                )
-                if message["errors"]:
-                    return self.response(message, code=403)
-
-            self.auth.verify_totp(user, totp_code)
+        try:
+            token, payload, user = self.auth.make_login(username, password, totp_code)
+        except AuthMissingTOTP:
+            user = self.auth.get_user(username=username)
+            message = self.auth.check_password_validity(
+                user,
+                totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION,
+            )
+            message["actions"].append("TOTP")
+            message["errors"].append("You do not provided a valid verification code")
+            if message["errors"]:
+                return self.response(message, code=403)
 
         # ##################################################
         # If requested, change the password
@@ -70,7 +65,9 @@ class Login(EndpointResource):
 
             if pwd_changed:
                 password = new_password
-                token, payload, user = self.auth.make_login(username, password)
+                token, payload, user = self.auth.make_login(
+                    username, password, totp_code
+                )
 
         message = self.auth.check_password_validity(
             user, totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION

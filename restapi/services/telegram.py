@@ -45,6 +45,7 @@ class Bot:
 
     # Startup workflow: init -> load_commands -> start
     def __init__(self) -> None:
+
         self.commands: Dict[str, str] = {}
         self.variables = Env.load_variables_group(prefix="telegram")
         if not self.variables.get("api_key"):  # pragma: no cover

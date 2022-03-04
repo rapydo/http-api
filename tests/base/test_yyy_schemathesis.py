@@ -4,6 +4,8 @@ import orjson
 import schemathesis
 import werkzeug
 from hypothesis import HealthCheck, settings
+from hypothesis.database import InMemoryExampleDatabase
+from requests.structures import CaseInsensitiveDict
 
 from restapi.env import Env
 from restapi.server import create_app
@@ -11,43 +13,47 @@ from restapi.services.authentication import BaseAuthentication
 from restapi.tests import BaseTests
 from restapi.utilities.logs import log, set_logger
 
-
-def get_auth_token(
-    client: werkzeug.Client, data: Dict[str, Optional[str]]
-) -> Tuple[str, Dict[str, str]]:
-
-    data["totp_code"] = BaseTests.generate_totp(data.get("username"))
-    r = client.post("/auth/login", data=data)
-    content = orjson.loads(r.data.decode("utf-8"))
-
-    if r.status_code == 403:
-        if isinstance(content, dict) and content.get("actions"):
-            actions = content.get("actions", {})
-
-            if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
-                currentpwd = data["password"]
-                newpwd = BaseTests.faker.password(strong=True)
-                data["new_password"] = newpwd
-                data["password_confirm"] = newpwd
-                # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
-                get_auth_token(client, data)
-                # Change again to restore the default password
-                # and keep all other tests fully working
-                data["password"] = newpwd
-                data["new_password"] = currentpwd
-                data["password_confirm"] = currentpwd
-                return get_auth_token(client, data)
-
-    assert r.status_code == 200
-    assert content is not None
-
-    return content, {"Authorization": f"Bearer {content}"}
-
-
 # Schemathesis is always enabled during core tests
 if not Env.get_bool("RUN_SCHEMATHESIS"):  # pragma: no cover
     log.warning("Skipping schemathesis")
 else:
+
+    # still untyped in hypothesis
+    hypothesis_database = InMemoryExampleDatabase()  # type: ignore
+
+    def get_auth_token(
+        client: werkzeug.Client, data: Dict[str, Optional[str]]
+    ) -> Tuple[str, CaseInsensitiveDict[str]]:
+
+        data["totp_code"] = BaseTests.generate_totp(data.get("username"))
+        r = client.post("/auth/login", data=data)
+        content = orjson.loads(r.data.decode("utf-8"))
+
+        if r.status_code == 403:
+            if isinstance(content, dict) and content.get("actions"):
+                actions = content.get("actions", {})
+
+                if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
+                    currentpwd = data["password"]
+                    newpwd = BaseTests.faker.password(strong=True)
+                    data["new_password"] = newpwd
+                    data["password_confirm"] = newpwd
+                    # Change the password to silence FIRST_LOGIN and PASSWORD_EXPIRED
+                    get_auth_token(client, data)
+                    # Change again to restore the default password
+                    # and keep all other tests fully working
+                    data["password"] = newpwd
+                    data["new_password"] = currentpwd
+                    data["password_confirm"] = currentpwd
+                    return get_auth_token(client, data)
+
+        assert r.status_code == 200
+        assert content is not None
+
+        headers: CaseInsensitiveDict[str] = CaseInsensitiveDict()
+        headers["Authorization"] = f"Bearer {content}"
+        return content, headers
+
     # No need to restore the logger after this test because
     # schemathesis test is the last one!
     # (just because in alphabetic order there are no other tests)
@@ -81,6 +87,7 @@ else:
         deadline=None,
         suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
         max_examples=50,
+        database=hypothesis_database,
     )
     def test_no_auth(case: schemathesis.Case) -> None:
 
@@ -102,6 +109,7 @@ else:
             deadline=None,
             suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
             max_examples=50,
+            database=hypothesis_database,
         )
         def test_with_auth(case: schemathesis.Case) -> None:
 
@@ -128,6 +136,7 @@ else:
             deadline=None,
             suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
             max_examples=50,
+            database=hypothesis_database,
         )
         def test_logout(case: schemathesis.Case) -> None:
 
