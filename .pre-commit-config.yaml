@@ -25,7 +25,7 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [
-            "git+https://github.com/rapydo/http-api.git@2.2",
+            "git+https://github.com/rapydo/http-api.git@2.3",
 
             # Extra dependencies
             "lxml",
