@@ -35,7 +35,7 @@ class FTPExt(Connector):
     # exception ftplib.error_reply
     # Exception raised when an unexpected reply is received from the server.
 
-    # exception ftplib.error_temp¶
+    # exception ftplib.error_temp
     # Exception raised when an error code signifying a temporary error
     # (response codes in the range 400–499) is received.
 
@@ -50,7 +50,7 @@ class FTPExt(Connector):
 
     @staticmethod
     def get_connection_exception() -> ExceptionsList:
-        return (socket.gaierror,)  # type: ignore
+        return (socket.gaierror,)
 
     def connect(self, **kwargs: str) -> "FTPExt":
 
