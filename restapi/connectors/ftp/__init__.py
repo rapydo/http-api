@@ -67,7 +67,7 @@ class FTPExt(Connector):
         if (password := variables.get("password")) is None:  # pragma: no cover
             raise ServiceUnavailable("Missing credentials")
 
-        port = Env.get_int(variables.get("port"), 25)
+        port = Env.get_int(variables.get("port"), 21)
 
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
         self.connection = FTP_TLS_SharedSession(context=ctx, timeout=10)
