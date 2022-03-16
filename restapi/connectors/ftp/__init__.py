@@ -29,7 +29,7 @@ class FTP_TLS_SharedSession(FTP_TLS):
 
 class FTPExt(Connector):
     def __init__(self) -> None:
-        self.connection: Optional[Union[FTP, FTP_TLS]] = None
+        self.connection: Union[FTP, FTP_TLS] = FTP()
         super().__init__()
 
     # exception ftplib.error_reply
