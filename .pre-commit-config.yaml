@@ -36,11 +36,9 @@ repos:
             "types-click",
             "types-PyYAML",
             "types-orjson",
-            "pymongo-stubs",
             "types-redis",
             "pika-stubs",
             "celery-types",
-            "mongo-types",
             "sqlalchemy-stubs",
             "Faker==11.3.0",
           ]
@@ -48,7 +46,6 @@ repos:
         # https://mypy.readthedocs.io/en/stable/command_line.html
         args: [
             # -> Base type Model becomes "Any" due to an unfollowed import
-            # -> Base type MongoModel becomes "Any" due to an unfollowed import
             # "--disallow-any-unimported",
 
             # Disable errors like:

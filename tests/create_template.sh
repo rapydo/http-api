@@ -10,18 +10,12 @@ elif [[ "$TEMPLATE" == "mysql" ]]; then
   rapydo create prj --auth mysql --frontend no -e AUTH_TOKEN_IP_GRACE_PERIOD=2
 elif [[ "$TEMPLATE" == "neo4j" ]]; then
   rapydo create prj --auth neo4j --frontend no -e AUTH_TOKEN_IP_GRACE_PERIOD=2
-elif [[ "$TEMPLATE" == "mongo" ]]; then
-  rapydo create prj --auth mongo --frontend no -e AUTH_TOKEN_IP_GRACE_PERIOD=2
 elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
   rapydo create prj -s celery -s rabbit --auth ${AUTH} --frontend no;
 elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
   rapydo create prj -s celery -s rabbit -s redis --auth ${AUTH} --frontend no;
-elif [[ "$TEMPLATE" == "celery-rabbit-mongo" ]]; then
-  rapydo create prj -s celery -s rabbit -s mongo --auth ${AUTH} --frontend no;
 elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
   rapydo create prj -s celery -s redis --auth ${AUTH} --frontend no;
-elif [[ "$TEMPLATE" == "celery-redis-mongo" ]]; then
-  rapydo create prj -s celery -s redis -s mongo --auth ${AUTH} --frontend no;
 elif [[ "$TEMPLATE" == "noauth" ]]; then
   rapydo create prj --auth no --frontend no
 

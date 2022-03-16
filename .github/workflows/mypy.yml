@@ -32,7 +32,6 @@ jobs:
             types-redis \
             pika-stubs \
             celery-types \
-            mongo-types \
             sqlalchemy-stubs
           pip install --upgrade --no-cache-dir --editable .
 
@@ -54,8 +53,6 @@ jobs:
             neobolt \
             neomodel \
             psycopg2 \
-            pymodm \
-            celerybeatmongo \
             redbeat \
             geolite2 \
             plumbum \

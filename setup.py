@@ -48,14 +48,12 @@ setup(
         # DB and services drivers
         "neomodel==4.0.8",
         "psycopg2-binary",
-        "pymodm",
         "PyMySQL",
         "redis",
         "pika",
         "celery[redis]==5.2.3",
         "flower==1.0.0",
         "celery-redbeat==2.0.0",
-        "celerybeat-mongo==0.2.0",
         "python-telegram-bot==13.10",
         "amqp==5.0.9",
         # TOTP

@@ -285,19 +285,6 @@ class CeleryExt(Connector):
 
         return f"{protocol}://{creds}{host}:{port}/{db}"
 
-    @staticmethod
-    def get_mongodb_url(variables: Dict[str, str], protocol: str) -> str:
-        host = variables.get("host")
-        port = Env.to_int(variables.get("port"))
-        user = variables.get("user", "")
-        pwd = variables.get("password", "")
-
-        creds = ""
-        if user and pwd:
-            creds = f"{user}:{pwd}@"
-
-        return f"{protocol}://{creds}{host}:{port}"
-
     def connect(self, **kwargs: str) -> "CeleryExt":
 
         variables = self.variables.copy()
@@ -374,7 +361,7 @@ class CeleryExt(Connector):
 
             log.warning(
                 "RABBIT backend is quite limited and not fully supported. "
-                "Consider to enable Redis or MongoDB as a backend database"
+                "Consider to enable Redis as a backend database"
             )
             self.celery_app.conf.result_backend = self.get_rabbit_url(
                 service_vars, protocol="rpc"
@@ -387,13 +374,6 @@ class CeleryExt(Connector):
                 service_vars, protocol="redis", celery_beat=False
             )
             # set('redis_backend_use_ssl', kwargs.get('redis_backend_use_ssl'))
-
-        elif backend == "MONGODB":
-            service_vars = Env.load_variables_group(prefix="mongo")
-
-            self.celery_app.conf.result_backend = self.get_mongodb_url(
-                service_vars, protocol="mongodb"
-            )
 
         else:  # pragma: no cover
             print_and_exit(
@@ -468,23 +448,7 @@ class CeleryExt(Connector):
 
             CeleryExt.CELERYBEAT_SCHEDULER = backend
 
-            if backend == "MONGODB":
-                service_vars = Env.load_variables_group(prefix="mongo")
-                url = self.get_mongodb_url(service_vars, protocol="mongodb")
-                SCHEDULER_DB = "celery"
-                self.celery_app.conf["CELERY_MONGODB_SCHEDULER_DB"] = SCHEDULER_DB
-                self.celery_app.conf[
-                    "CELERY_MONGODB_SCHEDULER_COLLECTION"
-                ] = "schedules"
-                self.celery_app.conf["CELERY_MONGODB_SCHEDULER_URL"] = url
-
-                import mongoengine
-
-                m = mongoengine.connect(
-                    SCHEDULER_DB, host=url, uuidRepresentation="standard"
-                )
-                log.info("Celery-beat connected to MongoDB: {}", m)
-            elif backend == "REDIS":
+            if backend == "REDIS":
 
                 service_vars = Env.load_variables_group(prefix="redis")
                 url = self.get_redis_url(
@@ -527,13 +491,6 @@ class CeleryExt(Connector):
     @classmethod
     def get_periodic_task(cls, name: str) -> Any:
 
-        if cls.CELERYBEAT_SCHEDULER == "MONGODB":
-            from celerybeatmongo.models import DoesNotExist, PeriodicTask
-
-            try:
-                return PeriodicTask.objects.get(name=name)
-            except DoesNotExist:
-                return None
         if cls.CELERYBEAT_SCHEDULER == "REDIS":
             from redbeat.schedulers import RedBeatSchedulerEntry
 
@@ -572,18 +529,7 @@ class CeleryExt(Connector):
         if kwargs is None:
             kwargs = {}
 
-        if cls.CELERYBEAT_SCHEDULER == "MONGODB":
-            from celerybeatmongo.models import PeriodicTask
-
-            PeriodicTask(
-                name=name,
-                task=task,
-                enabled=True,
-                args=args,
-                kwargs=kwargs,
-                interval=PeriodicTask.Interval(every=every, period=period),
-            ).save()
-        elif cls.CELERYBEAT_SCHEDULER == "REDIS":
+        if cls.CELERYBEAT_SCHEDULER == "REDIS":
             from celery.schedules import schedule
             from redbeat.schedulers import RedBeatSchedulerEntry
 
@@ -628,24 +574,7 @@ class CeleryExt(Connector):
         if kwargs is None:
             kwargs = {}
 
-        if cls.CELERYBEAT_SCHEDULER == "MONGODB":
-            from celerybeatmongo.models import PeriodicTask
-
-            PeriodicTask(
-                name=name,
-                task=task,
-                enabled=True,
-                args=args,
-                kwargs=kwargs,
-                crontab=PeriodicTask.Crontab(
-                    minute=minute,
-                    hour=hour,
-                    day_of_week=day_of_week,
-                    day_of_month=day_of_month,
-                    month_of_year=month_of_year,
-                ),
-            ).save()
-        elif cls.CELERYBEAT_SCHEDULER == "REDIS":
+        if cls.CELERYBEAT_SCHEDULER == "REDIS":
             from celery.schedules import crontab
             from redbeat.schedulers import RedBeatSchedulerEntry
 

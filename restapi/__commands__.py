@@ -182,13 +182,10 @@ def mywait() -> None:
             wait_socket(host, port, label)
 
             backend = variables.get("backend_service", "N/a")
-            # Rabbit is no longer used as backend due to the strong limitations
-            if backend == "RABBIT":  # pragma: no cover
+            if backend == "RABBIT":
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
             elif backend == "REDIS":
                 service_vars = Env.load_variables_group(prefix="redis")
-            elif backend == "MONGODB":
-                service_vars = Env.load_variables_group(prefix="mongo")
             else:
                 print_and_exit(
                     "Invalid celery backend: {}", backend

@@ -312,16 +312,12 @@ def cache(*args: Any, **kwargs: Any) -> Any:
     return mem.cache.memoize(*args, **kwargs)
 
 
-# This decorator is still a work in progress, in particular for MongoDB
 def database_transaction(func: EndpointFunction) -> EndpointFunction:
     @wraps(func)
     def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
         neo4j_enabled = Connector.check_availability("neo4j")
         sqlalchemy_enabled = Connector.check_availability("sqlalchemy")
-        # ... are transactions supported !?
-        mongo_enabled = Connector.check_availability("mongo")
-
         if neo4j_enabled:
             from neomodel import db as neo4j_db
 
@@ -332,9 +328,6 @@ def database_transaction(func: EndpointFunction) -> EndpointFunction:
 
             alchemy_db = sqlalchemy.get_instance()
 
-        # if mongo_enabled:
-        #     from .... import ... as mongo_db
-
         try:
 
             if neo4j_enabled:
@@ -344,10 +337,6 @@ def database_transaction(func: EndpointFunction) -> EndpointFunction:
             # if sqlalchemy_enabled:
             #     pass
 
-            if mongo_enabled:
-                # mongoDB transaction begin not implemented yet
-                pass
-
             out = func(self, *args, **kwargs)
 
             if neo4j_enabled:
@@ -355,10 +344,6 @@ def database_transaction(func: EndpointFunction) -> EndpointFunction:
 
             if sqlalchemy_enabled:
                 alchemy_db.session.commit()
-
-            if mongo_enabled:
-                # mongoDB transaction commit not implemented yet
-                pass
 
             return out
         except Exception as e:
@@ -370,10 +355,6 @@ def database_transaction(func: EndpointFunction) -> EndpointFunction:
 
                 if sqlalchemy_enabled:
                     alchemy_db.session.rollback()
-
-                if mongo_enabled:
-                    # mongoDB transaction rollback not implemented yet
-                    pass
 
             except Exception as sub_ex:  # pragma: no cover
                 log.warning("Exception raised during rollback: {}", sub_ex)

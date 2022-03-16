@@ -55,7 +55,7 @@ class Connector(metaclass=abc.ABCMeta):
     # Used by get_authentication_module
     _authentication_module: Optional[ModuleType] = None
 
-    # Returned by __getattr__ in neo4j, sqlalchemy and mongo connectors
+    # Returned by __getattr__ in neo4j and sqlalchemy connectors
     _models: Dict[str, Type] = {}
 
     # Used by set_object and get_object
