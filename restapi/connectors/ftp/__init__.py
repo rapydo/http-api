@@ -5,7 +5,7 @@ FTP connector with automatic integration in rapydo framework, based on ftplib
 import socket
 import ssl
 from ftplib import FTP, FTP_TLS, error_reply
-from typing import Optional
+from typing import Optional, Union
 
 from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
@@ -29,7 +29,7 @@ class FTP_TLS_SharedSession(FTP_TLS):
 
 class FTPExt(Connector):
     def __init__(self) -> None:
-        self.connection: Optional[FTP_TLS] = None
+        self.connection: Optional[Union[FTP, FTP_TLS]] = None
         super().__init__()
 
     # exception ftplib.error_reply
@@ -73,22 +73,26 @@ class FTPExt(Connector):
 
         if ssl_enabled:
             ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
-            self.connection = FTP_TLS_SharedSession(context=ctx, timeout=10)
-            self.connection.debugging = 1
+            ftp_tls_conn = FTP_TLS_SharedSession(context=ctx, timeout=10)
+            ftp_tls_conn.debugging = 1
 
-            self.connection.connect(host, port)
-            # self.connection.auth()
-            self.connection.login(user, password)
-            self.connection.set_pasv(True)
+            ftp_tls_conn.connect(host, port)
+            # ftp_tls_conn.auth()
+            ftp_tls_conn.login(user, password)
+            ftp_tls_conn.set_pasv(True)
             # Set up secure data connection
-            self.connection.prot_p()
-        else:
-            self.connection = FTP(context=ctx, timeout=10)
-            self.connection.debugging = 1
+            ftp_tls_conn.prot_p()
 
-            self.connection.connect(host, port)
-            self.connection.login(user, password)
-            self.connection.set_pasv(True)
+            self.connection = ftp_tls_conn
+        else:
+            ftp_conn = FTP(timeout=10)
+            ftp_conn.debugging = 1
+
+            ftp_conn.connect(host, port)
+            ftp_conn.login(user, password)
+            ftp_conn.set_pasv(True)
+
+            self.connection = ftp_conn
 
         log.debug("Current directory: {}", self.connection.pwd())
         return self
