@@ -69,16 +69,26 @@ class FTPExt(Connector):
 
         port = Env.get_int(variables.get("port"), 21)
 
-        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
-        self.connection = FTP_TLS_SharedSession(context=ctx, timeout=10)
-        self.connection.debugging = 1
+        ssl_enabled = Env.to_bool(variables.get("ssl_enabled"))
 
-        self.connection.connect(host, port)
-        self.connection.auth()
-        self.connection.login(user, password)
-        self.connection.set_pasv(True)
-        # Set up secure data connection
-        self.connection.prot_p()
+        if ssl_enabled:
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
+            self.connection = FTP_TLS_SharedSession(context=ctx, timeout=10)
+            self.connection.debugging = 1
+
+            self.connection.connect(host, port)
+            # self.connection.auth()
+            self.connection.login(user, password)
+            self.connection.set_pasv(True)
+            # Set up secure data connection
+            self.connection.prot_p()
+        else:
+            self.connection = FTP(context=ctx, timeout=10)
+            self.connection.debugging = 1
+
+            self.connection.connect(host, port)
+            self.connection.login(user, password)
+            self.connection.set_pasv(True)
 
         log.debug("Current directory: {}", self.connection.pwd())
         return self
