@@ -91,7 +91,7 @@ class TestApp(BaseTests):
             assert fullname is not None
 
             newdata = {
-                "shortname": faker.company(),
+                "shortname": f"{faker.company()}-{faker.pyint(2, 100)}",
                 "fullname": faker.company(),
             }
 
