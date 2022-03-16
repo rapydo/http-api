@@ -26,7 +26,7 @@ def test_cli() -> None:
     response = runner.invoke(cli.verify, ["--service", "x"])
     assert response.exit_code == 1
 
-    for service in ("neo4j", "mongo", "sqlalchemy"):
+    for service in ("neo4j", "sqlalchemy"):
         if not Connector.check_availability(service):
             continue
 

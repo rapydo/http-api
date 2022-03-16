@@ -345,10 +345,3 @@ def test_celerybeat() -> None:
                 task="task.does.not.exists",
                 every="invalid",
             )
-
-    if CeleryExt.CELERYBEAT_SCHEDULER == "MONGODB":
-
-        obj.create_periodic_task(
-            name="task3", task="task.does.not.exists", every="60", period="minutes"
-        )
-        assert obj.delete_periodic_task("task3")
