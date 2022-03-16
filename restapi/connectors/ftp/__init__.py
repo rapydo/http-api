@@ -74,7 +74,7 @@ class FTPExt(Connector):
         if ssl_enabled:
             ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
             ftp_tls_conn = FTP_TLS_SharedSession(context=ctx, timeout=10)
-            ftp_tls_conn.debugging = 1
+            # ftp_tls_conn.debugging = 1
 
             ftp_tls_conn.connect(host, port)
             # ftp_tls_conn.auth()
@@ -86,7 +86,7 @@ class FTPExt(Connector):
             self.connection = ftp_tls_conn
         else:
             ftp_conn = FTP(timeout=10)
-            ftp_conn.debugging = 1
+            # ftp_conn.debugging = 1
 
             ftp_conn.connect(host, port)
             ftp_conn.login(user, password)
