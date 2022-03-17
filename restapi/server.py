@@ -66,9 +66,9 @@ class ServerModes(int, Enum):
 #     log.critical(request.headers)
 
 
-def teardown_handler(  # pragma: no cover
+def teardown_handler(
     signal: int, frame: Optional[FrameType]
-) -> None:
+) -> None:  # pragma: no cover
 
     with lock:
 
@@ -238,7 +238,7 @@ def create_app(
                 "ignore", message="A private pytest class or function was used."
             )
 
-        elif PRODUCTION:
+        elif PRODUCTION:  # pragma: no cover
             warnings.simplefilter("ignore", Warning)
             warnings.simplefilter("always", UserWarning)
             warnings.simplefilter("default", DeprecationWarning)
@@ -253,7 +253,7 @@ def create_app(
             # even if ignore it is raised once
             # because of the imports executed before setting this to ignore
             warnings.simplefilter("ignore", Neo4jExperimentalWarning)
-        else:
+        else:  # pragma: no cover
             warnings.simplefilter("default", Warning)
             warnings.simplefilter("always", UserWarning)
             warnings.simplefilter("always", DeprecationWarning)

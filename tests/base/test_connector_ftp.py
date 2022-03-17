@@ -4,7 +4,7 @@ import pytest
 from flask import Flask
 
 from restapi.connectors import Connector
-from restapi.connectors import redis as connector
+from restapi.connectors import ftp as connector
 from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
