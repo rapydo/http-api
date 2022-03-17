@@ -30,6 +30,7 @@ class FTP_TLS_SharedSession(FTP_TLS):
 class FTPExt(Connector):
     def __init__(self) -> None:
         self.connection: Union[FTP, FTP_TLS] = FTP()
+        self.initialized = False
         super().__init__()
 
     # exception ftplib.error_reply
@@ -94,12 +95,13 @@ class FTPExt(Connector):
 
             self.connection = ftp_conn
 
+        self.initialized = True
         log.debug("Current directory: {}", self.connection.pwd())
         return self
 
     def disconnect(self) -> None:
         self.disconnected = True
-        if self.connection:
+        if self.connection and self.initialized:
             self.connection.quit()
             # expect ???:
             # -> log.debug("Connection already closed")
