@@ -78,7 +78,7 @@ def test_ftp(app: Flask, faker: Faker) -> None:
         assert obj is not None
 
         # The FTP folder is empty => only . and .. are returned
-        len(list(obj.connection.mlsd())) == 2
+        assert len(list(obj.connection.mlsd())) == 2
 
         # Upload a random content file on the FTP
         tmp_content = faker.pystr()
@@ -86,7 +86,7 @@ def test_ftp(app: Flask, faker: Faker) -> None:
         # or storbinary for binary mode
         obj.connection.storlines(f"STOR {ftp_filename}", tmp_content)
 
-        len(list(obj.connection.mlsd())) == 3
+        assert len(list(obj.connection.mlsd())) == 3
 
         # Download the file and verify it matches
         download_file: Path = Path(tempfile.NamedTemporaryFile().name)
