@@ -16,6 +16,16 @@ elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
   rapydo create prj -s celery -s rabbit -s redis --auth ${AUTH} --frontend no;
 elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then
   rapydo create prj -s celery -s redis --auth ${AUTH} --frontend no;
+elif [[ "$TEMPLATE" == "low_security" ]]; then
+  rapydo --testing create prj --current \
+                    --auth ${AUTH} \
+                    --frontend no \
+                    -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=0 \
+                    -e AUTH_MAX_PASSWORD_VALIDITY=0 \
+                    -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=0 \
+                    -e AUTH_MAX_LOGIN_ATTEMPTS=0 \
+                    -e AUTH_SECOND_FACTOR_AUTHENTICATION=0 \
+                    -e AUTH_TOKEN_IP_GRACE_PERIOD=99999999999
 elif [[ "$TEMPLATE" == "noauth" ]]; then
   rapydo create prj --auth no --frontend no
 

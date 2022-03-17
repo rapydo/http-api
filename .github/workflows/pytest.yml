@@ -14,6 +14,7 @@ jobs:
         template:
           [
             noauth,
+            low_security,
             extra,
             neo4j,
             postgres,
