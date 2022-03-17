@@ -69,7 +69,7 @@ def test_redis(app: Flask) -> None:
     obj.disconnect()
     # assert not oj.is_connected()
 
-    # ... close connection again ... nothing should happens
+    # ... close connection again ... nothing should happen
     obj.disconnect()
 
     with connector.get_instance() as obj:
