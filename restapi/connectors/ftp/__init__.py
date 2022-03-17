@@ -108,7 +108,8 @@ class FTPExt(Connector):
             # -> log.debug("Connection already closed")
 
     def is_connected(self) -> bool:
-        if not self.connection:
+        # Can't happen because connection is not Optional[]
+        if not self.connection:  # pragma: no cover
             return False
 
         try:

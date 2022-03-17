@@ -42,7 +42,7 @@ def test_ftp(app: Flask, faker: Faker) -> None:
     assert obj.is_connected()
 
     obj.disconnect()
-    # assert not oj.is_connected()
+    assert not obj.is_connected()
 
     # a second disconnect should not raise any error
     obj.disconnect()
@@ -69,7 +69,7 @@ def test_ftp(app: Flask, faker: Faker) -> None:
 
     assert obj.is_connected()
     obj.disconnect()
-    # assert not oj.is_connected()
+    assert not obj.is_connected()
 
     # ... close connection again ... nothing should happen
     obj.disconnect()
