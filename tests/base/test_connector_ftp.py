@@ -1,6 +1,9 @@
+import tempfile
 import time
+from pathlib import Path
 
 import pytest
+from faker import Faker
 from flask import Flask
 
 from restapi.connectors import Connector
@@ -27,7 +30,7 @@ def test_no_ftp() -> None:
 @pytest.mark.skipif(
     not CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
 )
-def test_ftp(app: Flask) -> None:
+def test_ftp(app: Flask, faker: Faker) -> None:
 
     log.info("Executing {} tests", CONNECTOR)
 
@@ -73,3 +76,26 @@ def test_ftp(app: Flask) -> None:
 
     with connector.get_instance() as obj:
         assert obj is not None
+
+        # The FTP folder is empty => only . and .. are returned
+        len(list(obj.connection.mlsd())) == 2
+
+        # Upload a random content file on the FTP
+        tmp_content = faker.pystr()
+        ftp_filename = faker.file_name()
+        # or storbinary for binary mode
+        obj.connection.storlines(f"STOR {ftp_filename}", tmp_content)
+
+        len(list(obj.connection.mlsd())) == 3
+
+        # Download the file and verify it matches
+        download_file: Path = Path(tempfile.NamedTemporaryFile().name)
+
+        with open(download_file, "w") as download_handle:
+            # Command for Downloading the file "RETR filename"
+            # or retrbinary for binary mode
+            obj.connection.retrlines(f"RETR {ftp_filename}", download_handle.write)
+
+        with open(download_file) as download_handle:
+            downloaded_content = download_handle.read()
+            assert downloaded_content == tmp_content
