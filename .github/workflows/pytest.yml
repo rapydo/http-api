@@ -119,7 +119,7 @@ jobs:
 
       - name: Print mocked email on failure
         if: failure()
-        run: cat ${{ matrix.template }}.${{ matrix.mode }}/data/logs/mock.mail.*.body
+        run: cat ${{ matrix.template }}.${{ matrix.mode }}/data/logs/mock.mail.*.body 2>/dev/null || true
 
       - name: Docker Logs
         if: failure()

@@ -103,6 +103,7 @@ class FTPExt(Connector):
         self.disconnected = True
         if self.connection and self.initialized:
             self.connection.quit()
+            self.initialized = False
             # expect ???:
             # -> log.debug("Connection already closed")
 
