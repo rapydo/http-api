@@ -246,8 +246,9 @@ def tests(
 ) -> None:  # pragma: no cover
     """Compute tests and coverage"""
 
-    # Forced TEST mode when using the restapi tests wrapper
-    os.environ["APP_MODE"] = "test"
+    # Forced a change from DEV to TEST mode when using the restapi tests wrapper
+    if not PRODUCTION:
+        os.environ["APP_MODE"] = "test"
 
     if wait:
         while initializing():
