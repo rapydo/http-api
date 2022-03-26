@@ -76,7 +76,7 @@ setup(
         "pytest-timeout==2.0.2",
         "pytest-sugar==0.9.4",
         "schemathesis==3.13.3",
-        "Faker==11.3.0",
+        "Faker==13.3.3",
         "Telethon==1.24.0",
     ],
     classifiers=[
