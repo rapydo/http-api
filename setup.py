@@ -75,7 +75,7 @@ setup(
         "pytest-cov==3.0.0",
         "pytest-timeout==2.0.2",
         "pytest-sugar==0.9.4",
-        "schemathesis==3.12.1",
+        "schemathesis==3.13.3",
         "Faker==11.3.0",
         "Telethon==1.24.0",
     ],
