@@ -114,10 +114,10 @@ class FTPExt(Connector):
 
         if self.disconnected:
             return False
-        try:  # pragma: no cover
+        try:
             self.connection.voidcmd("NOOP")
             return True
-        except error_reply:
+        except error_reply:  # pragma: no cover
             return False
 
 

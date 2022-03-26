@@ -174,7 +174,7 @@ OBSCURED_FIELDS = [
 
 
 def handle_log_output(original_parameters_string: Optional[Any]) -> Dict[str, Any]:
-    """Avoid printing passwords!"""
+    """Print a log line by preventing the exposure of sensitive information"""
     if original_parameters_string is None:
         return {}
 
@@ -203,12 +203,14 @@ def handle_log_output(original_parameters_string: Optional[Any]) -> Dict[str, An
 
 
 def obfuscate_url(url: str) -> str:
+    """Obfuscate a sensitive information with a placeholder"""
     return re.sub(r"\/\/.*:.*@", "//***:***@", url)
 
 
 def obfuscate_dict(
     parameters: Dict[str, Any], urlencoded: bool = False, max_len: int = MAX_CHAR_LEN
 ) -> Dict[str, Any]:
+    """Obfuscate sensitive information in a dictionary by looking at sensitive keys"""
 
     if not isinstance(parameters, dict):
         return parameters
@@ -237,6 +239,7 @@ def obfuscate_dict(
 
 
 def parse_event_target(target: Any) -> Tuple[str, str]:
+    """Extract from an object an ID to be stored in logs"""
     if not target:
         return "", ""
 
@@ -251,7 +254,6 @@ def parse_event_target(target: Any) -> Tuple[str, str]:
     return target_type, ""
 
 
-# Save a log entry in security-events.log
 def save_event_log(
     event: Events,
     target: Optional[Any] = None,
@@ -260,6 +262,7 @@ def save_event_log(
     ip: str = "-",
     url: str = "",
 ) -> None:
+    """Save a log entry in security-events.log"""
 
     target_type, target_id = parse_event_target(target)
 

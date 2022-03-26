@@ -64,6 +64,7 @@ APP_SECRETS = Path(Env.get("APP_SECRETS", "/secrets"))
 JWT_SECRET_FILE = APP_SECRETS.joinpath("jwt_secret.key")
 TOTP_SECRET_FILE = APP_SECRETS.joinpath("totp_secret.key")
 SSL_CERTIFICATE = "/etc/letsencrypt/real/fullchain1.pem"
+SSL_SECRET = "/etc/letsencrypt/real/privkey1.pem"
 DOMAIN = Env.get("DOMAIN", "")
 PROXIED_CONNECTION: bool = Env.get_bool("PROXIED_CONNECTION")
 

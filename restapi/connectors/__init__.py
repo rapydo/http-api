@@ -519,7 +519,7 @@ class Connector(metaclass=abc.ABCMeta):
                     obj.connection_verification_time = now + ver
                 # if the connection is no longer valid, invalidate the instance
                 else:  # pragma: no cover
-                    log.warning(
+                    log.info(
                         "{} is no longer connected, connector invalidated", self.name
                     )
                     obj.disconnected = True

@@ -24,7 +24,15 @@ import certifi
 from celery import Celery, states
 from celery.exceptions import Ignore
 
-from restapi.config import CUSTOM_PACKAGE, DOCS, HOST_TYPE, SSL_CERTIFICATE, TESTING
+from restapi.config import (
+    CUSTOM_PACKAGE,
+    DOCS,
+    HOST_TYPE,
+    PRODUCTION,
+    SSL_CERTIFICATE,
+    SSL_SECRET,
+    TESTING,
+)
 from restapi.connectors import Connector, ExceptionsList
 from restapi.connectors.rabbitmq import RabbitExt
 from restapi.connectors.redis import RedisExt
@@ -392,13 +400,9 @@ class CeleryExt(Connector):
         # This means the messages won’t be lost after a broker restart.
         # self.celery_app.conf.result_persistent = True
 
-        # Skip initial warnings, avoiding pickle format (deprecated)
-        self.celery_app.conf.accept_content = ["json"]
-        self.celery_app.conf.task_serializer = "json"
         # Decides if publishing task messages will be retried in the case of
         # connection loss or other connection errors
         self.celery_app.conf.task_publish_retry = True
-        self.celery_app.conf.result_serializer = "json"
 
         # Already enabled by default to use UTC
         # self.celery_app.conf.enable_utc
@@ -444,6 +448,13 @@ class CeleryExt(Connector):
         # The setting will be set to True by default in Celery 6.0.
         self.celery_app.conf.worker_cancel_long_running_tasks_on_connection_loss = True
 
+        if not PRODUCTION:
+            # Skip initial warnings by avoiding pickle format (deprecated)
+            # Only set in DEV mode since in PROD mode the auth serializer is used
+            self.celery_app.conf.accept_content = ["json"]
+            self.celery_app.conf.task_serializer = "json"
+            self.celery_app.conf.result_serializer = "json"
+
         if Env.get_bool("CELERYBEAT_ENABLED"):
 
             CeleryExt.CELERYBEAT_SCHEDULER = backend
@@ -471,6 +482,22 @@ class CeleryExt(Connector):
             "RAPyDo", broker=conf.broker_url, backend=conf.result_backend
         )
         self.celery_app.conf = conf
+
+        if PRODUCTION:
+
+            # https://docs.celeryq.dev/en/stable/userguide/security.html#message-signing
+            self.celery_app.conf.update(
+                security_key=SSL_SECRET,
+                security_certificate=SSL_CERTIFICATE,
+                security_cert_store=SSL_CERTIFICATE,
+                security_digest="sha256",
+                task_serializer="auth",
+                result_serializer="auth",
+                event_serializer="auth",
+                accept_content=["auth"],
+            )
+
+            self.celery_app.setup_security()
 
         for funct in Meta.get_celery_tasks(f"{CUSTOM_PACKAGE}.tasks"):
             # Weird errors due to celery-stubs?
