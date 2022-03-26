@@ -54,7 +54,7 @@ setup(
         "celery[redis]==5.2.3",
         "flower==1.0.0",
         "celery-redbeat==2.0.0",
-        "python-telegram-bot==13.10",
+        "python-telegram-bot==13.11",
         "amqp==5.1.0",
         # TOTP
         "pyotp==2.6.0",
