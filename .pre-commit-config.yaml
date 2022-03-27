@@ -40,7 +40,7 @@ repos:
             "pika-stubs",
             "celery-types",
             "sqlalchemy-stubs",
-            "Faker==11.3.0",
+            "Faker==13.3.3",
           ]
 
         # https://mypy.readthedocs.io/en/stable/command_line.html
