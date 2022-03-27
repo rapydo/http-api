@@ -42,7 +42,7 @@ setup(
         "passlib[bcrypt]==1.7.4",
         "meinheld==1.0.2",
         "gunicorn==20.1.0",
-        "marshmallow==3.14.1",
+        "marshmallow==3.15.0",
         "webargs==8.0.1",
         "apispec==5.1.1",
         # DB and services drivers
