@@ -16,9 +16,10 @@ from restapi.env import Env
 class RedisExt(Connector):
 
     DB = 0
-    CELERY_DB = 1
+    CELERY_BACKEND_DB = 1
     CACHE_DB = 2
     CELERY_BEAT_DB = 3
+    CELERY_BROKER_DB = 4
 
     def __init__(self) -> None:
         super().__init__()

@@ -276,20 +276,13 @@ class CeleryExt(Connector):
         return f"{protocol}://{creds}{host}:{port}{vhost}"
 
     @staticmethod
-    def get_redis_url(
-        variables: Dict[str, str], protocol: str, celery_beat: bool
-    ) -> str:
+    def get_redis_url(variables: Dict[str, str], protocol: str, db: int) -> str:
         host = variables.get("host")
         port = Env.to_int(variables.get("port"))
         pwd = variables.get("password", "")
         creds = ""
         if pwd:
             creds = f":{pwd}@"
-
-        if celery_beat:
-            db = RedisExt.CELERY_BEAT_DB
-        else:
-            db = RedisExt.CELERY_DB
 
         return f"{protocol}://{creds}{host}:{port}/{db}"
 
@@ -346,7 +339,7 @@ class CeleryExt(Connector):
             self.celery_app.conf.broker_use_ssl = False
 
             self.celery_app.conf.broker_url = self.get_redis_url(
-                service_vars, protocol="redis", celery_beat=False
+                service_vars, protocol="redis", db=RedisExt.CELERY_BROKER_DB
             )
 
         else:  # pragma: no cover
@@ -379,7 +372,7 @@ class CeleryExt(Connector):
             service_vars = Env.load_variables_group(prefix="redis")
 
             self.celery_app.conf.result_backend = self.get_redis_url(
-                service_vars, protocol="redis", celery_beat=False
+                service_vars, protocol="redis", db=RedisExt.CELERY_BACKEND_DB
             )
             # set('redis_backend_use_ssl', kwargs.get('redis_backend_use_ssl'))
 
@@ -463,7 +456,7 @@ class CeleryExt(Connector):
 
                 service_vars = Env.load_variables_group(prefix="redis")
                 url = self.get_redis_url(
-                    service_vars, protocol="redis", celery_beat=True
+                    service_vars, protocol="redis", db=RedisExt.CELERY_BEAT_DB
                 )
 
                 self.celery_app.conf["REDBEAT_REDIS_URL"] = url

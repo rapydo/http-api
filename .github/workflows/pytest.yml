@@ -18,8 +18,8 @@ jobs:
             extra,
             neo4j,
             postgres,
-            celery-rabbit-redis,
             celery-redis-redis,
+            celery-rabbit-redis,
             celery-rabbit-rabbit,
             mysql,
           ]
