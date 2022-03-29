@@ -30,18 +30,19 @@ setup(
     # Remember to update mypy.additional_dependencies
     install_requires=[
         # Flask, plugins and webservers
-        "Flask==2.0.3",
+        "Flask==2.1.0",
         "Flask-RESTful==0.3.9",
         "flask-apispec==0.11.0",
         "Flask-Caching==1.10.1",
         "Flask-Cors==3.0.10",
         "Flask-SQLAlchemy==2.5.1",
         "Flask-Migrate==3.1.0",
+        "Werkzeug==2.1.0",
+        "meinheld==1.0.2",
+        "gunicorn==20.1.0",
         "PyJWT==2.3.0",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.4",
-        "meinheld==1.0.2",
-        "gunicorn==20.1.0",
         "marshmallow==3.15.0",
         "webargs==8.1.0",
         "apispec==5.1.1",
