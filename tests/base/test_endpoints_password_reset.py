@@ -67,11 +67,11 @@ class TestApp(BaseTests):
         assert r.status_code == 400
 
         # Check if token is valid
-        r = client.put(f"{AUTH_URI}/reset/{token}")
+        r = client.put(f"{AUTH_URI}/reset/{token}", json={})
         assert r.status_code == 204
 
         # Token is still valid because no password still sent
-        r = client.put(f"{AUTH_URI}/reset/{token}")
+        r = client.put(f"{AUTH_URI}/reset/{token}", json={})
         assert r.status_code == 204
 
         # Missing information
