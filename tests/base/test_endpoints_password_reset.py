@@ -62,7 +62,7 @@ class TestApp(BaseTests):
         assert token is not None
 
         # Do password reset
-        r = client.put(f"{AUTH_URI}/reset/thisisatoken")
+        r = client.put(f"{AUTH_URI}/reset/thisisatoken", json={})
         # this token is not valid
         assert r.status_code == 400
 
