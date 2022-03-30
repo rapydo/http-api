@@ -109,11 +109,11 @@ class BaseTests:
 
         if method == "post":
             r = client.post(
-                f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
+                f"{API_URI}/{endpoint}", json={"get_schema": 1}, headers=headers
             )
         else:
             r = client.put(
-                f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
+                f"{API_URI}/{endpoint}", json={"get_schema": 1}, headers=headers
             )
 
         assert r.status_code == 200
