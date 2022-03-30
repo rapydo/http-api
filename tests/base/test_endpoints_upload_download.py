@@ -41,7 +41,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.put(
             f"{API_URI}/tests/upload",
-            json={
+            data={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
                 # By setting force False only txt files will be allowed for upload
                 # Strange, but it is how the endpoint is configured to improve the tests
@@ -56,7 +56,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.put(
             f"{API_URI}/tests/upload",
-            json={
+            data={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
                 # By setting force False only txt files will be allowed for upload
                 # Strange, but it is how the endpoint is configured to improve the tests
@@ -71,7 +71,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.put(
             f"{API_URI}/tests/upload",
-            json={"file": (io.BytesIO(str.encode(self.fcontent)), self.fname)},
+            data={"file": (io.BytesIO(str.encode(self.fcontent)), self.fname)},
         )
         assert r.status_code == 409
         err = f"File '{self.fname}' already exists, use force parameter to overwrite"
@@ -79,7 +79,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.put(
             f"{API_URI}/tests/upload",
-            json={
+            data={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
                 "force": True,
             },
@@ -115,7 +115,7 @@ class TestUploadAndDownload(BaseTests):
         new_content = "new content"
         r = client.put(
             f"{API_URI}/tests/upload",
-            json={
+            data={
                 "file": (io.BytesIO(str.encode(new_content)), self.fname),
                 "force": True,
             },
