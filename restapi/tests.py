@@ -256,9 +256,9 @@ class BaseTests:
                             data["new_password"] = newpwd
                             data["password_confirm"] = newpwd
                             # random int with 6 digits
-                            data["totp_code"] = cls.faker.pyint(
+                            data["totp_code"] = str(cls.faker.pyint(
                                 min_value=100000, max_value=999999
-                            )
+                            ))
                             BaseTests.do_login(
                                 client,
                                 USER,
