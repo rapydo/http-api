@@ -196,7 +196,7 @@ class BaseTests:
         data["username"] = USER
         data["password"] = PWD
 
-        r = client.post(f"{AUTH_URI}/login", data=data)
+        r = client.post(f"{AUTH_URI}/login", json=data)
         content = orjson.loads(r.data.decode("utf-8"))
 
         if r.status_code == 403:
@@ -358,7 +358,7 @@ class BaseTests:
         if data:
             user_data.update(data)
 
-        r = client.post(f"{API_URI}/admin/users", data=user_data, headers=admin_headers)
+        r = client.post(f"{API_URI}/admin/users", json=user_data, headers=admin_headers)
         assert r.status_code == 200
         uuid = cls.get_content(r)
         assert isinstance(uuid, str)
@@ -389,7 +389,7 @@ class BaseTests:
         if data:
             group_data.update(data)
         r = client.post(
-            f"{API_URI}/admin/groups", data=group_data, headers=admin_headers
+            f"{API_URI}/admin/groups", json=group_data, headers=admin_headers
         )
         assert r.status_code == 200
         uuid = cls.get_content(r)
