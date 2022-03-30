@@ -11,6 +11,12 @@ from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import Events, log
 
 
+def get_random_group_name(faker: Faker) -> str:
+    # faker.company alone is not always enough and some
+    # "Group already exists with shortname" occasionally occur during tests
+    return f"{faker.company()}-{faker.pyint(2, 100)}"
+
+
 class TestApp(BaseTests):
     def test_admin_groups(self, client: FlaskClient, faker: Faker) -> None:
 
@@ -91,8 +97,8 @@ class TestApp(BaseTests):
             assert fullname is not None
 
             newdata = {
-                "shortname": f"{faker.company()}-{faker.pyint(2, 100)}",
-                "fullname": faker.company(),
+                "shortname": get_random_group_name(faker),
+                "fullname": get_random_group_name(faker),
             }
 
             # Test the differences between post and put schema
@@ -179,7 +185,7 @@ class TestApp(BaseTests):
 
             data = {
                 "fullname": "Default group",
-                "shortname": faker.company(),
+                "shortname": get_random_group_name(faker),
             }
 
             # Event 4: create
