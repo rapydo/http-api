@@ -26,7 +26,7 @@ else:
     ) -> Tuple[str, CaseInsensitiveDict[str]]:
 
         data["totp_code"] = BaseTests.generate_totp(data.get("username"))
-        r = client.post("/auth/login", data=data)
+        r = client.post("/auth/login", json=data)
         content = orjson.loads(r.data.decode("utf-8"))
 
         if r.status_code == 403:
