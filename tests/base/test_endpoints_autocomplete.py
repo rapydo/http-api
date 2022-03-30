@@ -55,12 +55,12 @@ class TestApp(BaseTests):
             data.append(element[schema[0]["autocomplete_id_bind"]])
 
         # put accepts a single id provided by the autocomplete endpoint
-        r = client.put(f"{API_URI}/tests/autocomplete", data={"element": data[0]})
+        r = client.put(f"{API_URI}/tests/autocomplete", json={"element": data[0]})
         assert r.status_code == 204
 
         # post accepts a list of ids provided by the autocomplete endpoint
         r = client.post(
             f"{API_URI}/tests/autocomplete",
-            data={"elements": orjson.dumps(data).decode("UTF8")},
+            json={"elements": orjson.dumps(data).decode("UTF8")},
         )
         assert r.status_code == 204

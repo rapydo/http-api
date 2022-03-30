@@ -121,7 +121,7 @@ else:
             assert events[0].url == "/auth/login"
 
             reset_data = {"reset_email": data["email"]}
-            r = client.post(f"{AUTH_URI}/reset", data=reset_data)
+            r = client.post(f"{AUTH_URI}/reset", json=reset_data)
             assert r.status_code == 403
             assert self.get_content(r) == BAN_MESSAGE
 
@@ -330,7 +330,7 @@ else:
                 registration_data["surname"] = faker.last_name()
                 registration_data["password"] = faker.password(strong=True)
                 registration_data["password_confirm"] = registration_data["password"]
-                r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+                r = client.post(f"{AUTH_URI}/profile", json=registration_data)
                 # now the user is created but INACTIVE, activation endpoint is needed
                 assert r.status_code == 200
                 registration_message = "We are sending an email to your email address "

@@ -38,7 +38,7 @@ class TestApp(BaseTests):
             assert field in response
 
         # Verify custom input fields (if defined) included in the profile input schema
-        r = client.patch(f"{AUTH_URI}/profile", data={"get_schema": 1}, headers=headers)
+        r = client.patch(f"{AUTH_URI}/profile", json={"get_schema": 1}, headers=headers)
         response = self.get_content(r)
         assert isinstance(response, list)
         for field in profile_inputs.keys():
@@ -49,7 +49,7 @@ class TestApp(BaseTests):
                 pytest.fail(f"Input field {field} not found in profile input schema")
 
         # Verify custom registration fields (if defined) included in the reg. schema
-        r = client.post(f"{AUTH_URI}/profile", data={"get_schema": 1})
+        r = client.post(f"{AUTH_URI}/profile", json={"get_schema": 1})
         response = self.get_content(r)
         assert isinstance(response, list)
         for field in registration_inputs.keys():
@@ -64,7 +64,7 @@ class TestApp(BaseTests):
         headers, _ = self.do_login(client, None, None)
         # Verify custom admin input fields (if defined) included in admin users schema
         r = client.post(
-            f"{API_URI}/admin/users", data={"get_schema": 1}, headers=headers
+            f"{API_URI}/admin/users", json={"get_schema": 1}, headers=headers
         )
         response = self.get_content(r)
         assert isinstance(response, list)

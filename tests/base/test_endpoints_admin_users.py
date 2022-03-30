@@ -55,7 +55,7 @@ class TestApp(BaseTests):
             data["expiration"] = None
 
             # Event 1: create
-            r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
+            r = client.post(f"{API_URI}/admin/users", json=data, headers=headers)
             assert r.status_code == 200
             uuid = self.get_content(r)
             assert isinstance(uuid, str)
@@ -139,7 +139,7 @@ class TestApp(BaseTests):
             assert len(events[0].payload) == 0
 
             # Check duplicates
-            r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
+            r = client.post(f"{API_URI}/admin/users", json=data, headers=headers)
             assert r.status_code == 409
             assert (
                 self.get_content(r)
@@ -147,7 +147,7 @@ class TestApp(BaseTests):
             )
 
             data["email"] = BaseAuthentication.default_user
-            r = client.post(f"{API_URI}/admin/users", data=data, headers=headers)
+            r = client.post(f"{API_URI}/admin/users", json=data, headers=headers)
             assert r.status_code == 409
             assert (
                 self.get_content(r)
@@ -161,7 +161,7 @@ class TestApp(BaseTests):
             data2["expiration"] = None
 
             # Event 3: create
-            r = client.post(f"{API_URI}/admin/users", data=data2, headers=headers)
+            r = client.post(f"{API_URI}/admin/users", json=data2, headers=headers)
             assert r.status_code == 200
             uuid2 = self.get_content(r)
             assert isinstance(uuid2, str)
@@ -223,7 +223,7 @@ class TestApp(BaseTests):
             # email cannot be modified
             new_data = {"email": data.get("email")}
             r = client.put(
-                f"{API_URI}/admin/users/{uuid2}", data=new_data, headers=headers
+                f"{API_URI}/admin/users/{uuid2}", json=new_data, headers=headers
             )
             # from webargs >= 6 this endpoint no longer return a 204 but a 400
             # because email is an unknown field
@@ -272,7 +272,7 @@ class TestApp(BaseTests):
             # Event 7: modify
             newpwd = faker.password(strong=True)
             data = {"password": newpwd, "email_notification": True}
-            r = client.put(f"{API_URI}/admin/users/{uuid2}", data=data, headers=headers)
+            r = client.put(f"{API_URI}/admin/users/{uuid2}", json=data, headers=headers)
             assert r.status_code == 204
 
             # User 2 modified (same target_id as above)
@@ -312,7 +312,7 @@ class TestApp(BaseTests):
             r = client.get(f"{API_URI}/admin/users/{uuid}", headers=headers2)
             assert r.status_code == 401
 
-            r = client.post(f"{API_URI}/admin/users", data=data, headers=headers2)
+            r = client.post(f"{API_URI}/admin/users", json=data, headers=headers2)
             assert r.status_code == 401
 
             r = client.put(
@@ -360,7 +360,7 @@ class TestApp(BaseTests):
                 "roles": orjson.dumps([role]).decode("UTF8"),
             }
             # Event 9: modify
-            r = client.put(f"{API_URI}/admin/users/{uuid}", data=data, headers=headers)
+            r = client.put(f"{API_URI}/admin/users/{uuid}", json=data, headers=headers)
             assert r.status_code == 204
 
             # Default user is modified
@@ -523,7 +523,7 @@ class TestApp(BaseTests):
         data["expiration"] = None
         data["roles"] = orjson.dumps([Role.ADMIN]).decode("UTF8")
 
-        r = client.post(f"{API_URI}/admin/users", data=data, headers=staff_headers)
+        r = client.post(f"{API_URI}/admin/users", json=data, headers=staff_headers)
         assert r.status_code == 400
 
         # Admin users are filtered out when asked from a Staff user

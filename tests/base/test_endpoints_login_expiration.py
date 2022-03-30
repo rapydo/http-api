@@ -18,7 +18,7 @@ class TestApp2(BaseTests):
         # Let's create a new user with an expiration time of N seconds
         expiration_time = 10
         expiration = datetime.now(pytz.utc) + timedelta(seconds=expiration_time)
-        uuid, data = self.create_user(client, data={"expiration": expiration})
+        uuid, data = self.create_user(client, json={"expiration": expiration})
 
         # The user is valid
         valid_headers, _ = self.do_login(client, data["email"], data["password"])
@@ -49,7 +49,7 @@ class TestApp2(BaseTests):
 
         if Env.get_bool("ALLOW_PASSWORD_RESET"):
             reset_data = {"reset_email": data["email"]}
-            r = client.post(f"{AUTH_URI}/reset", data=reset_data)
+            r = client.post(f"{AUTH_URI}/reset", json=reset_data)
             assert r.status_code == 403
             assert self.get_content(r) == "Sorry, this account is expired"
 

@@ -16,17 +16,17 @@ class TestApp(BaseTests):
         # Create group 1 with 1 Coordinator and 1 User
         group1_uuid, _ = self.create_group(client)
         _, user1_data = self.create_user(
-            client, roles=[Role.COORDINATOR], data={"group": group1_uuid}
+            client, roles=[Role.COORDINATOR], json={"group": group1_uuid}
         )
         _, user2_data = self.create_user(
-            client, roles=[Role.USER], data={"group": group1_uuid}
+            client, roles=[Role.USER], json={"group": group1_uuid}
         )
 
         # Create group 2 with only 1 Coordinator
         group2_uuid, _ = self.create_group(client)
 
         _, user3_data = self.create_user(
-            client, roles=[Role.COORDINATOR], data={"group": group2_uuid}
+            client, roles=[Role.COORDINATOR], json={"group": group2_uuid}
         )
 
         # Verify POST / PUT and DELETE are not enabled
@@ -110,7 +110,7 @@ class TestApp(BaseTests):
 
         # Add an admin to group1
         _, user4_data = self.create_user(
-            client, roles=[Role.ADMIN, Role.COORDINATOR], data={"group": group1_uuid}
+            client, roles=[Role.ADMIN, Role.COORDINATOR], json={"group": group1_uuid}
         )
 
         # Verify as Admin AND Coordinator (Expected: all members, including admins)

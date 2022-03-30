@@ -228,7 +228,7 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
         # update profile, no data
-        r = client.patch(f"{AUTH_URI}/profile", data={}, headers=headers)
+        r = client.patch(f"{AUTH_URI}/profile", json={}, headers=headers)
         assert r.status_code == 204
 
         events = self.get_last_events(1)
@@ -255,11 +255,11 @@ class TestApp(BaseTests):
 
         # update profile
         data = {"name": newname, "uuid": newuuid}
-        r = client.patch(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.patch(f"{AUTH_URI}/profile", json=data, headers=headers)
         # uuid cannot be modified and will raise an unknown field
         assert r.status_code == 400
         data = {"name": newname}
-        r = client.patch(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.patch(f"{AUTH_URI}/profile", json=data, headers=headers)
         assert r.status_code == 204
 
         events = self.get_last_events(1)
@@ -281,40 +281,40 @@ class TestApp(BaseTests):
         assert c.get("uuid") != newuuid
 
         # change password, no data
-        r = client.put(f"{AUTH_URI}/profile", data={}, headers=headers)
+        r = client.put(f"{AUTH_URI}/profile", json={}, headers=headers)
         assert r.status_code == 400
         # Sending a new_password and/or password_confirm without a password
         newpassword = faker.password()
         data = {"new_password": newpassword}
-        r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
         assert r.status_code == 400
         data = {"password_confirm": newpassword}
-        r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
         assert r.status_code == 400
         data = {"new_password": newpassword, "password_confirm": newpassword}
-        r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
         assert r.status_code == 400
 
         data = {}
         data["password"] = faker.password(length=5)
-        r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
         assert r.status_code == 400
 
         data["new_password"] = faker.password(length=5)
-        r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
         assert r.status_code == 400
 
         data["password_confirm"] = faker.password(length=5)
-        r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
         assert r.status_code == 400
 
         data["password"] = BaseAuthentication.default_password
-        r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
         assert r.status_code == 400
 
         # Passwords are too short
         data["password_confirm"] = data["new_password"]
-        r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
         assert r.status_code == 400
 
         # Trying to set new password == password... it is not permitted!
@@ -324,13 +324,13 @@ class TestApp(BaseTests):
         if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
             data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
 
-        r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
         assert r.status_code == 409
 
         # Change the password
         data["new_password"] = faker.password(strong=True)
         data["password_confirm"] = data["new_password"]
-        r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
         assert r.status_code == 204
 
         # After a change password a spam of delete Token is expected
@@ -357,7 +357,7 @@ class TestApp(BaseTests):
         data["password_confirm"] = BaseAuthentication.default_password
         if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
             data["totp_code"] = BaseTests.generate_totp(BaseAuthentication.default_user)
-        r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+        r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
         assert r.status_code == 204
 
         # After a change password a spam of delete Token is expected
@@ -485,7 +485,7 @@ class TestApp(BaseTests):
                 "password_confirm": new_password,
             }
 
-            r = client.post(f"{AUTH_URI}/login", data=data)
+            r = client.post(f"{AUTH_URI}/login", json=data)
             assert r.status_code == 403
             resp = self.get_content(r)
             assert isinstance(resp, dict)
@@ -505,7 +505,7 @@ class TestApp(BaseTests):
             assert events[0].user == username
 
             data["totp_code"] = "000000"
-            r = client.post(f"{AUTH_URI}/login", data=data)
+            r = client.post(f"{AUTH_URI}/login", json=data)
             assert r.status_code == 401
             assert self.get_content(r) == "Verification code is not valid"
 
@@ -518,7 +518,7 @@ class TestApp(BaseTests):
 
             for totp in invalid_totp:
                 data["totp_code"] = totp
-                r = client.post(f"{AUTH_URI}/login", data=data)
+                r = client.post(f"{AUTH_URI}/login", json=data)
                 assert r.status_code == 400
                 resp = self.get_content(r)
                 assert isinstance(resp, dict)
@@ -526,7 +526,7 @@ class TestApp(BaseTests):
                 assert "Invalid TOTP format" in resp["totp_code"]
 
             data["totp_code"] = self.generate_totp(username)
-            r = client.post(f"{AUTH_URI}/login", data=data)
+            r = client.post(f"{AUTH_URI}/login", json=data)
             assert r.status_code == 200
 
             events = self.get_last_events(1)
@@ -544,7 +544,7 @@ class TestApp(BaseTests):
                 "username": username,
                 "password": password,
             }
-            r = client.post(f"{AUTH_URI}/login", data=data)
+            r = client.post(f"{AUTH_URI}/login", json=data)
             assert r.status_code == 403
             resp = self.get_content(r)
             assert isinstance(resp, dict)
@@ -554,7 +554,7 @@ class TestApp(BaseTests):
             assert "You do not provided a valid verification code" in resp["errors"]
 
             data["totp_code"] = "000000"
-            r = client.post(f"{AUTH_URI}/login", data=data)
+            r = client.post(f"{AUTH_URI}/login", json=data)
             assert r.status_code == 401
             assert self.get_content(r) == "Verification code is not valid"
 
@@ -567,7 +567,7 @@ class TestApp(BaseTests):
 
             for totp in invalid_totp:
                 data["totp_code"] = totp
-                r = client.post(f"{AUTH_URI}/login", data=data)
+                r = client.post(f"{AUTH_URI}/login", json=data)
                 assert r.status_code == 400
                 resp = self.get_content(r)
                 assert isinstance(resp, dict)
@@ -575,7 +575,7 @@ class TestApp(BaseTests):
                 assert "Invalid TOTP format" in resp["totp_code"]
 
             data["totp_code"] = self.generate_totp(username)
-            r = client.post(f"{AUTH_URI}/login", data=data)
+            r = client.post(f"{AUTH_URI}/login", json=data)
             assert r.status_code == 200
 
             events = self.get_last_events(1)
@@ -595,12 +595,12 @@ class TestApp(BaseTests):
                 "password_confirm": new_password,
             }
 
-            r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+            r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
             assert r.status_code == 401
             assert self.get_content(r) == "Verification code is missing"
 
             data["totp_code"] = "000000"
-            r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+            r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
             assert r.status_code == 401
             assert self.get_content(r) == "Verification code is not valid"
 
@@ -613,7 +613,7 @@ class TestApp(BaseTests):
 
             for totp in invalid_totp:
                 data["totp_code"] = totp
-                r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+                r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
                 assert r.status_code == 400
                 resp = self.get_content(r)
                 assert isinstance(resp, dict)
@@ -621,7 +621,7 @@ class TestApp(BaseTests):
                 assert "Invalid TOTP format" in resp["totp_code"]
 
             data["totp_code"] = self.generate_totp(username)
-            r = client.put(f"{AUTH_URI}/profile", data=data, headers=headers)
+            r = client.put(f"{AUTH_URI}/profile", json=data, headers=headers)
             assert r.status_code == 204
 
             # After a change password a spam of delete Token is expected

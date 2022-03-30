@@ -56,7 +56,7 @@ class TestApp(BaseTests):
             data = self.buildData(schema)
 
             # Event 1: create
-            r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
+            r = client.post(f"{API_URI}/admin/groups", json=data, headers=headers)
             assert r.status_code == 200
             uuid = self.get_content(r)
             assert isinstance(uuid, str)
@@ -121,7 +121,7 @@ class TestApp(BaseTests):
 
             # Event 2: modify
             r = client.put(
-                f"{API_URI}/admin/groups/{uuid}", data=newdata, headers=headers
+                f"{API_URI}/admin/groups/{uuid}", json=newdata, headers=headers
             )
             assert r.status_code == 204
 
@@ -146,7 +146,7 @@ class TestApp(BaseTests):
                     assert g.get("fullname") != data.get("fullname")
                     assert g.get("fullname") != fullname
 
-            r = client.put(f"{API_URI}/admin/groups/xyz", data=data, headers=headers)
+            r = client.put(f"{API_URI}/admin/groups/xyz", json=data, headers=headers)
             assert r.status_code == 404
 
             # Event 3: delete
@@ -189,7 +189,7 @@ class TestApp(BaseTests):
             }
 
             # Event 4: create
-            new_group_uuid, _ = self.create_group(client, data=data)
+            new_group_uuid, _ = self.create_group(client, json=data)
 
             events = self.get_last_events(1, filters={"target_type": "Group"})
             # A new group is created
@@ -216,7 +216,7 @@ class TestApp(BaseTests):
 
             # Event 5: modify
             r = client.put(
-                f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers
+                f"{API_URI}/admin/users/{user_uuid}", json=data, headers=headers
             )
             assert r.status_code == 204
 
