@@ -39,7 +39,7 @@ class Schema(MarshmallowSchema):
 
         if "access_token" in data:
             # valid for ImmutableMultiDict:
-            data = data.to_dict()  # type: ignore
+            # data = data.to_dict()  # type: ignore
             data.pop("access_token")
 
         if GET_SCHEMA_KEY in data:
