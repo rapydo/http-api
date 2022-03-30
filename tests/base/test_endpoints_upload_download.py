@@ -65,7 +65,7 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
-        destination_path = json_PATH.joinpath(upload_folder, self.fname)
+        destination_path = DATA_PATH.joinpath(upload_folder, self.fname)
         assert destination_path.exists()
         assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
 
