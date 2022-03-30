@@ -64,7 +64,7 @@ class TestApp2(BaseTests):
         expiration = datetime.now(pytz.utc) + timedelta(seconds=expiration_time)
         r = client.put(
             f"{API_URI}/admin/users/{uuid}",
-            data={"expiration": expiration},
+            json={"expiration": expiration},
             headers=admin_headers,
         )
         assert r.status_code == 204
@@ -98,7 +98,7 @@ class TestApp2(BaseTests):
         expiration = datetime.now(pytz.utc) + timedelta(seconds=expiration_time)
         r = client.put(
             f"{API_URI}/admin/users/{uuid}",
-            data={"expiration": expiration},
+            json={"expiration": expiration},
             headers=admin_headers,
         )
         assert r.status_code == 204
@@ -111,7 +111,7 @@ class TestApp2(BaseTests):
         expiration = datetime.now(pytz.utc) - timedelta(seconds=expiration_time)
         r = client.put(
             f"{API_URI}/admin/users/{uuid}",
-            data={"expiration": expiration},
+            json={"expiration": expiration},
             headers=admin_headers,
         )
         assert r.status_code == 204

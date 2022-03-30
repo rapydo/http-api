@@ -402,7 +402,7 @@ else:
                 # request activation forbidden due to blocked acount
                 r = client.post(
                     f"{AUTH_URI}/profile/activate",
-                    data={"username": registration_data["email"]},
+                    json={"username": registration_data["email"]},
                 )
                 assert r.status_code == 403
                 assert self.get_content(r) == BAN_MESSAGE
@@ -420,7 +420,7 @@ else:
 
                 r = client.post(
                     f"{AUTH_URI}/profile/activate",
-                    data={"username": registration_data["email"]},
+                    json={"username": registration_data["email"]},
                 )
                 assert r.status_code == 200
 

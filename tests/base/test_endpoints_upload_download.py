@@ -41,7 +41,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.put(
             f"{API_URI}/tests/upload",
-            data={
+            json={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
                 # By setting force False only txt files will be allowed for upload
                 # Strange, but it is how the endpoint is configured to improve the tests
@@ -56,7 +56,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.put(
             f"{API_URI}/tests/upload",
-            data={
+            json={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
                 # By setting force False only txt files will be allowed for upload
                 # Strange, but it is how the endpoint is configured to improve the tests
@@ -65,13 +65,13 @@ class TestUploadAndDownload(BaseTests):
         )
         assert r.status_code == 200
 
-        destination_path = DATA_PATH.joinpath(upload_folder, self.fname)
+        destination_path = json_PATH.joinpath(upload_folder, self.fname)
         assert destination_path.exists()
         assert oct(os.stat(destination_path).st_mode & 0o777) == "0o440"
 
         r = client.put(
             f"{API_URI}/tests/upload",
-            data={"file": (io.BytesIO(str.encode(self.fcontent)), self.fname)},
+            json={"file": (io.BytesIO(str.encode(self.fcontent)), self.fname)},
         )
         assert r.status_code == 409
         err = f"File '{self.fname}' already exists, use force parameter to overwrite"
@@ -79,7 +79,7 @@ class TestUploadAndDownload(BaseTests):
 
         r = client.put(
             f"{API_URI}/tests/upload",
-            data={
+            json={
                 "file": (io.BytesIO(str.encode(self.fcontent)), self.fname),
                 "force": True,
             },
@@ -115,7 +115,7 @@ class TestUploadAndDownload(BaseTests):
         new_content = "new content"
         r = client.put(
             f"{API_URI}/tests/upload",
-            data={
+            json={
                 "file": (io.BytesIO(str.encode(new_content)), self.fname),
                 "force": True,
             },
@@ -187,7 +187,7 @@ class TestUploadAndDownload(BaseTests):
         with io.StringIO(faker.text()) as f:
             r = client.put(
                 upload_endpoint,
-                data=f,
+                json=f,
                 headers={"Content-Range": "!"},
             )
         assert r.status_code == 400
@@ -198,7 +198,7 @@ class TestUploadAndDownload(BaseTests):
         with io.StringIO(up_data[0:5]) as f:
             r = client.put(
                 upload_endpoint,
-                data=f,
+                json=f,
                 headers={"Content-Range": f"bytes 0-5/{STR_LEN}"},
             )
         assert r.status_code == 206
@@ -212,7 +212,7 @@ class TestUploadAndDownload(BaseTests):
         with io.StringIO(up_data[5:]) as f:
             r = client.put(
                 upload_endpoint,
-                data=f,
+                json=f,
                 headers={"Content-Range": f"bytes 5-{STR_LEN}/{STR_LEN}"},
             )
         assert r.status_code == 200
@@ -287,7 +287,7 @@ class TestUploadAndDownload(BaseTests):
         with io.StringIO(up_data2) as f:
             r = client.put(
                 upload_endpoint,
-                data=f,
+                json=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
         assert r.status_code == 503
@@ -301,7 +301,7 @@ class TestUploadAndDownload(BaseTests):
         with io.StringIO(up_data2) as f:
             r = client.put(
                 upload_endpoint,
-                data=f,
+                json=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
 
@@ -353,7 +353,7 @@ class TestUploadAndDownload(BaseTests):
         with io.StringIO(up_data2) as f:
             r = client.put(
                 f"{API_URI}/tests/chunkedupload/{filename}",
-                data=f,
+                json=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
 

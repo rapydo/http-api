@@ -189,7 +189,7 @@ class TestApp(BaseTests):
             }
 
             # Event 4: create
-            new_group_uuid, _ = self.create_group(client, json=data)
+            new_group_uuid, _ = self.create_group(client, data=data)
 
             events = self.get_last_events(1, filters={"target_type": "Group"})
             # A new group is created

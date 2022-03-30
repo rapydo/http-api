@@ -195,7 +195,7 @@ class TestApp(BaseTests):
             # send and invalid user_id
             r = client.put(
                 f"{API_URI}/admin/users/invalid",
-                data={"name": faker.name()},
+                json={"name": faker.name()},
                 headers=headers,
             )
             assert r.status_code == 404
@@ -203,7 +203,7 @@ class TestApp(BaseTests):
             # Event 4: modify
             r = client.put(
                 f"{API_URI}/admin/users/{uuid}",
-                data={"name": faker.name()},
+                json={"name": faker.name()},
                 headers=headers,
             )
             assert r.status_code == 204
@@ -317,7 +317,7 @@ class TestApp(BaseTests):
 
             r = client.put(
                 f"{API_URI}/admin/users/{uuid}",
-                data={"name": faker.name()},
+                json={"name": faker.name()},
                 headers=headers2,
             )
             assert r.status_code == 401
@@ -438,7 +438,7 @@ class TestApp(BaseTests):
         # Staff users are not allowed to edit Admins
         r = client.put(
             f"{API_URI}/admin/users/{admin_uuid}",
-            data={
+            json={
                 "name": faker.name(),
                 "roles": orjson.dumps([Role.STAFF]).decode("UTF8"),
             },
@@ -450,7 +450,7 @@ class TestApp(BaseTests):
 
         r = client.put(
             f"{API_URI}/admin/users/{staff_uuid}",
-            data={
+            json={
                 "name": faker.name(),
                 "roles": orjson.dumps([Role.STAFF]).decode("UTF8"),
             },
@@ -460,7 +460,7 @@ class TestApp(BaseTests):
 
         r = client.put(
             f"{API_URI}/admin/users/{user_uuid}",
-            data={
+            json={
                 "name": faker.name(),
                 "roles": orjson.dumps([Role.USER]).decode("UTF8"),
             },
@@ -506,7 +506,7 @@ class TestApp(BaseTests):
         # Staff can't send role admin on put
         r = client.put(
             f"{API_URI}/admin/users/{user_uuid}",
-            data={
+            json={
                 "name": faker.name(),
                 "roles": orjson.dumps([Role.ADMIN]).decode("UTF8"),
             },

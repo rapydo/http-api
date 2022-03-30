@@ -215,7 +215,7 @@ class TestApp(BaseTests):
         # request activation, correct username
         r = client.post(
             f"{AUTH_URI}/profile/activate",
-            data={"username": registration_data["email"]},
+            json={"username": registration_data["email"]},
         )
         assert r.status_code == 200
         assert self.get_content(r) == activation_message
