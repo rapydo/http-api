@@ -139,7 +139,7 @@ class TestApp(BaseTests):
         headers, _ = self.do_login(client, None, new_pwd)
 
         # Token is no longer valid
-        r = client.put(f"{AUTH_URI}/reset/{token}")
+        r = client.put(f"{AUTH_URI}/reset/{token}", json={})
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == "Invalid reset token"
@@ -172,21 +172,21 @@ class TestApp(BaseTests):
 
         # Token created for another user
         token = self.get_crafted_token("r")
-        r = client.put(f"{AUTH_URI}/reset/{token}")
+        r = client.put(f"{AUTH_URI}/reset/{token}", json={})
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == "Invalid reset token"
 
         # Token created for another user
         token = self.get_crafted_token("r", wrong_algorithm=True)
-        r = client.put(f"{AUTH_URI}/reset/{token}")
+        r = client.put(f"{AUTH_URI}/reset/{token}", json={})
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == "Invalid reset token"
 
         # Token created for another user
         token = self.get_crafted_token("r", wrong_secret=True)
-        r = client.put(f"{AUTH_URI}/reset/{token}")
+        r = client.put(f"{AUTH_URI}/reset/{token}", json={})
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == "Invalid reset token"
@@ -199,28 +199,28 @@ class TestApp(BaseTests):
         uuid = response.get("uuid")
 
         token = self.get_crafted_token("x", user_id=uuid)
-        r = client.put(f"{AUTH_URI}/reset/{token}")
+        r = client.put(f"{AUTH_URI}/reset/{token}", json={})
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == "Invalid reset token"
 
         # token created for the correct user, but from outside the system!!
         token = self.get_crafted_token("r", user_id=uuid)
-        r = client.put(f"{AUTH_URI}/reset/{token}")
+        r = client.put(f"{AUTH_URI}/reset/{token}", json={})
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == "Invalid reset token"
 
         # Immature token
         token = self.get_crafted_token("r", user_id=uuid, immature=True)
-        r = client.put(f"{AUTH_URI}/reset/{token}")
+        r = client.put(f"{AUTH_URI}/reset/{token}", json={})
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == "Invalid reset token"
 
         # Expired token
         token = self.get_crafted_token("r", user_id=uuid, expired=True)
-        r = client.put(f"{AUTH_URI}/reset/{token}")
+        r = client.put(f"{AUTH_URI}/reset/{token}", json={})
         assert r.status_code == 400
         c = self.get_content(r)
         assert c == "Invalid reset token: this request is expired"
