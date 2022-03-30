@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict
 
 import pytest
@@ -96,7 +97,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/admin/mail", json=data, headers=headers)
         assert r.status_code == 400
 
-        data["cc"] = [faker.ascii_email()]
+        data["cc"] = json.dumps([faker.ascii_email()])
         r = client.post(f"{API_URI}/admin/mail", json=data, headers=headers)
         assert r.status_code == 204
 
@@ -116,7 +117,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/admin/mail", json=data, headers=headers)
         assert r.status_code == 400
 
-        data["bcc"] = [faker.ascii_email()]
+        data["bcc"] = json.dumps([faker.ascii_email()])
         r = client.post(f"{API_URI}/admin/mail", json=data, headers=headers)
         assert r.status_code == 204
 
