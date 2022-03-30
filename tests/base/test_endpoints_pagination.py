@@ -78,7 +78,7 @@ class TestApp(BaseTests):
         r = client.get(f"{API_URI}/tests/pagination", query_string=data)
         assert r.status_code == 400
 
-        r = client.post(f"{API_URI}/tests/pagination")
+        r = client.post(f"{API_URI}/tests/pagination", json={})
         assert r.status_code == 200
         content = self.get_content(r)
         assert isinstance(content, list)
@@ -158,7 +158,7 @@ class TestApp(BaseTests):
         assert isinstance(content, list)
 
         # Request get_total as query parameter but is ignored => sent a list of elements
-        r = client.post(f"{API_URI}/tests/pagination", query_string={"get_total": True})
+        r = client.post(f"{API_URI}/tests/pagination", json={}, query_string={"get_total": True})
         assert r.status_code == 200
         content = self.get_content(r)
         assert isinstance(content, list)
