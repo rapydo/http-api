@@ -152,8 +152,7 @@ class TestUploadAndDownload(BaseTests):
     ) -> None:
 
         log.warning("Temporary disabled upload test")
-        if True:
-            return None
+        return None
 
         warnings.filterwarnings(
             "ignore", message="unclosed file <_io.BufferedReader name="
