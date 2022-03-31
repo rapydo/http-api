@@ -4,7 +4,7 @@ REST APIs integrated with the RAPyDo framework
 
 Based on:
 
-- Flask 2.1.0
+- Flask 2.1.1
 - Flask-RESTful 0.3.9
 - flask-apispec 0.11.1 with apispec 5.1.1
 - marshmallow 3.15.0
