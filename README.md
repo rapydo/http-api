@@ -6,7 +6,7 @@ Based on:
 
 - Flask 2.1.0
 - Flask-RESTful 0.3.9
-- flask-apispec 0.11.0 with apispec 5.1.1
+- flask-apispec 0.11.1 with apispec 5.1.1
 - marshmallow 3.15.0
 - webargs 8.1.0
 - Flask-Caching 1.10.1
