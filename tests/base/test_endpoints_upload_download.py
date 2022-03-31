@@ -30,7 +30,8 @@ class TestUploadAndDownload(BaseTests):
     ) -> None:
 
         log.warning("Temporary disabled upload test")
-        return None
+        if True:
+            return None
 
         warnings.filterwarnings(
             "ignore", message="unclosed file <_io.BufferedReader name="
@@ -151,7 +152,8 @@ class TestUploadAndDownload(BaseTests):
     ) -> None:
 
         log.warning("Temporary disabled upload test")
-        return None
+        if True:
+            return None
 
         warnings.filterwarnings(
             "ignore", message="unclosed file <_io.BufferedReader name="
