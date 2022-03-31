@@ -6,6 +6,7 @@ from typing import Dict
 from faker import Faker
 
 from restapi.config import DATA_PATH, PRODUCTION, get_backend_url
+from restapi.env import Env
 from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
 
@@ -29,8 +30,8 @@ class TestUploadAndDownload(BaseTests):
         self, client: FlaskClient, faker: Faker
     ) -> None:
 
-        log.warning("Temporary disabled upload test")
-        if True:
+        if Env.get("TEMPORARY_DISABLE_UPLOAD_DOWNLOAD_TESTS", "1"):
+            log.warning("Temporary disabled upload test")
             return None
 
         warnings.filterwarnings(
@@ -151,8 +152,9 @@ class TestUploadAndDownload(BaseTests):
         self, client: FlaskClient, faker: Faker
     ) -> None:
 
-        log.warning("Temporary disabled upload test")
-        return None
+        if Env.get("TEMPORARY_DISABLE_UPLOAD_DOWNLOAD_TESTS", "1"):
+            log.warning("Temporary disabled upload test")
+            return None
 
         warnings.filterwarnings(
             "ignore", message="unclosed file <_io.BufferedReader name="

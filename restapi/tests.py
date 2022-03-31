@@ -95,7 +95,7 @@ class BaseTests:
         raise AttributeError(f"Class variable {variable} not found")  # pragma: no cover
 
     @staticmethod
-    def getDynamicInputSchema(
+    def get_dynamic_input_schema(
         client: FlaskClient,
         endpoint: str,
         headers: Optional[Dict[str, str]],
@@ -340,7 +340,7 @@ class BaseTests:
 
         admin_headers, _ = cls.do_login(client, None, None)
         assert admin_headers is not None
-        schema = cls.getDynamicInputSchema(client, "admin/users", admin_headers)
+        schema = cls.get_dynamic_input_schema(client, "admin/users", admin_headers)
         user_data = cls.buildData(schema)
         if Connector.check_availability("smtp"):
             user_data["email_notification"] = False
@@ -384,7 +384,7 @@ class BaseTests:
 
         admin_headers, _ = cls.do_login(client, None, None)
         assert admin_headers is not None
-        schema = cls.getDynamicInputSchema(client, "admin/groups", admin_headers)
+        schema = cls.get_dynamic_input_schema(client, "admin/groups", admin_headers)
         group_data = cls.buildData(schema)
         if data:
             group_data.update(data)

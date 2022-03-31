@@ -47,7 +47,7 @@ class TestApp(BaseTests):
             r = client.get(f"{API_URI}/admin/users", headers=headers)
             assert r.status_code == 200
 
-            schema = self.getDynamicInputSchema(client, "admin/users", headers)
+            schema = self.get_dynamic_input_schema(client, "admin/users", headers)
             data = self.buildData(schema)
 
             data["email_notification"] = True
@@ -91,7 +91,7 @@ class TestApp(BaseTests):
             # Test the differences between post and put schema
             post_schema = {s["key"]: s for s in schema}
 
-            tmp_schema = self.getDynamicInputSchema(
+            tmp_schema = self.get_dynamic_input_schema(
                 client, f"admin/users/{uuid}", headers, method="put"
             )
             put_schema = {s["key"]: s for s in tmp_schema}
@@ -469,14 +469,14 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
         # Admin role is not allowed for Staff users
-        tmp_schema = self.getDynamicInputSchema(client, "admin/users", admin_headers)
+        tmp_schema = self.get_dynamic_input_schema(client, "admin/users", admin_headers)
         post_schema = {s["key"]: s for s in tmp_schema}
         assert "roles" in post_schema
         assert "options" in post_schema["roles"]
         assert "normal_user" in post_schema["roles"]["options"]
         assert "admin_root" in post_schema["roles"]["options"]
 
-        tmp_schema = self.getDynamicInputSchema(
+        tmp_schema = self.get_dynamic_input_schema(
             client, f"admin/users/{user_uuid}", admin_headers, method="put"
         )
         put_schema = {s["key"]: s for s in tmp_schema}
@@ -486,14 +486,14 @@ class TestApp(BaseTests):
         assert "normal_user" in post_schema["roles"]["options"]
         assert "admin_root" in post_schema["roles"]["options"]
 
-        tmp_schema = self.getDynamicInputSchema(client, "admin/users", staff_headers)
+        tmp_schema = self.get_dynamic_input_schema(client, "admin/users", staff_headers)
         post_schema = {s["key"]: s for s in tmp_schema}
         assert "roles" in post_schema
         assert "options" in post_schema["roles"]
         assert "normal_user" in post_schema["roles"]["options"]
         assert "admin_root" not in post_schema["roles"]["options"]
 
-        tmp_schema = self.getDynamicInputSchema(
+        tmp_schema = self.get_dynamic_input_schema(
             client, f"admin/users/{user_uuid}", staff_headers, method="put"
         )
         put_schema = {s["key"]: s for s in tmp_schema}
@@ -515,7 +515,7 @@ class TestApp(BaseTests):
         assert r.status_code == 400
 
         # Staff can't send role admin on post
-        schema = self.getDynamicInputSchema(client, "admin/users", staff_headers)
+        schema = self.get_dynamic_input_schema(client, "admin/users", staff_headers)
         data = self.buildData(schema)
 
         data["email_notification"] = True

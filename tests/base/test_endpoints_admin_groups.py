@@ -52,7 +52,7 @@ class TestApp(BaseTests):
             r = client.get(f"{API_URI}/admin/groups", headers=headers)
             assert r.status_code == 200
 
-            schema = self.getDynamicInputSchema(client, "admin/groups", headers)
+            schema = self.get_dynamic_input_schema(client, "admin/groups", headers)
             data = self.buildData(schema)
 
             # Event 1: create
@@ -104,7 +104,7 @@ class TestApp(BaseTests):
             # Test the differences between post and put schema
             post_schema = {s["key"]: s for s in schema}
 
-            tmp_schema = self.getDynamicInputSchema(
+            tmp_schema = self.get_dynamic_input_schema(
                 client, f"admin/groups/{uuid}", headers, method="put"
             )
             put_schema = {s["key"]: s for s in tmp_schema}

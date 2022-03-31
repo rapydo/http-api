@@ -10,7 +10,7 @@ class TestApp(BaseTests):
 
         # This test verifies that buildData is always able to randomly create
         # valid inputs for endpoints with inputs defined by marshamallow schemas
-        schema = self.getDynamicInputSchema(client, "tests/autocomplete", {})
+        schema = self.get_dynamic_input_schema(client, "tests/autocomplete", {})
 
         assert schema[0]["key"] == "elements"
         assert schema[0]["type"] == "string[]"
