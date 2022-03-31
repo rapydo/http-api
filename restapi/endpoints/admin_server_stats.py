@@ -121,9 +121,9 @@ class AdminStats(EndpointResource):
                 "free": vmstat_out2[9].strip().split(" ")[0],
             },
             "disk": {
-                "total_disk_space": total / 1024 ** 3,
-                "used_disk_space": used / 1024 ** 3,
-                "free_disk_space": free / 1024 ** 3,
+                "total_disk_space": total / 1024**3,
+                "used_disk_space": used / 1024**3,
+                "free_disk_space": free / 1024**3,
                 "occupacy": 100 * used / total,
             },
             "procs": {

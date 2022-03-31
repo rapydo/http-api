@@ -367,11 +367,13 @@ def create_app(
                     log.error("Cannot register {}: {}", endpoint.cls.__name__, e)
 
     # marshmallow errors handler
-    microservice.register_error_handler(422, handle_marshmallow_errors)
+    # Can't get the typing to work with flask 2.1
+    microservice.register_error_handler(422, handle_marshmallow_errors)  # type: ignore
 
     # microservice.before_request(inspect_request)
     # Logging responses
-    microservice.after_request(handle_response)
+    # Can't get the typing to work with flask 2.1
+    microservice.after_request(handle_response)  # type: ignore
 
     if SENTRY_URL is not None:  # pragma: no cover
 

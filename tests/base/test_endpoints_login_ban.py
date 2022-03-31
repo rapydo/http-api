@@ -53,7 +53,6 @@ elif max_login_attempts == 0:
             # Goodbye temporary user
             self.delete_user(client, uuid)
 
-
 else:
 
     # This test executes a sleep(ban_duration)... this assert is to prevent to
