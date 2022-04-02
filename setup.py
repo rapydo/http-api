@@ -76,10 +76,10 @@ setup(
         "pytest-cov==3.0.0",
         "pytest-timeout==2.1.0",
         "pytest-sugar==0.9.4",
-        "schemathesis==3.13.4",
+        "schemathesis==3.13.6",
         # Version 6.41 has compatibility issues with schemathesis
         "hypothesis==6.40.3",
-        "Faker==13.3.6",
+        "Faker==13.3.3",
         "Telethon==1.24.0",
     ],
     classifiers=[
