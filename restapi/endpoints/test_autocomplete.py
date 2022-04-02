@@ -51,7 +51,7 @@ if TESTING:
             )
 
         # This is the autocomplete endpoint
-        # It receive a strin an return a list of elements matching the input
+        # It receive a string and return a list of elements matching the input
         @decorators.marshal_with(MyElement(many=True), code=200)
         @decorators.endpoint(
             path="/tests/autocomplete/<query>",
