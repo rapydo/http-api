@@ -82,6 +82,8 @@ setup(
         "pytest-timeout==1.4.2",
         "pytest-sugar==0.9.4",
         "schemathesis==3.10.0",
+        # Version 6.41 has compatibility issues with schemathesis
+        "hypothesis==6.40.3",
         "Faker==9.5.0",
         "Telethon==1.23.0",
     ],
