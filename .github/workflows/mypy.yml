@@ -18,7 +18,7 @@ jobs:
       - name: Install MyPy
         run: |
           # libgeos is needed with python 3.10
-          apt-get install --yes --no-install-recommends libgeos-dev
+          sudo apt-get install --yes --no-install-recommends libgeos-dev
 
           python -m pip install --upgrade pip
           pip install \
