@@ -14,12 +14,9 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.10"
+          python-version: 3.9
       - name: Install MyPy
         run: |
-          # libgeos is needed with python 3.10
-          sudo apt-get install --yes --no-install-recommends libgeos-dev
-
           python -m pip install --upgrade pip
           pip install \
             mypy \
