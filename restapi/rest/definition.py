@@ -94,9 +94,7 @@ class EndpointResource(MethodResource, MethodView):  # type: ignore
         if headers["Content-Type"] == "application/json":
             content = jsonifier(content)
 
-        return FlaskResponse(
-            content, mimetype=headers["Content-Type"], status=code, headers=headers
-        )
+        return (content, code, headers)
 
     def empty_response(self) -> Response:
         """Empty response as defined by the protocol"""
