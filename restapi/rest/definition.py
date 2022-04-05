@@ -3,8 +3,8 @@ from typing import Any, Dict, List, Optional
 
 from flask import Response as FlaskResponse
 from flask import request
+from flask.views import MethodView
 from flask_apispec import MethodResource
-from flask_restful import Resource
 
 from restapi.connectors import Connector
 from restapi.rest.response import ResponseMaker
@@ -21,7 +21,7 @@ DEFAULT_PERPAGE = 10
 
 # Base type MethodResource becomes "Any" due to an unfollowed import
 # Base type Resource becomes "Any" due to an unfollowed import
-class EndpointResource(MethodResource, Resource):  # type: ignore
+class EndpointResource(MethodResource, MethodView):  # type: ignore
 
     depends_on: List[str] = []
     labels = ["undefined"]

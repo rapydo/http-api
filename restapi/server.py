@@ -18,7 +18,6 @@ from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
 from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
-from flask_restful import Api
 from geolite2 import geolite2
 from neo4j.meta import ExperimentalWarning as Neo4jExperimentalWarning
 from sentry_sdk.integrations.flask import FlaskIntegration
@@ -283,16 +282,11 @@ def create_app(
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints
         mem.private_endpoints = endpoints_loader.private_endpoints
 
-        # Triggering automatic mapping of REST endpoints
-        rest_api = Api(catch_all_404s=True)
-
         for endpoint in endpoints_loader.endpoints:
-            # Create the restful resource with it;
-            # this method is from RESTful plugin
-            rest_api.add_resource(endpoint.cls, *endpoint.uris)
-
-        # HERE all endpoints will be registered by using FlaskRestful
-        rest_api.init_app(microservice)
+            ename = endpoint.cls.__name__.lower()
+            endpoint_view = endpoint.cls.as_view(ename)
+            for url in endpoint.uris:
+                microservice.add_url_rule(url, view_func=endpoint_view)
 
         # APISpec configuration
         api_url = get_backend_url()

@@ -9,12 +9,12 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Type, get_type_hints
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
-from flask_restful import Resource
 
 from restapi import decorators
 from restapi.config import ABS_RESTAPI_PATH, CONF_PATH, CUSTOM_PACKAGE
 from restapi.env import Env
 from restapi.rest.annotations import inject_apispec_docs
+from restapi.rest.definition import EndpointResource
 from restapi.services.authentication import User
 from restapi.utilities import print_and_exit
 from restapi.utilities.configuration import read_configuration
@@ -31,11 +31,9 @@ uri_pattern = re.compile(r"\<([^\>]+)\>")
 
 
 @ClassOfAttributes
-# Argument 2 to "__init__" becomes "Type[Any]" due to an unfollowed import
-class EndpointElements:  # type: ignore
-    # Type of variable becomes "Type[Any]" due to an unfollowed import
-    cls: Type[Resource] = attribute(default=None)  # type: ignore
-    uris: List[str] = attribute(default=[])
+class EndpointElements:
+    cls: Type[EndpointResource] = attribute(default=None)
+    uris: Set[str] = attribute(default=set())
     # {'method': path, 'get': path, 'post': path}
     methods: Dict[str, str] = attribute(default={})
     tags: List[str] = attribute(default=[])
@@ -123,10 +121,9 @@ class EndpointsLoader:
 
         return False, None
 
-    # Return type becomes "List[Type[Any]]" due to an unfollowed import
-    def extract_endpoints(self, base_dir: Path) -> List[Type[Resource]]:  # type: ignore
+    def extract_endpoints(self, base_dir: Path) -> List[Type[EndpointResource]]:
 
-        endpoints_classes = []
+        endpoints_classes: List[Type[EndpointResource]] = []
         # get last item of the path
         # normpath is required to strip final / if any
         base_module = base_dir.name
@@ -178,9 +175,12 @@ class EndpointsLoader:
 
         for epclss in self.extract_endpoints(base_dir):
 
+            if not epclss.methods:  # pragma: no cover
+                continue
+
             # Building endpoint
             endpoint = EndpointElements(
-                uris=[],
+                uris=set(),
                 methods={},
                 cls=epclss,
                 tags=epclss.labels,
@@ -279,7 +279,7 @@ class EndpointsLoader:
                 inject_apispec_docs(fn, {"responses": responses}, epclss.labels)
 
                 # This will be used by server.py.add
-                endpoint.uris.append(fn.uri)
+                endpoint.uris.add(fn.uri)
 
                 self.private_endpoints.setdefault(fn.uri, {})
                 self.private_endpoints[fn.uri].setdefault(method_fn, endpoint.private)
@@ -310,9 +310,7 @@ class EndpointsLoader:
         # /xyz/abc
         # The second endpoint is shadowed by the first one
         mappings: Dict[str, Set[str]] = {}
-        # Type of variable becomes "Dict[str, Dict[str, Type[Any]]]"
-        #   due to an unfollowed import
-        classes: Dict[str, Dict[str, Type[Resource]]] = {}  # type: ignore
+        classes: Dict[str, Dict[str, Type[EndpointResource]]] = {}
         # duplicates are found while filling the dictionaries
         for endpoint in self.endpoints:
             for method, uri in endpoint.methods.items():
