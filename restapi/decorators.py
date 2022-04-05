@@ -31,7 +31,7 @@ from restapi.models import PartialSchema, fields, validate
 from restapi.rest.annotations import inject_apispec_docs
 from restapi.rest.bearer import TOKEN_VALIDATED_KEY
 from restapi.rest.bearer import HTTPTokenAuth as auth  # imported as alias for endpoints
-from restapi.rest.definition import EndpointResource, Response
+from restapi.rest.definition import EndpointResource, Response, jsonifier
 from restapi.types import EndpointFunction
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
@@ -461,7 +461,10 @@ def catch_exceptions(**kwargs: Any) -> Callable[[EndpointFunction], EndpointFunc
                     log.exception(e)
                     log.error(e)
 
-                return self.response(e.args[0], code=e.status_code)
+                return self.response(
+                    jsonifier(e.args[0]),
+                    code=e.status_code,
+                )
 
             except werkzeug.exceptions.BadRequest:  # pragma: no cover
                 # do not stop werkzeug BadRequest
@@ -480,7 +483,7 @@ def catch_exceptions(**kwargs: Any) -> Callable[[EndpointFunction], EndpointFunc
             # errors with RabbitMQ credentials raised when sending Celery tasks
             except AccessRefused as e:  # pragma: no cover
                 log.error(e)
-                return self.response("Unexpected Server Error", code=500)
+                return self.response(jsonifier("Unexpected Server Error"), code=500)
             except Exception as e:
 
                 if SENTRY_URL is not None:  # pragma: no cover
@@ -499,10 +502,12 @@ def catch_exceptions(**kwargs: Any) -> Callable[[EndpointFunction], EndpointFunc
                 log.exception(message)
 
                 if excname in ["SystemError"]:  # pragma: no cover
-                    return self.response("Unexpected Server Error", code=500)
+                    return self.response(jsonifier("Unexpected Server Error"), code=500)
 
                 return self.response(
-                    {excname: f"There was an unexpected error. ErrorID: {error_id}"},
+                    jsonifier(
+                        {excname: f"There was an unexpected error. ErrorID: {error_id}"}
+                    ),
                     code=400,
                 )
 

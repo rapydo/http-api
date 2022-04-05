@@ -91,9 +91,6 @@ class EndpointResource(MethodResource, MethodView):  # type: ignore
         if "Content-Type" not in headers:
             headers["Content-Type"] = "application/json"
 
-        if headers["Content-Type"] == "application/json":
-            content = jsonifier(content)
-
         return (content, code, headers)
 
     def empty_response(self) -> Response:
