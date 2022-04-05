@@ -14,6 +14,7 @@ from flask import jsonify, render_template, request
 from flask.json import JSONEncoder
 from marshmallow import fields as marshmallow_fields
 from marshmallow.utils import _Missing
+from werkzeug.exceptions import HTTPException
 
 from restapi import __version__ as version
 from restapi.config import (
@@ -28,19 +29,44 @@ from restapi.types import Response, ResponseContent
 from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
 
 
-def handle_404_errors(error: Exception) -> Response:
+def jsonifier(content: Any) -> Any:
+    if isinstance(content, set):
+        return jsonifier(list(content))
+    if isinstance(content, (datetime, date)):
+        return jsonifier(content.isoformat())
+    if isinstance(content, decimal.Decimal):
+        return jsonifier(float(content))
+    if isinstance(content, Path):
+        return jsonifier(str(content))
 
-    return (
-        {
-            "message": "The requested URL was not found on the server. "
-            "If you entered the URL manually please check your spelling and try again."
-        },
-        404,
-        {"Content-Type": "application/json"},
+    return orjson.dumps(content).decode("UTF8")
+
+
+class ExtendedJSONEncoder(JSONEncoder):
+    def default(self, o: Any) -> Any:
+        if isinstance(o, set):
+            return list(o)
+        if isinstance(o, (datetime, date)):
+            return o.isoformat()
+        if isinstance(o, decimal.Decimal):
+            return float(o)
+        if isinstance(o, Path):
+            return str(o)
+        # Otherwise: TypeError: Object of type xxx is not JSON serializable
+        return super().default(o)  # pragma: no cover
+
+
+def handle_http_errors(error: HTTPException) -> Response:
+
+    return FlaskResponse(
+        jsonifier({"message": error.description}),
+        status=error.code,
+        mimetype="application/json",
+        headers={"Content-Type": "application/json"},
     )
 
 
-def handle_marshmallow_errors(error: Exception) -> Response:
+def handle_marshmallow_errors(error: HTTPException) -> Response:
 
     try:
 
@@ -171,33 +197,6 @@ def handle_response(response: FlaskResponse) -> FlaskResponse:
         )
 
     return response
-
-
-def jsonifier(content: Any) -> Any:
-    if isinstance(content, set):
-        return jsonifier(list(content))
-    if isinstance(content, (datetime, date)):
-        return jsonifier(content.isoformat())
-    if isinstance(content, decimal.Decimal):
-        return jsonifier(float(content))
-    if isinstance(content, Path):
-        return jsonifier(str(content))
-
-    return orjson.dumps(content).decode("UTF8")
-
-
-class ExtendedJSONEncoder(JSONEncoder):
-    def default(self, o: Any) -> Any:
-        if isinstance(o, set):
-            return list(o)
-        if isinstance(o, (datetime, date)):
-            return o.isoformat()
-        if isinstance(o, decimal.Decimal):
-            return float(o)
-        if isinstance(o, Path):
-            return str(o)
-        # Otherwise: TypeError: Object of type xxx is not JSON serializable
-        return super().default(o)  # pragma: no cover
 
 
 class ResponseMaker:

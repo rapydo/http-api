@@ -6,9 +6,7 @@ from typing import Dict
 from faker import Faker
 
 from restapi.config import DATA_PATH, PRODUCTION, get_backend_url
-from restapi.env import Env
 from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
-from restapi.utilities.logs import log
 
 
 def get_location_header(headers: Dict[str, str], expected: str) -> str:
@@ -29,10 +27,6 @@ class TestUploadAndDownload(BaseTests):
     def test_simple_upload_and_download(
         self, client: FlaskClient, faker: Faker
     ) -> None:
-
-        if Env.get("TEMPORARY_DISABLE_UPLOAD_DOWNLOAD_TESTS", "1"):
-            log.warning("Temporary disabled upload test")
-            return None
 
         warnings.filterwarnings(
             "ignore", message="unclosed file <_io.BufferedReader name="
@@ -152,10 +146,6 @@ class TestUploadAndDownload(BaseTests):
         self, client: FlaskClient, faker: Faker
     ) -> None:
 
-        if Env.get("TEMPORARY_DISABLE_UPLOAD_DOWNLOAD_TESTS", "1"):
-            log.warning("Temporary disabled upload test")
-            return None
-
         warnings.filterwarnings(
             "ignore", message="unclosed file <_io.BufferedReader name="
         )
@@ -166,7 +156,7 @@ class TestUploadAndDownload(BaseTests):
         # as defined in test_upload.py for chunked uploads
         upload_folder = "fixed"
 
-        r = client.post(f"{API_URI}/tests/chunkedupload", json={"force": True})
+        r = client.post(f"{API_URI}/tests/chunkedupload", data={"force": True})
         assert r.status_code == 400
 
         filename = "fixed.filename.txt"
@@ -177,7 +167,7 @@ class TestUploadAndDownload(BaseTests):
             "mimeType": "application/zip",
             "lastModified": 1590302749209,
         }
-        r = client.post(f"{API_URI}/tests/chunkedupload", json=data)
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ""
         upload_endpoint = get_location_header(
@@ -185,19 +175,19 @@ class TestUploadAndDownload(BaseTests):
         )
 
         data["force"] = False
-        r = client.post(f"{API_URI}/tests/chunkedupload", json=data)
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 409
         assert self.get_content(r) == f"File '{filename}' already exists"
 
         with io.StringIO(faker.text()) as f:
-            r = client.put(upload_endpoint, json=f)
+            r = client.put(upload_endpoint, data=f)
         assert r.status_code == 400
         assert self.get_content(r) == "Invalid request"
 
         with io.StringIO(faker.text()) as f:
             r = client.put(
                 upload_endpoint,
-                json=f,
+                data=f,
                 headers={"Content-Range": "!"},
             )
         assert r.status_code == 400
@@ -208,7 +198,7 @@ class TestUploadAndDownload(BaseTests):
         with io.StringIO(up_data[0:5]) as f:
             r = client.put(
                 upload_endpoint,
-                json=f,
+                data=f,
                 headers={"Content-Range": f"bytes 0-5/{STR_LEN}"},
             )
         assert r.status_code == 206
@@ -222,7 +212,7 @@ class TestUploadAndDownload(BaseTests):
         with io.StringIO(up_data[5:]) as f:
             r = client.put(
                 upload_endpoint,
-                json=f,
+                data=f,
                 headers={"Content-Range": f"bytes 5-{STR_LEN}/{STR_LEN}"},
             )
         assert r.status_code == 200
@@ -297,7 +287,7 @@ class TestUploadAndDownload(BaseTests):
         with io.StringIO(up_data2) as f:
             r = client.put(
                 upload_endpoint,
-                json=f,
+                data=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
         assert r.status_code == 503
@@ -311,7 +301,7 @@ class TestUploadAndDownload(BaseTests):
         with io.StringIO(up_data2) as f:
             r = client.put(
                 upload_endpoint,
-                json=f,
+                data=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
 
@@ -339,13 +329,13 @@ class TestUploadAndDownload(BaseTests):
         # assert content == up_data + up_data2
 
         data["force"] = False
-        r = client.post(f"{API_URI}/tests/chunkedupload", json=data)
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 409
         err = f"File '{uploaded_filename}' already exists"
         assert self.get_content(r) == err
 
         data["force"] = True
-        r = client.post(f"{API_URI}/tests/chunkedupload", json=data)
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 201
         assert self.get_content(r) == ""
         upload_endpoint = get_location_header(
@@ -354,7 +344,7 @@ class TestUploadAndDownload(BaseTests):
 
         data["name"] = "fixed.filename.notallowed"
         data["force"] = False
-        r = client.post(f"{API_URI}/tests/chunkedupload", json=data)
+        r = client.post(f"{API_URI}/tests/chunkedupload", data=data)
         assert r.status_code == 400
         assert self.get_content(r) == "File extension not allowed"
 
@@ -363,7 +353,7 @@ class TestUploadAndDownload(BaseTests):
         with io.StringIO(up_data2) as f:
             r = client.put(
                 f"{API_URI}/tests/chunkedupload/{filename}",
-                json=f,
+                data=f,
                 headers={"Content-Range": f"bytes */{STR_LEN}"},
             )
 
