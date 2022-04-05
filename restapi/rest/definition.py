@@ -1,6 +1,7 @@
 import warnings
 from typing import Any, Dict, List, Optional
 
+import orjson
 from flask import Response as FlaskResponse
 from flask import request
 from flask.views import MethodView
@@ -88,7 +89,15 @@ class EndpointResource(MethodResource, MethodView):  # type: ignore
                     content, mimetype="text/html", status=code, headers=headers
                 )
 
-        return (content, code, headers)
+        if "Content-Type" not in headers:
+            headers["Content-Type"] = "application/json"
+
+        if headers["Content-Type"] == "application/json":
+            content = orjson.dumps(content).decode("UTF8")
+
+        return FlaskResponse(
+            content, mimetype=headers["Content-Type"], status=code, headers=headers
+        )
 
     def empty_response(self) -> Response:
         """Empty response as defined by the protocol"""

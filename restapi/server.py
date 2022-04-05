@@ -42,6 +42,7 @@ from restapi.env import Env
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import (
     ExtendedJSONEncoder,
+    handle_404_errors,
     handle_marshmallow_errors,
     handle_response,
 )
@@ -363,6 +364,7 @@ def create_app(
     # marshmallow errors handler
     # Can't get the typing to work with flask 2.1
     microservice.register_error_handler(422, handle_marshmallow_errors)  # type: ignore
+    microservice.register_error_handler(404, handle_404_errors)  # type: ignore
 
     # microservice.before_request(inspect_request)
     # Logging responses

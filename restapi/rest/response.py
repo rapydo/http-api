@@ -27,6 +27,18 @@ from restapi.types import Response, ResponseContent
 from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
 
 
+def handle_404_errors(error: Exception) -> Response:
+
+    return (
+        {
+            "message": "The requested URL was not found on the server. "
+            "If you entered the URL manually please check your spelling and try again."
+        },
+        404,
+        {"Content-Type": "application/json"},
+    )
+
+
 def handle_marshmallow_errors(error: Exception) -> Response:
 
     try:

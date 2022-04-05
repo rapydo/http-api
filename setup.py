@@ -31,7 +31,6 @@ setup(
     install_requires=[
         # Flask, plugins and webservers
         "Flask==2.1.1",
-        "Flask-RESTful==0.3.9",
         "flask-apispec==0.11.1",
         "Flask-Caching==1.10.1",
         "Flask-Cors==3.0.10",
