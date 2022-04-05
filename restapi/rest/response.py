@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, cast
 from urllib import parse as urllib_parse
 
+import orjson
 from flask import Response as FlaskResponse
 from flask import jsonify, render_template, request
 from flask.json import JSONEncoder
@@ -170,6 +171,19 @@ def handle_response(response: FlaskResponse) -> FlaskResponse:
         )
 
     return response
+
+
+def jsonifier(content: Any) -> Any:
+    if isinstance(content, set):
+        return jsonifier(list(content))
+    if isinstance(content, (datetime, date)):
+        return jsonifier(content.isoformat())
+    if isinstance(content, decimal.Decimal):
+        return jsonifier(float(content))
+    if isinstance(content, Path):
+        return jsonifier(str(content))
+
+    return orjson.dumps(content).decode("UTF8")
 
 
 class ExtendedJSONEncoder(JSONEncoder):

@@ -1,14 +1,13 @@
 import warnings
 from typing import Any, Dict, List, Optional
 
-import orjson
 from flask import Response as FlaskResponse
 from flask import request
 from flask.views import MethodView
 from flask_apispec import MethodResource
 
 from restapi.connectors import Connector
-from restapi.rest.response import ResponseMaker
+from restapi.rest.response import ResponseMaker, jsonifier
 from restapi.services.authentication import BaseAuthentication, User
 from restapi.services.cache import Cache
 from restapi.types import Response, ResponseContent
@@ -93,7 +92,7 @@ class EndpointResource(MethodResource, MethodView):  # type: ignore
             headers["Content-Type"] = "application/json"
 
         if headers["Content-Type"] == "application/json":
-            content = orjson.dumps(content).decode("UTF8")
+            content = jsonifier(content)
 
         return FlaskResponse(
             content, mimetype=headers["Content-Type"], status=code, headers=headers
