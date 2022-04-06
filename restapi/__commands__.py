@@ -2,7 +2,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import click
 from flask.cli import FlaskGroup
@@ -23,22 +23,6 @@ def cli() -> None:  # pragma: no cover
     click.echo("*** RESTful HTTP API ***")
 
 
-# Too dangerous to launch it during tests... skipping tests
-def main(args: List[str]) -> None:  # pragma: no cover
-
-    current_app = Env.get("FLASK_APP", "").strip()
-    if not current_app:
-        os.environ["FLASK_APP"] = f"{current_package}.__main__"
-
-    # Call to untyped function "FlaskGroup" in typed context
-    fg_cli = FlaskGroup()  # type: ignore
-    options = {"prog_name": "restapi", "args": args}
-
-    # cannot catch for CTRL+c
-    # Call to untyped function "main" in typed context
-    fg_cli.main(**options)  # type: ignore
-
-
 def initializing() -> bool:
 
     return find_process(current_package, keywords=["init"], prefix="/usr/local/bin/")
@@ -50,6 +34,15 @@ def launch() -> None:  # pragma: no cover
     """Launch the RAPyDo-based HTTP API server"""
 
     mywait()
+
+    if initializing():
+        print_and_exit(
+            "Please wait few more seconds: initialization is still in progress"
+        )
+
+    current_app = Env.get("FLASK_APP", "").strip()
+    if not current_app:
+        os.environ["FLASK_APP"] = f"{current_package}.__main__"
 
     args = [
         "run",
@@ -63,13 +56,12 @@ def launch() -> None:  # pragma: no cover
         "--with-threads",
     ]
 
-    if initializing():
-        print_and_exit(
-            "Please wait few more seconds: initialization is still in progress"
-        )
-    else:
-        main(args)
-        log.warning("Server shutdown")
+    # cannot catch for CTRL+c
+    # Call to untyped function "FlaskGroup" in typed context
+    fg_cli = FlaskGroup()  # type: ignore
+    # Call to untyped function "main" in typed context
+    fg_cli.main(prog_name="restapi", args=args)  # type: ignore
+    log.warning("Server shutdown")
 
 
 @cli.command()
