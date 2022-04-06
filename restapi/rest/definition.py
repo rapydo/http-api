@@ -60,6 +60,7 @@ class EndpointResource(MethodResource, MethodView):  # type: ignore
         headers: Optional[Dict[str, str]] = None,
         head_method: bool = False,
         allow_html: bool = False,
+        force_json: bool = False,
     ) -> Response:
 
         if headers is None:
@@ -88,8 +89,10 @@ class EndpointResource(MethodResource, MethodView):  # type: ignore
                     content, mimetype="text/html", status=code, headers=headers
                 )
 
-        if "Content-Type" not in headers:
+        if "Content-Type" not in headers or force_json:
             headers["Content-Type"] = "application/json"
+        if force_json:
+            content = jsonifier(content)
 
         return (content, code, headers)
 
