@@ -101,9 +101,7 @@ def create_app(
 
     # Flask app instance
     # template_folder = template dir for output in HTML
-    microservice = Flask(
-        name, template_folder=str(ABS_RESTAPI_PATH.joinpath("templates"))
-    )
+    flask_app = Flask(name, template_folder=str(ABS_RESTAPI_PATH.joinpath("templates")))
 
     # CORS
     if not PRODUCTION:
@@ -116,7 +114,7 @@ def create_app(
             cors_origin += ":*"
 
         CORS(
-            microservice,
+            flask_app,
             allow_headers=[
                 "Content-Type",
                 "Authorization",
@@ -133,12 +131,12 @@ def create_app(
         log.debug("CORS Enabled")
 
     # Flask configuration from config file
-    microservice.config.from_object(config)
-    microservice.json_encoder = ExtendedJSONEncoder
+    flask_app.config.from_object(config)
+    flask_app.json_encoder = ExtendedJSONEncoder
 
     # Used to force flask to avoid json sorting and ensure that
     # the output to reflect the order of field in the Marshmallow schema
-    microservice.config["JSON_SORT_KEYS"] = False
+    flask_app.config["JSON_SORT_KEYS"] = False
 
     log.debug("Flask app configured")
 
@@ -172,7 +170,7 @@ def create_app(
     if not isinstance(mem.customizer, BaseCustomizer):  # pragma: no cover
         print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
 
-    Connector.init_app(app=microservice, worker_mode=(mode == ServerModes.WORKER))
+    Connector.init_app(app=flask_app, worker_mode=(mode == ServerModes.WORKER))
 
     # Initialize reading of all files
     mem.geo_reader = geolite2.reader()
@@ -277,7 +275,7 @@ def create_app(
         # ignore warning messages on flask socket after teardown
         warnings.filterwarnings("ignore", message="unclosed <socket.socket")
 
-        mem.cache = Cache.get_instance(microservice)
+        mem.cache = Cache.get_instance(flask_app)
 
         endpoints_loader.load_endpoints()
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints
@@ -287,7 +285,7 @@ def create_app(
             ename = endpoint.cls.__name__.lower()
             endpoint_view = endpoint.cls.as_view(ename)
             for url in endpoint.uris:
-                microservice.add_url_rule(url, view_func=endpoint_view)
+                flask_app.add_url_rule(url, view_func=endpoint_view)
 
         # APISpec configuration
         api_url = get_backend_url()
@@ -317,7 +315,7 @@ def create_app(
             api_key_scheme = {"type": "apiKey", "in": "header", "name": "Authorization"}
             spec.components.security_scheme("Bearer", api_key_scheme)
 
-        microservice.config.update(
+        flask_app.config.update(
             {
                 "APISPEC_SPEC": spec,
                 # 'APISPEC_SWAGGER_URL': '/api/swagger',
@@ -328,14 +326,14 @@ def create_app(
             }
         )
 
-        mem.docs = FlaskApiSpec(microservice)
+        mem.docs = FlaskApiSpec(flask_app)
 
         # Clean app routes
         ignore_verbs = {"HEAD", "OPTIONS"}
 
-        for rule in microservice.url_map.iter_rules():
+        for rule in flask_app.url_map.iter_rules():
 
-            view_function = microservice.view_functions[rule.endpoint]
+            view_function = flask_app.view_functions[rule.endpoint]
             if not hasattr(view_function, "view_class"):
                 continue
 
@@ -353,7 +351,7 @@ def create_app(
             rule.methods = newmethods
 
         # Register swagger. Note: after method mapping cleaning
-        with microservice.app_context():
+        with flask_app.app_context():
             for endpoint in endpoints_loader.endpoints:
                 try:
                     mem.docs.register(endpoint.cls)
@@ -363,16 +361,16 @@ def create_app(
 
     # marshmallow errors handler
     # Can't get the typing to work with flask 2.1
-    microservice.register_error_handler(422, handle_marshmallow_errors)  # type: ignore
-    microservice.register_error_handler(400, handle_http_errors)  # type: ignore
-    microservice.register_error_handler(404, handle_http_errors)  # type: ignore
-    microservice.register_error_handler(405, handle_http_errors)  # type: ignore
-    microservice.register_error_handler(500, handle_http_errors)  # type: ignore
+    flask_app.register_error_handler(422, handle_marshmallow_errors)  # type: ignore
+    flask_app.register_error_handler(400, handle_http_errors)  # type: ignore
+    flask_app.register_error_handler(404, handle_http_errors)  # type: ignore
+    flask_app.register_error_handler(405, handle_http_errors)  # type: ignore
+    flask_app.register_error_handler(500, handle_http_errors)  # type: ignore
 
-    # microservice.before_request(inspect_request)
+    # flask_app.before_request(inspect_request)
     # Logging responses
     # Can't get the typing to work with flask 2.1
-    microservice.after_request(handle_response)  # type: ignore
+    flask_app.after_request(handle_response)  # type: ignore
 
     if SENTRY_URL is not None:  # pragma: no cover
 
@@ -398,4 +396,4 @@ def create_app(
             target=None,
         )
 
-    return microservice
+    return flask_app
