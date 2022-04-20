@@ -122,8 +122,8 @@ class Connector(metaclass=abc.ABCMeta):
     ) -> bool:
         if not self.disconnected:
             self.disconnect()
-            return True
-        return False  # pragma: no cover
+        if excinst:
+            raise excinst
 
     @staticmethod
     @abc.abstractmethod
