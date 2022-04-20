@@ -148,7 +148,7 @@ def get_service_address(
 def mywait() -> None:
     """
     Wait for a service on his host:port configuration
-    basing the check on a socket connection.
+    This check is merely based on a socket connection
     """
     for name, variables in Connector.services.items():
 

@@ -192,6 +192,7 @@ class CeleryExt(Connector):
             If idempotent (i.e. will not cause unintended effects even if called
             multiple times with the same arguments),
             celery will be configured with `acks_late` flag.
+            Note: you can interrupt an idempotent task with task.revoke(terminate=True)
         :param name: The name of the task,
             the default, if not specified, is the name of the decorated function.
         :param autoretry_for: A tuple of exception classes. If any of these exceptions
