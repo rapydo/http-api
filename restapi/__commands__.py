@@ -161,7 +161,7 @@ def mywait() -> None:
     """
     for name, variables in Connector.services.items():
 
-        if name == "smtp":
+        if name == "smtp" or name == "ftp":
             log.info("Service {} is enabled but not tested at startup time", name)
             continue
 
