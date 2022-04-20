@@ -120,10 +120,12 @@ class Connector(metaclass=abc.ABCMeta):
         excinst: Optional[Exception],
         exctb: Optional[TracebackType],
     ) -> bool:
+
         if not self.disconnected:
             self.disconnect()
-            return True
-        return False  # pragma: no cover
+        if excinst:
+            raise excinst
+        return True
 
     @staticmethod
     @abc.abstractmethod

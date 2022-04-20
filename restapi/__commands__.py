@@ -56,7 +56,6 @@ def launch() -> None:  # pragma: no cover
         "--with-threads",
     ]
 
-    # cannot catch for CTRL+c
     # Call to untyped function "FlaskGroup" in typed context
     fg_cli = FlaskGroup()  # type: ignore
     # Call to untyped function "main" in typed context
