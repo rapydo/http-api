@@ -91,11 +91,18 @@ def test_ftp(app: Flask, faker: Faker) -> None:
         # Download the file and verify it matches
         download_file: Path = Path(tempfile.NamedTemporaryFile().name)
 
+        # DEBUG CODE
+        log.critical(download_file)
+
         with open(download_file, "w") as download_handle:
             # Command for Downloading the file "RETR filename"
             # or retrbinary for binary mode
+            log.critical("retrieving content...")
             obj.connection.retrlines(f"RETR {ftp_filename}", download_handle.write)
+            log.critical("content retrieved")
 
         with open(download_file) as download_handle:
+            log.critical("reading content...")
             downloaded_content = download_handle.read()
+            log.critical("content read")
             assert downloaded_content == tmp_content
