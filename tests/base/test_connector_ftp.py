@@ -83,26 +83,25 @@ def test_ftp(app: Flask, faker: Faker) -> None:
         # Upload a random content file on the FTP
         tmp_content = faker.pystr()
         ftp_filename = faker.file_name()
-        # or storbinary for binary mode
-        obj.connection.storlines(f"STOR {ftp_filename}", tmp_content)
+        tmp_path = tempfile.NamedTemporaryFile().name
+
+        with open(tmp_path, "w+") as temporary_write_file:
+            temporary_write_file.write(tmp_content)
+
+        with open(tmp_path, "rb") as temporary_read_file:
+            # or storbinary for binary mode
+            obj.connection.storlines(f"STOR {ftp_filename}", temporary_read_file)
 
         assert len(list(obj.connection.mlsd())) == 3
 
         # Download the file and verify it matches
         download_file: Path = Path(tempfile.NamedTemporaryFile().name)
 
-        # DEBUG CODE
-        log.critical(download_file)
-
         with open(download_file, "w") as download_handle:
             # Command for Downloading the file "RETR filename"
             # or retrbinary for binary mode
-            log.critical("retrieving content...")
             obj.connection.retrlines(f"RETR {ftp_filename}", download_handle.write)
-            log.critical("content retrieved")
 
         with open(download_file) as download_handle:
-            log.critical("reading content...")
             downloaded_content = download_handle.read()
-            log.critical("content read")
             assert downloaded_content == tmp_content

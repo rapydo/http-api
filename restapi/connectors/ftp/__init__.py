@@ -104,8 +104,6 @@ class FTPExt(Connector):
         if self.connection and self.initialized:
             self.connection.quit()
             self.initialized = False
-            # expect ???:
-            # -> log.debug("Connection already closed")
 
     def is_connected(self) -> bool:
         # Can't happen because connection is not Optional[]
