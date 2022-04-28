@@ -11,7 +11,6 @@ from threading import Lock
 from types import FrameType
 from typing import Dict, Optional
 
-import sentry_sdk
 import werkzeug.exceptions
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
@@ -20,6 +19,7 @@ from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
 from geolite2 import geolite2
 from neo4j.meta import ExperimentalWarning as Neo4jExperimentalWarning
+from sentry_sdk import init as sentry_sdk_init
 from sentry_sdk.integrations.flask import FlaskIntegration
 
 from restapi import config
@@ -375,7 +375,7 @@ def create_app(
     if SENTRY_URL is not None:  # pragma: no cover
 
         if PRODUCTION:
-            sentry_sdk.init(
+            sentry_sdk_init(  # type: ignore
                 dsn=SENTRY_URL,
                 # already catched by handle_marshmallow_errors
                 ignore_errors=[werkzeug.exceptions.UnprocessableEntity],
@@ -384,7 +384,7 @@ def create_app(
             log.info("Enabled Sentry {}", SENTRY_URL)
         else:
             # Could be enabled in print mode
-            # sentry_sdk.init(transport=print)
+            # sentry_sdk_init(transport=print)
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
     log.info("Boot completed")
