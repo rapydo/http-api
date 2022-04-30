@@ -43,7 +43,6 @@ jobs:
 
           for lib in \
             flask_apispec \
-            apispec \
             flask_caching \
             flask_cors \
             flask_sqlalchemy \
