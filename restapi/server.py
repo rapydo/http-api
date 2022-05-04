@@ -275,6 +275,12 @@ def create_app(
         # ignore warning messages on flask socket after teardown
         warnings.filterwarnings("ignore", message="unclosed <socket.socket")
 
+        # on IMC:
+        #  File ".../python3.10/dist-packages/tornado/ioloop.py", line 263, in current
+        #    loop = asyncio.get_event_loop()
+        # DeprecationWarning: There is no current event loop
+        warnings.filterwarnings("ignore", message="There is no current event loop")
+
         mem.cache = Cache.get_instance(flask_app)
 
         endpoints_loader.load_endpoints()
