@@ -73,7 +73,7 @@ class FTPExt(Connector):
         ssl_enabled = Env.to_bool(variables.get("ssl_enabled"))
 
         if ssl_enabled:
-            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             ftp_tls_conn = FTP_TLS_SharedSession(context=ctx, timeout=10)
             # ftp_tls_conn.debugging = 1
 
