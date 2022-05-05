@@ -74,6 +74,10 @@ class RabbitExt(Connector):
         vhost = variables.get("vhost", "/")
 
         if ssl_enabled:
+
+            # This started failing with python 3.10:
+            # context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            # -> Cannot create a client socket with a PROTOCOL_TLS_SERVER context
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 
             context.load_default_certs()
