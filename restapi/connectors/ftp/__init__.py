@@ -84,7 +84,7 @@ class FTPExt(Connector):
             # context.verify_mode = ssl.CERT_NONE
             # Enable certificate verification:
             context.verify_mode = ssl.CERT_REQUIRED
-            context.check_hostname = True
+            context.check_hostname = False
             # Path to pem file to verify self signed certificates
             context.load_verify_locations(cafile=SSL_CERTIFICATE)
             # System CA to verify true cerificates
