@@ -287,6 +287,11 @@ def create_app(
             "ignore",
             message="_SixMetaPathImporter.find_spec() not found; falling back to find_module()",
         )
+        warnings.filterwarnings(
+            "ignore",
+            message="_SixMetaPathImporter.find_spec",
+        )
+
         mem.cache = Cache.get_instance(flask_app)
 
         endpoints_loader.load_endpoints()
