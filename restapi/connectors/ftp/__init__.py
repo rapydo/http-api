@@ -7,6 +7,9 @@ import ssl
 from ftplib import FTP, FTP_TLS, error_reply
 from typing import Optional, Union
 
+import certifi
+
+from restapi.config import SSL_CERTIFICATE
 from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
 from restapi.exceptions import ServiceUnavailable
@@ -73,8 +76,20 @@ class FTPExt(Connector):
         ssl_enabled = Env.to_bool(variables.get("ssl_enabled"))
 
         if ssl_enabled:
-            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            ftp_tls_conn = FTP_TLS_SharedSession(context=ctx, timeout=10)
+            context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+
+            context.load_default_certs()
+
+            # Disable certificate verification:
+            # context.verify_mode = ssl.CERT_NONE
+            # Enable certificate verification:
+            context.verify_mode = ssl.CERT_REQUIRED
+            context.check_hostname = True
+            # Path to pem file to verify self signed certificates
+            context.load_verify_locations(cafile=SSL_CERTIFICATE)
+            # System CA to verify true cerificates
+            context.load_verify_locations(cafile=certifi.where())
+            ftp_tls_conn = FTP_TLS_SharedSession(context=context, timeout=10)
             # ftp_tls_conn.debugging = 1
 
             ftp_tls_conn.connect(host, port)

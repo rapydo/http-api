@@ -82,11 +82,9 @@ class RabbitExt(Connector):
 
             context.load_default_certs()
 
-            # ### Disable certificate verification:
+            # Disable certificate verification:
             # context.verify_mode = ssl.CERT_NONE
-            # ########################################
-
-            # ### Enable certificate verification:
+            # Enable certificate verification:
             context.verify_mode = ssl.CERT_REQUIRED
             context.check_hostname = True
             # Path to pem file to verify self signed certificates
