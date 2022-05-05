@@ -10,8 +10,6 @@ elif [[ "$TEMPLATE" == "mysql" ]]; then
   rapydo create prj --auth mysql --frontend no -e AUTH_TOKEN_IP_GRACE_PERIOD=2
 elif [[ "$TEMPLATE" == "neo4j" ]]; then
   rapydo create prj --auth neo4j --frontend no -e AUTH_TOKEN_IP_GRACE_PERIOD=2
-elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
-  rapydo create prj -s celery -s rabbit --auth ${AUTH} --frontend no;
 elif [[ "$TEMPLATE" == "celery-rabbit-redis" ]]; then
   rapydo create prj -s celery -s rabbit -s redis --auth ${AUTH} --frontend no;
 elif [[ "$TEMPLATE" == "celery-redis-redis" ]]; then

@@ -20,7 +20,6 @@ jobs:
             postgres,
             celery-redis-redis,
             celery-rabbit-redis,
-            celery-rabbit-rabbit,
             mysql,
           ]
         mode: [dev, prod]
