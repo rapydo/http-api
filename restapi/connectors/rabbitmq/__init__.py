@@ -76,6 +76,8 @@ class RabbitExt(Connector):
         if ssl_enabled:
             # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
             context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            context.options &= ~ssl.PROTOCOL_TLS_CLIENT
+
             context.load_default_certs()
 
             # ### Disable certificate verification:
