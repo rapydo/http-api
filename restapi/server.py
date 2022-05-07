@@ -394,7 +394,7 @@ def create_app(
     if SENTRY_URL is not None:  # pragma: no cover
 
         if PRODUCTION:
-            sentry_sdk_init(  # type: ignore
+            sentry_sdk_init(
                 dsn=SENTRY_URL,
                 # already catched by handle_marshmallow_errors
                 ignore_errors=[werkzeug.exceptions.UnprocessableEntity],
