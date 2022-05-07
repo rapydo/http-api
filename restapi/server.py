@@ -281,15 +281,17 @@ def create_app(
         # DeprecationWarning: There is no current event loop
         warnings.filterwarnings("ignore", message="There is no current event loop")
 
-        # from flask_caching with python 3.10 on core tests...
+        # from flask_caching 1.10.1 with python 3.10 on core tests...
         # try to remove this once upgraded flask_caching in a near future
         warnings.filterwarnings(
             "ignore",
-            message="_SixMetaPathImporter.find_spec() not found; falling back to find_module()",
+            message="_SixMetaPathImporter.find_spec",
         )
+
+        # Raised from sentry_sdk 1.5.11 with python 3.10 events
         warnings.filterwarnings(
             "ignore",
-            message="_SixMetaPathImporter.find_spec",
+            message="SelectableGroups dict interface is deprecated. Use select.",
         )
 
         mem.cache = Cache.get_instance(flask_app)
