@@ -1,11 +1,10 @@
 import inspect
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Optional, Type, Union, cast
 
 from marshmallow import EXCLUDE
 from marshmallow import Schema as MarshmallowSchema
 from marshmallow import ValidationError, pre_load
 from neomodel import StructuredNode, StructuredRel, properties
-from werkzeug.datastructures import ImmutableMultiDict
 
 from restapi.models import fields
 from restapi.utilities.logs import log
@@ -38,7 +37,7 @@ class Schema(MarshmallowSchema):
     @pre_load
     def raise_get_schema(
         self,
-        data: Union[Dict[str, Any], ImmutableMultiDict[str, Any]],
+        data: Dict[str, Any],
         **kwargs: Any,
     ) -> Dict[str, Any]:
 
@@ -58,7 +57,7 @@ class Schema(MarshmallowSchema):
 
             mutable_data = data.to_dict()  # type: ignore
             mutable_data.pop("access_token")
-            return mutable_data
+            return cast(Dict[str, Any], mutable_data)
 
 
 class PartialSchema(Schema):
