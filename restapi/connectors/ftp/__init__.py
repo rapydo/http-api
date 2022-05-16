@@ -116,7 +116,7 @@ class FTPExt(Connector):
 
     def disconnect(self) -> None:
         self.disconnected = True
-        if self.connection and self.initialized:
+        if self.connection and self.initialized and self.connection.sock:
             self.connection.quit()
             self.initialized = False
 
