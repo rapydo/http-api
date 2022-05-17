@@ -275,12 +275,6 @@ def create_app(
         # ignore warning messages on flask socket after teardown
         warnings.filterwarnings("ignore", message="unclosed <socket.socket")
 
-        # on IMC:
-        #  File ".../python3.10/dist-packages/tornado/ioloop.py", line 263, in current
-        #    loop = asyncio.get_event_loop()
-        # DeprecationWarning: There is no current event loop
-        warnings.filterwarnings("ignore", message="There is no current event loop")
-
         # from flask_caching 1.10.1 with python 3.10 on core tests...
         # try to remove this once upgraded flask_caching in a near future
         warnings.filterwarnings(

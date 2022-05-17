@@ -18,4 +18,4 @@ Based on:
 - Redis-py
 - pika with amqp 5.1.0
 - celery 5.2.3 with celery-redbeat 2.0.0
-- gunicorn 20.1.0 with tornado 6.1
+- gunicorn 20.1.0
