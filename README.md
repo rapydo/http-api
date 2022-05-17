@@ -15,7 +15,7 @@ Based on:
 - Flask-SQLAlchemy 2.5.1
 - Neomodel 4.0.8
 - PyMySQL
-- Redis-py
+- Redis-py 4.2.2
 - pika with amqp 5.1.0
 - celery 5.2.3 with celery-redbeat 2.0.0
 - gunicorn 20.1.0
