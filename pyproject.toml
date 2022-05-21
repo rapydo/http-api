@@ -1,6 +1,6 @@
 [project]
 name = "rapydo_http"
-version = "2.3"
+version = "2.4"
 description = "HTTP API server working on top of the RAPyDo framework"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
