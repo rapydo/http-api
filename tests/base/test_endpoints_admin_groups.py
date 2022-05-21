@@ -11,6 +11,12 @@ from restapi.tests import API_URI, AUTH_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import Events, log
 
 
+def get_random_group_name(faker: Faker) -> str:
+    # faker.company alone is not always enough and some
+    # "Group already exists with shortname" occasionally occur during tests
+    return f"{faker.company()}-{faker.pyint(2, 100)}"
+
+
 class TestApp(BaseTests):
     def test_admin_groups(self, client: FlaskClient, faker: Faker) -> None:
 
@@ -46,11 +52,11 @@ class TestApp(BaseTests):
             r = client.get(f"{API_URI}/admin/groups", headers=headers)
             assert r.status_code == 200
 
-            schema = self.getDynamicInputSchema(client, "admin/groups", headers)
+            schema = self.get_dynamic_input_schema(client, "admin/groups", headers)
             data = self.buildData(schema)
 
             # Event 1: create
-            r = client.post(f"{API_URI}/admin/groups", data=data, headers=headers)
+            r = client.post(f"{API_URI}/admin/groups", json=data, headers=headers)
             assert r.status_code == 200
             uuid = self.get_content(r)
             assert isinstance(uuid, str)
@@ -91,14 +97,14 @@ class TestApp(BaseTests):
             assert fullname is not None
 
             newdata = {
-                "shortname": faker.company(),
-                "fullname": faker.company(),
+                "shortname": get_random_group_name(faker),
+                "fullname": get_random_group_name(faker),
             }
 
             # Test the differences between post and put schema
             post_schema = {s["key"]: s for s in schema}
 
-            tmp_schema = self.getDynamicInputSchema(
+            tmp_schema = self.get_dynamic_input_schema(
                 client, f"admin/groups/{uuid}", headers, method="put"
             )
             put_schema = {s["key"]: s for s in tmp_schema}
@@ -115,7 +121,7 @@ class TestApp(BaseTests):
 
             # Event 2: modify
             r = client.put(
-                f"{API_URI}/admin/groups/{uuid}", data=newdata, headers=headers
+                f"{API_URI}/admin/groups/{uuid}", json=newdata, headers=headers
             )
             assert r.status_code == 204
 
@@ -140,7 +146,7 @@ class TestApp(BaseTests):
                     assert g.get("fullname") != data.get("fullname")
                     assert g.get("fullname") != fullname
 
-            r = client.put(f"{API_URI}/admin/groups/xyz", data=data, headers=headers)
+            r = client.put(f"{API_URI}/admin/groups/xyz", json=data, headers=headers)
             assert r.status_code == 404
 
             # Event 3: delete
@@ -179,7 +185,7 @@ class TestApp(BaseTests):
 
             data = {
                 "fullname": "Default group",
-                "shortname": faker.company(),
+                "shortname": get_random_group_name(faker),
             }
 
             # Event 4: create
@@ -210,7 +216,7 @@ class TestApp(BaseTests):
 
             # Event 5: modify
             r = client.put(
-                f"{API_URI}/admin/users/{user_uuid}", data=data, headers=headers
+                f"{API_URI}/admin/users/{user_uuid}", json=data, headers=headers
             )
             assert r.status_code == 204
 

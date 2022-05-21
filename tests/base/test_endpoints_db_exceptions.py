@@ -20,12 +20,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/database/400")
         assert r.status_code == 400
         # This is the message of a DatabaseMissingRequiredProperty
-        err = self.get_content(r)
-        # table name not available in mongo error... :-(
-        if Connector.authentication_service == "mongo":
-            assert err == "Missing property shortname required by database constraints"
-        else:
-            assert err == "Missing property shortname required by Group"
+        assert self.get_content(r) == "Missing property shortname required by Group"
 
         auth = Connector.get_authentication_instance()
         default_group = auth.get_group(name=DEFAULT_GROUP_NAME)
@@ -62,6 +57,4 @@ class TestApp(BaseTests):
         default_group = auth.get_group(name=DEFAULT_GROUP_NAME)
         assert default_group is not None
 
-        # This cannot be verified with mongo because transactions are not implemented
-        if Connector.authentication_service != "mongo":
-            assert default_group.fullname == new_fullname
+        assert default_group.fullname == new_fullname

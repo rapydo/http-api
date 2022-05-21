@@ -71,7 +71,7 @@ def catch_db_exceptions(func: F) -> F:
 
             t = "already exists with label"
             m = re.search(
-                fr"Node\([0-9]+\) {t} `(.+)` and property `(.+)` = '(.+)'", str(e)
+                rf"Node\([0-9]+\) {t} `(.+)` and property `(.+)` = '(.+)'", str(e)
             )
 
             if m:

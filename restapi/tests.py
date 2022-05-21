@@ -95,7 +95,7 @@ class BaseTests:
         raise AttributeError(f"Class variable {variable} not found")  # pragma: no cover
 
     @staticmethod
-    def getDynamicInputSchema(
+    def get_dynamic_input_schema(
         client: FlaskClient,
         endpoint: str,
         headers: Optional[Dict[str, str]],
@@ -109,11 +109,11 @@ class BaseTests:
 
         if method == "post":
             r = client.post(
-                f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
+                f"{API_URI}/{endpoint}", json={"get_schema": 1}, headers=headers
             )
         else:
             r = client.put(
-                f"{API_URI}/{endpoint}", data={"get_schema": 1}, headers=headers
+                f"{API_URI}/{endpoint}", json={"get_schema": 1}, headers=headers
             )
 
         assert r.status_code == 200
@@ -196,7 +196,7 @@ class BaseTests:
         data["username"] = USER
         data["password"] = PWD
 
-        r = client.post(f"{AUTH_URI}/login", data=data)
+        r = client.post(f"{AUTH_URI}/login", json=data)
         content = orjson.loads(r.data.decode("utf-8"))
 
         if r.status_code == 403:
@@ -256,8 +256,8 @@ class BaseTests:
                             data["new_password"] = newpwd
                             data["password_confirm"] = newpwd
                             # random int with 6 digits
-                            data["totp_code"] = cls.faker.pyint(
-                                min_value=100000, max_value=999999
+                            data["totp_code"] = str(
+                                cls.faker.pyint(min_value=100000, max_value=999999)
                             )
                             BaseTests.do_login(
                                 client,
@@ -340,7 +340,7 @@ class BaseTests:
 
         admin_headers, _ = cls.do_login(client, None, None)
         assert admin_headers is not None
-        schema = cls.getDynamicInputSchema(client, "admin/users", admin_headers)
+        schema = cls.get_dynamic_input_schema(client, "admin/users", admin_headers)
         user_data = cls.buildData(schema)
         if Connector.check_availability("smtp"):
             user_data["email_notification"] = False
@@ -358,7 +358,7 @@ class BaseTests:
         if data:
             user_data.update(data)
 
-        r = client.post(f"{API_URI}/admin/users", data=user_data, headers=admin_headers)
+        r = client.post(f"{API_URI}/admin/users", json=user_data, headers=admin_headers)
         assert r.status_code == 200
         uuid = cls.get_content(r)
         assert isinstance(uuid, str)
@@ -384,12 +384,12 @@ class BaseTests:
 
         admin_headers, _ = cls.do_login(client, None, None)
         assert admin_headers is not None
-        schema = cls.getDynamicInputSchema(client, "admin/groups", admin_headers)
+        schema = cls.get_dynamic_input_schema(client, "admin/groups", admin_headers)
         group_data = cls.buildData(schema)
         if data:
             group_data.update(data)
         r = client.post(
-            f"{API_URI}/admin/groups", data=group_data, headers=admin_headers
+            f"{API_URI}/admin/groups", json=group_data, headers=admin_headers
         )
         assert r.status_code == 200
         uuid = cls.get_content(r)

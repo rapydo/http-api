@@ -21,7 +21,7 @@ def usage(update: Update, context: CallbackContext[UD, CD, BD]) -> None:
 @bot.restricted_to_admins
 def my_self(update: Update, context: CallbackContext[UD, CD, BD]) -> None:
     # Can't be true, since it is restricted_to_admins
-    if not update.message or not update.message.from_user:  # pragma
+    if not update.message or not update.message.from_user:  # pragma: no cover
         log.critical("Error: user is missing")
         return None
 

@@ -11,7 +11,7 @@ class TestApp(BaseTests):
 
         # This test verifies that buildData is always able to randomly create
         # valid inputs for endpoints with inputs defined by marshamallow schemas
-        schema = self.getDynamicInputSchema(client, "tests/inputs", {})
+        schema = self.get_dynamic_input_schema(client, "tests/inputs", {})
         # Expected number of fields
         assert len(schema) == 14
         for field in schema:
@@ -204,7 +204,7 @@ class TestApp(BaseTests):
         assert "mylist3" not in data
         data["mylist3"] = orjson.dumps(["mycustominputvalue"]).decode("UTF8")
 
-        r = client.post(f"{API_URI}/tests/inputs", data=data)
+        r = client.post(f"{API_URI}/tests/inputs", json=data)
         assert r.status_code == 204
 
         # This is to verify that access_token, if provided is excluded from parameters
@@ -213,12 +213,12 @@ class TestApp(BaseTests):
         if Env.get_bool("AUTH_ENABLE"):
             _, token = self.do_login(client, None, None)
             data["access_token"] = token
-            r = client.post(f"{API_URI}/tests/inputs", data=data)
+            r = client.post(f"{API_URI}/tests/inputs", json=data)
             assert r.status_code == 204
 
         # This is to verify that unknown inputs raise a ValidationError
         data["unknown"] = "input"
-        r = client.post(f"{API_URI}/tests/inputs", data=data)
+        r = client.post(f"{API_URI}/tests/inputs", json=data)
         assert r.status_code == 400
 
     @pytest.mark.skipif(
@@ -228,7 +228,7 @@ class TestApp(BaseTests):
     def test_neo4j_inputs(self, client: FlaskClient) -> None:
 
         headers, _ = self.do_login(client, None, None)
-        schema = self.getDynamicInputSchema(client, "tests/neo4jinputs", headers)
+        schema = self.get_dynamic_input_schema(client, "tests/neo4jinputs", headers)
         assert len(schema) == 1
 
         field = schema[0]
@@ -239,7 +239,7 @@ class TestApp(BaseTests):
         assert "options" not in field
 
         r = client.post(
-            f"{API_URI}/tests/neo4jinputs", data={"choice": "A"}, headers=headers
+            f"{API_URI}/tests/neo4jinputs", json={"choice": "A"}, headers=headers
         )
         assert r.status_code == 200
         response = self.get_content(r)
@@ -265,7 +265,7 @@ class TestApp(BaseTests):
         assert "token_type" in response["relationship_many"][0]
 
         r = client.post(
-            f"{API_URI}/tests/neo4jinputs", data={"choice": "B"}, headers=headers
+            f"{API_URI}/tests/neo4jinputs", json={"choice": "B"}, headers=headers
         )
         assert r.status_code == 200
         response = self.get_content(r)
@@ -277,7 +277,7 @@ class TestApp(BaseTests):
         assert response["choice"]["description"] == "BBB"
 
         r = client.post(
-            f"{API_URI}/tests/neo4jinputs", data={"choice": "C"}, headers=headers
+            f"{API_URI}/tests/neo4jinputs", json={"choice": "C"}, headers=headers
         )
         assert r.status_code == 200
         response = self.get_content(r)
@@ -289,7 +289,7 @@ class TestApp(BaseTests):
         assert response["choice"]["description"] == "CCC"
 
         r = client.post(
-            f"{API_URI}/tests/neo4jinputs", data={"choice": "D"}, headers=headers
+            f"{API_URI}/tests/neo4jinputs", json={"choice": "D"}, headers=headers
         )
         # This should fail, but Neo4jChoice are not validated as input
         # assert r.status_code == 400

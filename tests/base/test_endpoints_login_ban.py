@@ -53,7 +53,6 @@ elif max_login_attempts == 0:
             # Goodbye temporary user
             self.delete_user(client, uuid)
 
-
 else:
 
     # This test executes a sleep(ban_duration)... this assert is to prevent to
@@ -121,7 +120,7 @@ else:
             assert events[0].url == "/auth/login"
 
             reset_data = {"reset_email": data["email"]}
-            r = client.post(f"{AUTH_URI}/reset", data=reset_data)
+            r = client.post(f"{AUTH_URI}/reset", json=reset_data)
             assert r.status_code == 403
             assert self.get_content(r) == BAN_MESSAGE
 
@@ -330,7 +329,7 @@ else:
                 registration_data["surname"] = faker.last_name()
                 registration_data["password"] = faker.password(strong=True)
                 registration_data["password_confirm"] = registration_data["password"]
-                r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+                r = client.post(f"{AUTH_URI}/profile", json=registration_data)
                 # now the user is created but INACTIVE, activation endpoint is needed
                 assert r.status_code == 200
                 registration_message = "We are sending an email to your email address "
@@ -402,7 +401,7 @@ else:
                 # request activation forbidden due to blocked acount
                 r = client.post(
                     f"{AUTH_URI}/profile/activate",
-                    data={"username": registration_data["email"]},
+                    json={"username": registration_data["email"]},
                 )
                 assert r.status_code == 403
                 assert self.get_content(r) == BAN_MESSAGE
@@ -420,7 +419,7 @@ else:
 
                 r = client.post(
                     f"{AUTH_URI}/profile/activate",
-                    data={"username": registration_data["email"]},
+                    json={"username": registration_data["email"]},
                 )
                 assert r.status_code == 200
 

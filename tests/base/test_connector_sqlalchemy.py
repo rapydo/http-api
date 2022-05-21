@@ -75,7 +75,7 @@ def test_sqlalchemy(app: Flask) -> None:
     obj.disconnect()
     assert not obj.is_connected()
 
-    # ... close connection again ... nothing should happens
+    # ... close connection again ... nothing should happen
     obj.disconnect()
 
     # sqlalchemy connector does not support with context

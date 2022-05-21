@@ -184,7 +184,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
     obj.disconnect()
     assert not obj.is_connected()
 
-    # ... close connection again ... nothing should happens
+    # ... close connection again ... nothing should happen
     obj.disconnect()
 
     with connector.get_instance() as obj:
@@ -345,10 +345,3 @@ def test_celerybeat() -> None:
                 task="task.does.not.exists",
                 every="invalid",
             )
-
-    if CeleryExt.CELERYBEAT_SCHEDULER == "MONGODB":
-
-        obj.create_periodic_task(
-            name="task3", task="task.does.not.exists", every="60", period="minutes"
-        )
-        assert obj.delete_periodic_task("task3")

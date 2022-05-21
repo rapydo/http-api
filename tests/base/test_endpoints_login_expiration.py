@@ -49,7 +49,7 @@ class TestApp2(BaseTests):
 
         if Env.get_bool("ALLOW_PASSWORD_RESET"):
             reset_data = {"reset_email": data["email"]}
-            r = client.post(f"{AUTH_URI}/reset", data=reset_data)
+            r = client.post(f"{AUTH_URI}/reset", json=reset_data)
             assert r.status_code == 403
             assert self.get_content(r) == "Sorry, this account is expired"
 
@@ -64,7 +64,7 @@ class TestApp2(BaseTests):
         expiration = datetime.now(pytz.utc) + timedelta(seconds=expiration_time)
         r = client.put(
             f"{API_URI}/admin/users/{uuid}",
-            data={"expiration": expiration},
+            json={"expiration": expiration},
             headers=admin_headers,
         )
         assert r.status_code == 204
@@ -98,7 +98,7 @@ class TestApp2(BaseTests):
         expiration = datetime.now(pytz.utc) + timedelta(seconds=expiration_time)
         r = client.put(
             f"{API_URI}/admin/users/{uuid}",
-            data={"expiration": expiration},
+            json={"expiration": expiration},
             headers=admin_headers,
         )
         assert r.status_code == 204
@@ -111,7 +111,7 @@ class TestApp2(BaseTests):
         expiration = datetime.now(pytz.utc) - timedelta(seconds=expiration_time)
         r = client.put(
             f"{API_URI}/admin/users/{uuid}",
-            data={"expiration": expiration},
+            json={"expiration": expiration},
             headers=admin_headers,
         )
         assert r.status_code == 204

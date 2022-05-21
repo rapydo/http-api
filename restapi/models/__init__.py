@@ -29,4 +29,4 @@ ISO8601UTC = "%Y-%m-%dT%H:%M:%S.%fZ"
 def load_data(request: FlaskRequest, schema: Schema) -> Any:
     # Return json if it is not None, otherwise it will send form
     # No merge is allowed here
-    return request.json or request.form
+    return request.get_json(silent=True) or request.form

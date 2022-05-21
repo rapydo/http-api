@@ -2,7 +2,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import click
 from flask.cli import FlaskGroup
@@ -23,22 +23,6 @@ def cli() -> None:  # pragma: no cover
     click.echo("*** RESTful HTTP API ***")
 
 
-# Too dangerous to launch it during tests... skipping tests
-def main(args: List[str]) -> None:  # pragma: no cover
-
-    current_app = Env.get("FLASK_APP", "").strip()
-    if not current_app:
-        os.environ["FLASK_APP"] = f"{current_package}.__main__"
-
-    # Call to untyped function "FlaskGroup" in typed context
-    fg_cli = FlaskGroup()  # type: ignore
-    options = {"prog_name": "restapi", "args": args}
-
-    # cannot catch for CTRL+c
-    # Call to untyped function "main" in typed context
-    fg_cli.main(**options)  # type: ignore
-
-
 def initializing() -> bool:
 
     return find_process(current_package, keywords=["init"], prefix="/usr/local/bin/")
@@ -50,6 +34,15 @@ def launch() -> None:  # pragma: no cover
     """Launch the RAPyDo-based HTTP API server"""
 
     mywait()
+
+    if initializing():
+        print_and_exit(
+            "Please wait few more seconds: initialization is still in progress"
+        )
+
+    current_app = Env.get("FLASK_APP", "").strip()
+    if not current_app:
+        os.environ["FLASK_APP"] = f"{current_package}.__main__"
 
     args = [
         "run",
@@ -63,13 +56,11 @@ def launch() -> None:  # pragma: no cover
         "--with-threads",
     ]
 
-    if initializing():
-        print_and_exit(
-            "Please wait few more seconds: initialization is still in progress"
-        )
-    else:
-        main(args)
-        log.warning("Server shutdown")
+    # Call to untyped function "FlaskGroup" in typed context
+    fg_cli = FlaskGroup()  # type: ignore
+    # Call to untyped function "main" in typed context
+    fg_cli.main(prog_name="restapi", args=args)  # type: ignore
+    log.warning("Server shutdown")
 
 
 @cli.command()
@@ -157,11 +148,11 @@ def get_service_address(
 def mywait() -> None:
     """
     Wait for a service on his host:port configuration
-    basing the check on a socket connection.
+    This check is merely based on a socket connection
     """
     for name, variables in Connector.services.items():
 
-        if name == "smtp":
+        if name == "smtp" or name == "ftp":
             log.info("Service {} is enabled but not tested at startup time", name)
             continue
 
@@ -182,13 +173,10 @@ def mywait() -> None:
             wait_socket(host, port, label)
 
             backend = variables.get("backend_service", "N/a")
-            # Rabbit is no longer used as backend due to the strong limitations
-            if backend == "RABBIT":  # pragma: no cover
+            if backend == "RABBIT":
                 service_vars = Env.load_variables_group(prefix="rabbitmq")
             elif backend == "REDIS":
                 service_vars = Env.load_variables_group(prefix="redis")
-            elif backend == "MONGODB":
-                service_vars = Env.load_variables_group(prefix="mongo")
             else:
                 print_and_exit(
                     "Invalid celery backend: {}", backend
@@ -249,8 +237,9 @@ def tests(
 ) -> None:  # pragma: no cover
     """Compute tests and coverage"""
 
-    # Forced TEST mode when using the restapi tests wrapper
-    os.environ["APP_MODE"] = "test"
+    # Forced a change from DEV to TEST mode when using the restapi tests wrapper
+    if not PRODUCTION:
+        os.environ["APP_MODE"] = "test"
 
     if wait:
         while initializing():

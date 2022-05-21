@@ -10,7 +10,7 @@ class TestApp(BaseTests):
 
         # This test verifies that buildData is always able to randomly create
         # valid inputs for endpoints with inputs defined by marshamallow schemas
-        schema = self.getDynamicInputSchema(client, "tests/autocomplete", {})
+        schema = self.get_dynamic_input_schema(client, "tests/autocomplete", {})
 
         assert schema[0]["key"] == "elements"
         assert schema[0]["type"] == "string[]"
@@ -55,12 +55,12 @@ class TestApp(BaseTests):
             data.append(element[schema[0]["autocomplete_id_bind"]])
 
         # put accepts a single id provided by the autocomplete endpoint
-        r = client.put(f"{API_URI}/tests/autocomplete", data={"element": data[0]})
+        r = client.put(f"{API_URI}/tests/autocomplete", json={"element": data[0]})
         assert r.status_code == 204
 
         # post accepts a list of ids provided by the autocomplete endpoint
         r = client.post(
             f"{API_URI}/tests/autocomplete",
-            data={"elements": orjson.dumps(data).decode("UTF8")},
+            json={"elements": orjson.dumps(data).decode("UTF8")},
         )
         assert r.status_code == 204

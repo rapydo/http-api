@@ -24,7 +24,7 @@ def test_vulnerabilities(client: FlaskClient) -> None:
         )
         assert r.status_code == 200
 
-        r = client.post(f"{API_URI}/tests/vulnerabilities/{s}", data={"payload": s})
+        r = client.post(f"{API_URI}/tests/vulnerabilities/{s}", json={"payload": s})
         assert r.status_code == 200
 
     # Can't test x//x as url parameter
@@ -33,5 +33,5 @@ def test_vulnerabilities(client: FlaskClient) -> None:
     )
     assert r.status_code == 200
 
-    r = client.post(f"{API_URI}/tests/vulnerabilities/x", data={"payload": "x//x"})
+    r = client.post(f"{API_URI}/tests/vulnerabilities/x", json={"payload": "x//x"})
     assert r.status_code == 200

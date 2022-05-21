@@ -3,11 +3,11 @@ from typing import Any, Dict, List, Optional
 
 from flask import Response as FlaskResponse
 from flask import request
+from flask.views import MethodView
 from flask_apispec import MethodResource
-from flask_restful import Resource
 
 from restapi.connectors import Connector
-from restapi.rest.response import ResponseMaker
+from restapi.rest.response import ResponseMaker, jsonifier
 from restapi.services.authentication import BaseAuthentication, User
 from restapi.services.cache import Cache
 from restapi.types import Response, ResponseContent
@@ -21,7 +21,7 @@ DEFAULT_PERPAGE = 10
 
 # Base type MethodResource becomes "Any" due to an unfollowed import
 # Base type Resource becomes "Any" due to an unfollowed import
-class EndpointResource(MethodResource, Resource):  # type: ignore
+class EndpointResource(MethodResource, MethodView):  # type: ignore
 
     depends_on: List[str] = []
     labels = ["undefined"]
@@ -60,6 +60,7 @@ class EndpointResource(MethodResource, Resource):  # type: ignore
         headers: Optional[Dict[str, str]] = None,
         head_method: bool = False,
         allow_html: bool = False,
+        force_json: bool = False,
     ) -> Response:
 
         if headers is None:
@@ -87,6 +88,11 @@ class EndpointResource(MethodResource, Resource):  # type: ignore
                 return FlaskResponse(
                     content, mimetype="text/html", status=code, headers=headers
                 )
+
+        if "Content-Type" not in headers or force_json:
+            headers["Content-Type"] = "application/json"
+        if force_json:
+            content = jsonifier(content)
 
         return (content, code, headers)
 

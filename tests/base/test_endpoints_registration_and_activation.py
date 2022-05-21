@@ -22,7 +22,7 @@ class TestApp(BaseTests):
         assert r.status_code == 400
 
         # registration, missing information
-        r = client.post(f"{AUTH_URI}/profile", data={"x": "y"})
+        r = client.post(f"{AUTH_URI}/profile", json={"x": "y"})
         assert r.status_code == 400
 
         # Ensure name and surname longer than 3
@@ -33,59 +33,59 @@ class TestApp(BaseTests):
 
         registration_data = {}
         registration_data["password"] = faker.password(5)
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 400
 
         registration_data["email"] = BaseAuthentication.default_user
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 400
 
         registration_data["name"] = name
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 400
 
         registration_data["surname"] = surname
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 400
 
         registration_data["password_confirm"] = faker.password(strong=True)
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 400
 
         min_pwd_len = Env.get_int("AUTH_MIN_PASSWORD_LENGTH", 9999)
 
         registration_data["password"] = faker.password(min_pwd_len - 1)
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 400
 
         registration_data["password"] = faker.password(min_pwd_len)
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 409
         m = f"This user already exists: {BaseAuthentication.default_user}"
         assert self.get_content(r) == m
 
         registration_data["email"] = email
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 409
         assert self.get_content(r) == "Your password doesn't match the confirmation"
 
         registration_data["password"] = faker.password(min_pwd_len, low=False, up=True)
         registration_data["password_confirm"] = registration_data["password"]
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, missing lower case letters"
         assert self.get_content(r) == m
 
         registration_data["password"] = faker.password(min_pwd_len, low=True)
         registration_data["password_confirm"] = registration_data["password"]
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, missing upper case letters"
         assert self.get_content(r) == m
 
         registration_data["password"] = faker.password(min_pwd_len, low=True, up=True)
         registration_data["password_confirm"] = registration_data["password"]
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, missing numbers"
         assert self.get_content(r) == m
@@ -94,7 +94,7 @@ class TestApp(BaseTests):
             min_pwd_len, low=True, up=True, digits=True
         )
         registration_data["password_confirm"] = registration_data["password"]
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, missing special characters"
         assert self.get_content(r) == m
@@ -102,28 +102,28 @@ class TestApp(BaseTests):
         registration_data["password"] = registration_data["email"].split("@")[0]
         registration_data["password"] += "DEFghi345!"
         registration_data["password_confirm"] = registration_data["password"]
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, can't contain your email address"
         assert self.get_content(r) == m
 
         registration_data["password"] = registration_data["name"] + "LMNopq678="
         registration_data["password_confirm"] = registration_data["password"]
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, can't contain your name"
         assert self.get_content(r) == m
 
         registration_data["password"] = registration_data["surname"] + "LMNopq678="
         registration_data["password_confirm"] = registration_data["password"]
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         assert r.status_code == 409
         m = "Password is too weak, can't contain your name"
         assert self.get_content(r) == m
 
         registration_data["password"] = faker.password(strong=True)
         registration_data["password_confirm"] = registration_data["password"]
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         # now the user is created but INACTIVE, activation endpoint is needed
         assert r.status_code == 200
         registration_message = "We are sending an email to your email address where "
@@ -169,7 +169,7 @@ class TestApp(BaseTests):
 
         # Also password reset is not allowed
         data = {"reset_email": registration_data["email"]}
-        r = client.post(f"{AUTH_URI}/reset", data=data)
+        r = client.post(f"{AUTH_URI}/reset", json=data)
         assert r.status_code == 403
         assert self.get_content(r) == "Sorry, this account is not active"
 
@@ -185,11 +185,11 @@ class TestApp(BaseTests):
         # Activation, missing or wrong information
         r = client.post(f"{AUTH_URI}/profile/activate")
         assert r.status_code == 400
-        r = client.post(f"{AUTH_URI}/profile/activate", data=faker.pydict(2))
+        r = client.post(f"{AUTH_URI}/profile/activate", json=faker.pydict(2))
         assert r.status_code == 400
         # It isn't an email
         invalid = faker.pystr(10)
-        r = client.post(f"{AUTH_URI}/profile/activate", data={"username": invalid})
+        r = client.post(f"{AUTH_URI}/profile/activate", json={"username": invalid})
         assert r.status_code == 400
 
         headers, _ = self.do_login(client, None, None)
@@ -198,7 +198,7 @@ class TestApp(BaseTests):
         activation_message += "you will find the link to activate your account"
         # request activation, wrong username
         r = client.post(
-            f"{AUTH_URI}/profile/activate", data={"username": faker.ascii_email()}
+            f"{AUTH_URI}/profile/activate", json={"username": faker.ascii_email()}
         )
         # return is 200, but no token will be generated and no mail will be sent
         # but it respond with the activation msg and hides the non existence of the user
@@ -215,7 +215,7 @@ class TestApp(BaseTests):
         # request activation, correct username
         r = client.post(
             f"{AUTH_URI}/profile/activate",
-            data={"username": registration_data["email"]},
+            json={"username": registration_data["email"]},
         )
         assert r.status_code == 200
         assert self.get_content(r) == activation_message
@@ -313,7 +313,7 @@ class TestApp(BaseTests):
         # 3 - user tries to activate and fails because already active
 
         registration_data["email"] = faker.ascii_email()
-        r = client.post(f"{AUTH_URI}/profile", data=registration_data)
+        r = client.post(f"{AUTH_URI}/profile", json=registration_data)
         # now the user is created but INACTIVE, activation endpoint is needed
         assert r.status_code == 200
 
@@ -342,7 +342,7 @@ class TestApp(BaseTests):
 
         assert uuid is not None
         r = client.put(
-            f"{API_URI}/admin/users/{uuid}", data={"is_active": True}, headers=headers
+            f"{API_URI}/admin/users/{uuid}", json={"is_active": True}, headers=headers
         )
         assert r.status_code == 204
 

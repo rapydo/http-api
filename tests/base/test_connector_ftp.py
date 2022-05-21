@@ -1,21 +1,24 @@
+import tempfile
 import time
+from pathlib import Path
 
 import pytest
+from faker import Faker
 from flask import Flask
 
 from restapi.connectors import Connector
-from restapi.connectors import mongo as connector
+from restapi.connectors import ftp as connector
 from restapi.exceptions import ServiceUnavailable
 from restapi.utilities.logs import log
 
-CONNECTOR = "mongo"
+CONNECTOR = "ftp"
 CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
 
 
 @pytest.mark.skipif(
     CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
 )
-def test_no_mongo() -> None:
+def test_no_ftp() -> None:
 
     with pytest.raises(ServiceUnavailable):
         connector.get_instance()
@@ -27,25 +30,19 @@ def test_no_mongo() -> None:
 @pytest.mark.skipif(
     not CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
 )
-def test_mongo(app: Flask) -> None:
+def test_ftp(app: Flask, faker: Faker) -> None:
 
     log.info("Executing {} tests", CONNECTOR)
 
     with pytest.raises(ServiceUnavailable):
-        obj = connector.get_instance(host="invalidhostname", port="123")
-        try:
-            obj.Token.objects.first()
-        except Exception:
-            raise ServiceUnavailable("")
+        connector.get_instance(host="invalidhostname", port="123")
 
     obj = connector.get_instance()
     assert obj is not None
-
-    with pytest.raises(AttributeError, match=r"Model InvalidModel not found"):
-        # _ assignment prevents pointless-statement (W0104) Codacy errors
-        _ = obj.InvalidModel
+    assert obj.is_connected()
 
     obj.disconnect()
+    assert not obj.is_connected()
 
     # a second disconnect should not raise any error
     obj.disconnect()
@@ -74,8 +71,37 @@ def test_mongo(app: Flask) -> None:
     obj.disconnect()
     assert not obj.is_connected()
 
-    # ... close connection again ... nothing should happens
+    # ... close connection again ... nothing should happen
     obj.disconnect()
 
     with connector.get_instance() as obj:
         assert obj is not None
+
+        # The FTP folder is empty => only . and .. are returned
+        assert len(list(obj.connection.mlsd())) == 2
+
+        # Upload a random content file on the FTP
+        tmp_content = faker.pystr()
+        ftp_filename = faker.file_name()
+        tmp_path = tempfile.NamedTemporaryFile().name
+
+        with open(tmp_path, "w+") as temporary_write_file:
+            temporary_write_file.write(tmp_content)
+
+        with open(tmp_path, "rb") as temporary_read_file:
+            # or storbinary for binary mode
+            obj.connection.storlines(f"STOR {ftp_filename}", temporary_read_file)
+
+        assert len(list(obj.connection.mlsd())) == 3
+
+        # Download the file and verify it matches
+        download_file: Path = Path(tempfile.NamedTemporaryFile().name)
+
+        with open(download_file, "w") as download_handle:
+            # Command for Downloading the file "RETR filename"
+            # or retrbinary for binary mode
+            obj.connection.retrlines(f"RETR {ftp_filename}", download_handle.write)
+
+        with open(download_file) as download_handle:
+            downloaded_content = download_handle.read()
+            assert downloaded_content == tmp_content

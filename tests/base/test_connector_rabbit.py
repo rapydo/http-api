@@ -155,7 +155,7 @@ def test_rabbit(app: Flask, faker: Faker) -> None:
     obj.disconnect()
     assert not obj.is_connected()
 
-    # ... close connection again ... nothing should happens
+    # ... close connection again ... nothing should happen
     obj.disconnect()
 
     with connector.get_instance() as obj:

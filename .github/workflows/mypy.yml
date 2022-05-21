@@ -6,7 +6,7 @@ on:
 
 jobs:
   mypy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
@@ -14,9 +14,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: "3.10"
       - name: Install MyPy
         run: |
+          sudo apt-get install --yes libgeos-dev
           python -m pip install --upgrade pip
           pip install \
             mypy \
@@ -32,7 +33,6 @@ jobs:
             types-redis \
             pika-stubs \
             celery-types \
-            mongo-types \
             sqlalchemy-stubs
           pip install --upgrade --no-cache-dir --editable .
 
@@ -44,18 +44,14 @@ jobs:
 
           for lib in \
             flask_apispec \
-            apispec \
             flask_caching \
             flask_cors \
             flask_sqlalchemy \
-            flask_restful \
             flask_migrate \
             neo4j \
             neobolt \
             neomodel \
             psycopg2 \
-            pymodm \
-            celerybeatmongo \
             redbeat \
             geolite2 \
             plumbum \

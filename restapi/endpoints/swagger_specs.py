@@ -36,8 +36,6 @@ class NewSwaggerSpecifications(EndpointResource):
         if user:
             # Set security requirements for endpoint
             for key, data in specs.items():
-
-                # Find endpoint mapping flagged as private
                 if key == "paths":
                     for uri, endpoint in data.items():
                         u = uri.replace("{", "<").replace("}", ">")

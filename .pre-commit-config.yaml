@@ -1,19 +1,19 @@
 repos:
   - repo: https://github.com/timothycrosley/isort
-    rev: 5.9.1
+    rev: 5.10.1
     hooks:
       - id: isort
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.3.2
+    rev: v2.6.2
     hooks:
       - id: prettier
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.19.4
+    rev: v2.32.0
     hooks:
       - id: pyupgrade
         args: [--py38-plus]
   - repo: https://github.com/ambv/black
-    rev: 21.6b0
+    rev: 22.3.0
     hooks:
       - id: black
   - repo: https://gitlab.com/pycqa/flake8
@@ -21,11 +21,11 @@ repos:
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.930
+    rev: v0.942
     hooks:
       - id: mypy
         additional_dependencies: [
-            "git+https://github.com/rapydo/http-api.git@2.2",
+            "git+https://github.com/rapydo/http-api.git@2.3",
 
             # Extra dependencies
             "lxml",
@@ -36,19 +36,15 @@ repos:
             "types-click",
             "types-PyYAML",
             "types-orjson",
-            "pymongo-stubs",
             "types-redis",
             "pika-stubs",
             "celery-types",
-            "mongo-types",
             "sqlalchemy-stubs",
-            "Faker==11.3.0",
           ]
 
         # https://mypy.readthedocs.io/en/stable/command_line.html
         args: [
             # -> Base type Model becomes "Any" due to an unfollowed import
-            # -> Base type MongoModel becomes "Any" due to an unfollowed import
             # "--disallow-any-unimported",
 
             # Disable errors like:
@@ -87,7 +83,7 @@ repos:
           ]
 
   - repo: https://github.com/gitguardian/gg-shield
-    rev: v1.7.3
+    rev: v1.11.0
     hooks:
       - id: ggshield
         language_version: python3

@@ -11,16 +11,15 @@ from threading import Lock
 from types import FrameType
 from typing import Dict, Optional
 
-import sentry_sdk
 import werkzeug.exceptions
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
 from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
-from flask_restful import Api
 from geolite2 import geolite2
 from neo4j.meta import ExperimentalWarning as Neo4jExperimentalWarning
+from sentry_sdk import init as sentry_sdk_init
 from sentry_sdk.integrations.flask import FlaskIntegration
 
 from restapi import config
@@ -43,6 +42,7 @@ from restapi.env import Env
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import (
     ExtendedJSONEncoder,
+    handle_http_errors,
     handle_marshmallow_errors,
     handle_response,
 )
@@ -66,9 +66,9 @@ class ServerModes(int, Enum):
 #     log.critical(request.headers)
 
 
-def teardown_handler(  # pragma: no cover
+def teardown_handler(
     signal: int, frame: Optional[FrameType]
-) -> None:
+) -> None:  # pragma: no cover
 
     with lock:
 
@@ -101,9 +101,7 @@ def create_app(
 
     # Flask app instance
     # template_folder = template dir for output in HTML
-    microservice = Flask(
-        name, template_folder=str(ABS_RESTAPI_PATH.joinpath("templates"))
-    )
+    flask_app = Flask(name, template_folder=str(ABS_RESTAPI_PATH.joinpath("templates")))
 
     # CORS
     if not PRODUCTION:
@@ -116,7 +114,7 @@ def create_app(
             cors_origin += ":*"
 
         CORS(
-            microservice,
+            flask_app,
             allow_headers=[
                 "Content-Type",
                 "Authorization",
@@ -133,12 +131,12 @@ def create_app(
         log.debug("CORS Enabled")
 
     # Flask configuration from config file
-    microservice.config.from_object(config)
-    microservice.json_encoder = ExtendedJSONEncoder
+    flask_app.config.from_object(config)
+    flask_app.json_encoder = ExtendedJSONEncoder
 
     # Used to force flask to avoid json sorting and ensure that
     # the output to reflect the order of field in the Marshmallow schema
-    microservice.config["JSON_SORT_KEYS"] = False
+    flask_app.config["JSON_SORT_KEYS"] = False
 
     log.debug("Flask app configured")
 
@@ -172,7 +170,7 @@ def create_app(
     if not isinstance(mem.customizer, BaseCustomizer):  # pragma: no cover
         print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
 
-    Connector.init_app(app=microservice, worker_mode=(mode == ServerModes.WORKER))
+    Connector.init_app(app=flask_app, worker_mode=(mode == ServerModes.WORKER))
 
     # Initialize reading of all files
     mem.geo_reader = geolite2.reader()
@@ -238,7 +236,7 @@ def create_app(
                 "ignore", message="A private pytest class or function was used."
             )
 
-        elif PRODUCTION:
+        elif PRODUCTION:  # pragma: no cover
             warnings.simplefilter("ignore", Warning)
             warnings.simplefilter("always", UserWarning)
             warnings.simplefilter("default", DeprecationWarning)
@@ -253,7 +251,7 @@ def create_app(
             # even if ignore it is raised once
             # because of the imports executed before setting this to ignore
             warnings.simplefilter("ignore", Neo4jExperimentalWarning)
-        else:
+        else:  # pragma: no cover
             warnings.simplefilter("default", Warning)
             warnings.simplefilter("always", UserWarning)
             warnings.simplefilter("always", DeprecationWarning)
@@ -277,22 +275,30 @@ def create_app(
         # ignore warning messages on flask socket after teardown
         warnings.filterwarnings("ignore", message="unclosed <socket.socket")
 
-        mem.cache = Cache.get_instance(microservice)
+        # from flask_caching 1.10.1 with python 3.10 on core tests...
+        # try to remove this once upgraded flask_caching in a near future
+        warnings.filterwarnings(
+            "ignore",
+            message="_SixMetaPathImporter.find_spec",
+        )
+
+        # Raised from sentry_sdk 1.5.11 with python 3.10 events
+        warnings.filterwarnings(
+            "ignore",
+            message="SelectableGroups dict interface is deprecated. Use select.",
+        )
+
+        mem.cache = Cache.get_instance(flask_app)
 
         endpoints_loader.load_endpoints()
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints
         mem.private_endpoints = endpoints_loader.private_endpoints
 
-        # Triggering automatic mapping of REST endpoints
-        rest_api = Api(catch_all_404s=True)
-
         for endpoint in endpoints_loader.endpoints:
-            # Create the restful resource with it;
-            # this method is from RESTful plugin
-            rest_api.add_resource(endpoint.cls, *endpoint.uris)
-
-        # HERE all endpoints will be registered by using FlaskRestful
-        rest_api.init_app(microservice)
+            ename = endpoint.cls.__name__.lower()
+            endpoint_view = endpoint.cls.as_view(ename)
+            for url in endpoint.uris:
+                flask_app.add_url_rule(url, view_func=endpoint_view)
 
         # APISpec configuration
         api_url = get_backend_url()
@@ -322,7 +328,7 @@ def create_app(
             api_key_scheme = {"type": "apiKey", "in": "header", "name": "Authorization"}
             spec.components.security_scheme("Bearer", api_key_scheme)
 
-        microservice.config.update(
+        flask_app.config.update(
             {
                 "APISPEC_SPEC": spec,
                 # 'APISPEC_SWAGGER_URL': '/api/swagger',
@@ -333,14 +339,14 @@ def create_app(
             }
         )
 
-        mem.docs = FlaskApiSpec(microservice)
+        mem.docs = FlaskApiSpec(flask_app)
 
         # Clean app routes
         ignore_verbs = {"HEAD", "OPTIONS"}
 
-        for rule in microservice.url_map.iter_rules():
+        for rule in flask_app.url_map.iter_rules():
 
-            view_function = microservice.view_functions[rule.endpoint]
+            view_function = flask_app.view_functions[rule.endpoint]
             if not hasattr(view_function, "view_class"):
                 continue
 
@@ -358,7 +364,7 @@ def create_app(
             rule.methods = newmethods
 
         # Register swagger. Note: after method mapping cleaning
-        with microservice.app_context():
+        with flask_app.app_context():
             for endpoint in endpoints_loader.endpoints:
                 try:
                     mem.docs.register(endpoint.cls)
@@ -367,16 +373,22 @@ def create_app(
                     log.error("Cannot register {}: {}", endpoint.cls.__name__, e)
 
     # marshmallow errors handler
-    microservice.register_error_handler(422, handle_marshmallow_errors)
+    # Can't get the typing to work with flask 2.1
+    flask_app.register_error_handler(422, handle_marshmallow_errors)  # type: ignore
+    flask_app.register_error_handler(400, handle_http_errors)  # type: ignore
+    flask_app.register_error_handler(404, handle_http_errors)  # type: ignore
+    flask_app.register_error_handler(405, handle_http_errors)  # type: ignore
+    flask_app.register_error_handler(500, handle_http_errors)  # type: ignore
 
-    # microservice.before_request(inspect_request)
+    # flask_app.before_request(inspect_request)
     # Logging responses
-    microservice.after_request(handle_response)
+    # Can't get the typing to work with flask 2.1
+    flask_app.after_request(handle_response)  # type: ignore
 
     if SENTRY_URL is not None:  # pragma: no cover
 
         if PRODUCTION:
-            sentry_sdk.init(
+            sentry_sdk_init(
                 dsn=SENTRY_URL,
                 # already catched by handle_marshmallow_errors
                 ignore_errors=[werkzeug.exceptions.UnprocessableEntity],
@@ -385,11 +397,11 @@ def create_app(
             log.info("Enabled Sentry {}", SENTRY_URL)
         else:
             # Could be enabled in print mode
-            # sentry_sdk.init(transport=print)
+            # sentry_sdk_init(transport=print)
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
     log.info("Boot completed")
-    if PRODUCTION and not TESTING and name == MAIN_SERVER_NAME:
+    if PRODUCTION and not TESTING and name == MAIN_SERVER_NAME:  # pragma: no cover
         save_event_log(
             event=Events.server_startup,
             payload={"server": name},
@@ -397,4 +409,4 @@ def create_app(
             target=None,
         )
 
-    return microservice
+    return flask_app

@@ -55,7 +55,7 @@ class Connector(metaclass=abc.ABCMeta):
     # Used by get_authentication_module
     _authentication_module: Optional[ModuleType] = None
 
-    # Returned by __getattr__ in neo4j, sqlalchemy and mongo connectors
+    # Returned by __getattr__ in neo4j and sqlalchemy connectors
     _models: Dict[str, Type] = {}
 
     # Used by set_object and get_object
@@ -120,10 +120,12 @@ class Connector(metaclass=abc.ABCMeta):
         excinst: Optional[Exception],
         exctb: Optional[TracebackType],
     ) -> bool:
+
         if not self.disconnected:
             self.disconnect()
-            return True
-        return False  # pragma: no cover
+        if excinst:
+            raise excinst
+        return True
 
     @staticmethod
     @abc.abstractmethod
@@ -519,7 +521,7 @@ class Connector(metaclass=abc.ABCMeta):
                     obj.connection_verification_time = now + ver
                 # if the connection is no longer valid, invalidate the instance
                 else:  # pragma: no cover
-                    log.warning(
+                    log.info(
                         "{} is no longer connected, connector invalidated", self.name
                     )
                     obj.disconnected = True

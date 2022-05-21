@@ -81,7 +81,7 @@ def test_bot() -> None:
 
             message = await send_command(client, "/monitor disk")
             error = "Missing credentials in headers, e.g. Authorization: 'Bearer TOKEN'"
-            assert message == error
+            assert error in message
 
             message = await send_command(client, "/monitor disk 2")
             assert message == "Too many inputs"

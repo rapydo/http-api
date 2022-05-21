@@ -74,15 +74,17 @@ class RabbitExt(Connector):
         vhost = variables.get("vhost", "/")
 
         if ssl_enabled:
-            # context = ssl.SSLContext(verify_mode=ssl.CERT_NONE)
-            context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+
+            # This started failing with python 3.10:
+            # context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            # -> Cannot create a client socket with a PROTOCOL_TLS_SERVER context
+            context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+
             context.load_default_certs()
 
-            # ### Disable certificate verification:
+            # Disable certificate verification:
             # context.verify_mode = ssl.CERT_NONE
-            # ########################################
-
-            # ### Enable certificate verification:
+            # Enable certificate verification:
             context.verify_mode = ssl.CERT_REQUIRED
             context.check_hostname = True
             # Path to pem file to verify self signed certificates

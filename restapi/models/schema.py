@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Optional, Type, Union, cast
 
 from marshmallow import EXCLUDE
 from marshmallow import Schema as MarshmallowSchema
@@ -35,16 +35,29 @@ class Schema(MarshmallowSchema):
 
     # NOTE: self is not used, but @pre_load cannot be static
     @pre_load
-    def raise_get_schema(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-
-        if "access_token" in data:
-            # valid for ImmutableMultiDict:
-            data = data.to_dict()  # type: ignore
-            data.pop("access_token")
+    def raise_get_schema(
+        self,
+        data: Dict[str, Any],
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
 
         if GET_SCHEMA_KEY in data:
             raise ValidationError("Schema requested")
-        return data
+
+        if "access_token" not in data:
+            return data
+
+        # data is Immutable if it comes from args, is mutable otherwise
+        try:
+            data.pop("access_token")
+            return data
+            # Why isinstance is not working here!?
+            # isinstance(data, ImmutableMultiDict)
+        except TypeError:  # pragma: no cover
+
+            mutable_data = data.to_dict()  # type: ignore
+            mutable_data.pop("access_token")
+            return cast(Dict[str, Any], mutable_data)
 
 
 class PartialSchema(Schema):

@@ -24,7 +24,15 @@ import certifi
 from celery import Celery, states
 from celery.exceptions import Ignore
 
-from restapi.config import CUSTOM_PACKAGE, DOCS, HOST_TYPE, SSL_CERTIFICATE, TESTING
+from restapi.config import (
+    CUSTOM_PACKAGE,
+    DOCS,
+    HOST_TYPE,
+    PRODUCTION,
+    SSL_CERTIFICATE,
+    SSL_SECRET,
+    TESTING,
+)
 from restapi.connectors import Connector, ExceptionsList
 from restapi.connectors.rabbitmq import RabbitExt
 from restapi.connectors.redis import RedisExt
@@ -184,6 +192,7 @@ class CeleryExt(Connector):
             If idempotent (i.e. will not cause unintended effects even if called
             multiple times with the same arguments),
             celery will be configured with `acks_late` flag.
+            Note: you can interrupt an idempotent task with task.revoke(terminate=True)
         :param name: The name of the task,
             the default, if not specified, is the name of the decorated function.
         :param autoretry_for: A tuple of exception classes. If any of these exceptions
@@ -268,9 +277,7 @@ class CeleryExt(Connector):
         return f"{protocol}://{creds}{host}:{port}{vhost}"
 
     @staticmethod
-    def get_redis_url(
-        variables: Dict[str, str], protocol: str, celery_beat: bool
-    ) -> str:
+    def get_redis_url(variables: Dict[str, str], protocol: str, db: int) -> str:
         host = variables.get("host")
         port = Env.to_int(variables.get("port"))
         pwd = variables.get("password", "")
@@ -278,25 +285,7 @@ class CeleryExt(Connector):
         if pwd:
             creds = f":{pwd}@"
 
-        if celery_beat:
-            db = RedisExt.CELERY_BEAT_DB
-        else:
-            db = RedisExt.CELERY_DB
-
         return f"{protocol}://{creds}{host}:{port}/{db}"
-
-    @staticmethod
-    def get_mongodb_url(variables: Dict[str, str], protocol: str) -> str:
-        host = variables.get("host")
-        port = Env.to_int(variables.get("port"))
-        user = variables.get("user", "")
-        pwd = variables.get("password", "")
-
-        creds = ""
-        if user and pwd:
-            creds = f"{user}:{pwd}@"
-
-        return f"{protocol}://{creds}{host}:{port}"
 
     def connect(self, **kwargs: str) -> "CeleryExt":
 
@@ -351,7 +340,7 @@ class CeleryExt(Connector):
             self.celery_app.conf.broker_use_ssl = False
 
             self.celery_app.conf.broker_url = self.get_redis_url(
-                service_vars, protocol="redis", celery_beat=False
+                service_vars, protocol="redis", db=RedisExt.CELERY_BROKER_DB
             )
 
         else:  # pragma: no cover
@@ -374,7 +363,7 @@ class CeleryExt(Connector):
 
             log.warning(
                 "RABBIT backend is quite limited and not fully supported. "
-                "Consider to enable Redis or MongoDB as a backend database"
+                "Consider to enable Redis as a backend database"
             )
             self.celery_app.conf.result_backend = self.get_rabbit_url(
                 service_vars, protocol="rpc"
@@ -384,16 +373,9 @@ class CeleryExt(Connector):
             service_vars = Env.load_variables_group(prefix="redis")
 
             self.celery_app.conf.result_backend = self.get_redis_url(
-                service_vars, protocol="redis", celery_beat=False
+                service_vars, protocol="redis", db=RedisExt.CELERY_BACKEND_DB
             )
             # set('redis_backend_use_ssl', kwargs.get('redis_backend_use_ssl'))
-
-        elif backend == "MONGODB":
-            service_vars = Env.load_variables_group(prefix="mongo")
-
-            self.celery_app.conf.result_backend = self.get_mongodb_url(
-                service_vars, protocol="mongodb"
-            )
 
         else:  # pragma: no cover
             print_and_exit(
@@ -412,13 +394,9 @@ class CeleryExt(Connector):
         # This means the messages won’t be lost after a broker restart.
         # self.celery_app.conf.result_persistent = True
 
-        # Skip initial warnings, avoiding pickle format (deprecated)
-        self.celery_app.conf.accept_content = ["json"]
-        self.celery_app.conf.task_serializer = "json"
         # Decides if publishing task messages will be retried in the case of
         # connection loss or other connection errors
         self.celery_app.conf.task_publish_retry = True
-        self.celery_app.conf.result_serializer = "json"
 
         # Already enabled by default to use UTC
         # self.celery_app.conf.enable_utc
@@ -464,31 +442,22 @@ class CeleryExt(Connector):
         # The setting will be set to True by default in Celery 6.0.
         self.celery_app.conf.worker_cancel_long_running_tasks_on_connection_loss = True
 
+        if not PRODUCTION:
+            # Skip initial warnings by avoiding pickle format (deprecated)
+            # Only set in DEV mode since in PROD mode the auth serializer is used
+            self.celery_app.conf.accept_content = ["json"]
+            self.celery_app.conf.task_serializer = "json"
+            self.celery_app.conf.result_serializer = "json"
+
         if Env.get_bool("CELERYBEAT_ENABLED"):
 
             CeleryExt.CELERYBEAT_SCHEDULER = backend
 
-            if backend == "MONGODB":
-                service_vars = Env.load_variables_group(prefix="mongo")
-                url = self.get_mongodb_url(service_vars, protocol="mongodb")
-                SCHEDULER_DB = "celery"
-                self.celery_app.conf["CELERY_MONGODB_SCHEDULER_DB"] = SCHEDULER_DB
-                self.celery_app.conf[
-                    "CELERY_MONGODB_SCHEDULER_COLLECTION"
-                ] = "schedules"
-                self.celery_app.conf["CELERY_MONGODB_SCHEDULER_URL"] = url
-
-                import mongoengine
-
-                m = mongoengine.connect(
-                    SCHEDULER_DB, host=url, uuidRepresentation="standard"
-                )
-                log.info("Celery-beat connected to MongoDB: {}", m)
-            elif backend == "REDIS":
+            if backend == "REDIS":
 
                 service_vars = Env.load_variables_group(prefix="redis")
                 url = self.get_redis_url(
-                    service_vars, protocol="redis", celery_beat=True
+                    service_vars, protocol="redis", db=RedisExt.CELERY_BEAT_DB
                 )
 
                 self.celery_app.conf["REDBEAT_REDIS_URL"] = url
@@ -507,6 +476,22 @@ class CeleryExt(Connector):
             "RAPyDo", broker=conf.broker_url, backend=conf.result_backend
         )
         self.celery_app.conf = conf
+
+        if PRODUCTION:
+
+            # https://docs.celeryq.dev/en/stable/userguide/security.html#message-signing
+            self.celery_app.conf.update(
+                security_key=SSL_SECRET,
+                security_certificate=SSL_CERTIFICATE,
+                security_cert_store=SSL_CERTIFICATE,
+                security_digest="sha256",
+                task_serializer="auth",
+                result_serializer="auth",
+                event_serializer="auth",
+                accept_content=["auth"],
+            )
+
+            self.celery_app.setup_security()
 
         for funct in Meta.get_celery_tasks(f"{CUSTOM_PACKAGE}.tasks"):
             # Weird errors due to celery-stubs?
@@ -527,13 +512,6 @@ class CeleryExt(Connector):
     @classmethod
     def get_periodic_task(cls, name: str) -> Any:
 
-        if cls.CELERYBEAT_SCHEDULER == "MONGODB":
-            from celerybeatmongo.models import DoesNotExist, PeriodicTask
-
-            try:
-                return PeriodicTask.objects.get(name=name)
-            except DoesNotExist:
-                return None
         if cls.CELERYBEAT_SCHEDULER == "REDIS":
             from redbeat.schedulers import RedBeatSchedulerEntry
 
@@ -572,18 +550,7 @@ class CeleryExt(Connector):
         if kwargs is None:
             kwargs = {}
 
-        if cls.CELERYBEAT_SCHEDULER == "MONGODB":
-            from celerybeatmongo.models import PeriodicTask
-
-            PeriodicTask(
-                name=name,
-                task=task,
-                enabled=True,
-                args=args,
-                kwargs=kwargs,
-                interval=PeriodicTask.Interval(every=every, period=period),
-            ).save()
-        elif cls.CELERYBEAT_SCHEDULER == "REDIS":
+        if cls.CELERYBEAT_SCHEDULER == "REDIS":
             from celery.schedules import schedule
             from redbeat.schedulers import RedBeatSchedulerEntry
 
@@ -628,24 +595,7 @@ class CeleryExt(Connector):
         if kwargs is None:
             kwargs = {}
 
-        if cls.CELERYBEAT_SCHEDULER == "MONGODB":
-            from celerybeatmongo.models import PeriodicTask
-
-            PeriodicTask(
-                name=name,
-                task=task,
-                enabled=True,
-                args=args,
-                kwargs=kwargs,
-                crontab=PeriodicTask.Crontab(
-                    minute=minute,
-                    hour=hour,
-                    day_of_week=day_of_week,
-                    day_of_month=day_of_month,
-                    month_of_year=month_of_year,
-                ),
-            ).save()
-        elif cls.CELERYBEAT_SCHEDULER == "REDIS":
+        if cls.CELERYBEAT_SCHEDULER == "REDIS":
             from celery.schedules import crontab
             from redbeat.schedulers import RedBeatSchedulerEntry
 
