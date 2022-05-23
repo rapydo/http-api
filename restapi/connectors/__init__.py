@@ -204,7 +204,7 @@ class Connector(metaclass=abc.ABCMeta):
 
             # Can't test connector misconfiguration...
             if not connector_class:  # pragma: no cover
-                log.error("No connector class found in {}/{}", main_folder, connector)
+                log.error("No connector class found in {}", connector)
                 continue
 
             try:
