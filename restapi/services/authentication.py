@@ -31,7 +31,6 @@ from passlib.context import CryptContext
 
 from restapi.config import (
     BACKEND_HOSTNAME,
-    BOT_HOSTNAME,
     HOST_TYPE,
     JWT_SECRET_FILE,
     PRODUCTION,
@@ -73,7 +72,7 @@ class AuthMissingTOTP(Exception):
 
 def import_secret(abs_filename: Path) -> bytes:
 
-    if HOST_TYPE != BACKEND_HOSTNAME and HOST_TYPE != BOT_HOSTNAME:  # pragma: no cover
+    if HOST_TYPE != BACKEND_HOSTNAME:  # pragma: no cover
         return Fernet.generate_key()
 
     try:

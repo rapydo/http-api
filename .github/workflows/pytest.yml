@@ -41,12 +41,6 @@ jobs:
           echo "Selected random authentication service = ${RANDOM_AUTH}"
           # Make the environment variable available to next steps
           echo "RANDOM_AUTH=${RANDOM_AUTH}" >> $GITHUB_ENV
-          echo "TELEGRAM_ADMINS=${{ secrets.TELEGRAM_ADMINS }}" >> $GITHUB_ENV
-          echo "TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}" >> $GITHUB_ENV
-          echo "TELEGRAM_APP_HASH=${{ secrets.TELEGRAM_APP_HASH }}" >> $GITHUB_ENV
-          echo "TELEGRAM_APP_ID=${{ secrets.TELEGRAM_APP_ID }}" >> $GITHUB_ENV
-          echo "TELEGRAM_BOTNAME=${{ secrets.TELEGRAM_BOTNAME }}" >> $GITHUB_ENV
-          echo "TELETHON_SESSION=${{ secrets.TELETHON_SESSION }}" >> $GITHUB_ENV
 
           python -m pip install --upgrade pip
           CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d '"')
@@ -65,7 +59,7 @@ jobs:
           rapydo --testing --project prj init
           rapydo pull --quiet
           bash ../tests/customize_template.sh ${{ matrix.template }}
-          rapydo -e ACTIVATE_TELEGRAM=0 start
+          rapydo start
           sleep 25
           rapydo logs
 

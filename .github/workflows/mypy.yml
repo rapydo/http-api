@@ -57,7 +57,6 @@ jobs:
             plumbum \
             psutil \
             passlib \
-            telethon \
             ; do
             echo "[mypy-${lib}.*]" >> mypy.ini
             echo "ignore_missing_imports = True" >> mypy.ini

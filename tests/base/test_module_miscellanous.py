@@ -258,7 +258,6 @@ class TestApp(BaseTests):
 
         assert get_host_type("backend-server") == "backend-server"
         assert get_host_type("celery") == "celery"
-        assert get_host_type("telegram-bot") == "telegram-bot"
         assert get_host_type("celery-beat") == "celery-beat"
         assert get_host_type("flower") == "flower"
         assert get_host_type("whateverelse") == "celery"

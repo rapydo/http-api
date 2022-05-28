@@ -27,7 +27,6 @@ MAIN_SERVER_NAME = "REST_API"
 BACKEND_HOSTNAME = "backend-server"
 FLOWER_HOSTNAME = "flower"
 CELERYBEAT_HOSTNAME = "celery-beat"
-BOT_HOSTNAME = "telegram-bot"
 CELERY_HOSTNAME = "celery"
 DOCS = "docs-generation"
 
@@ -45,9 +44,6 @@ def get_host_type(HOSTNAME: str) -> str:
 
     if HOSTNAME == CELERYBEAT_HOSTNAME:
         return CELERYBEAT_HOSTNAME
-
-    if HOSTNAME == BOT_HOSTNAME:
-        return BOT_HOSTNAME
 
     # Celery has not a fixed hostname
     return CELERY_HOSTNAME

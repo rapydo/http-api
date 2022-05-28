@@ -41,7 +41,7 @@ extensions = [
 ]
 
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
-autodoc_mock_imports = ["restapi.services.bot", "restapi.services.telegram"]
+# autodoc_mock_imports = ["mymodule"]
 # autodoc_typehints = "description"
 autodoc_typehints = "both"
 always_document_param_types = True
