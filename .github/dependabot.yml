@@ -13,16 +13,8 @@ updates:
       interval: "daily"
 
   # Maintain dependencies for Python
-  - package-ecosystem: "poetry"
+  - package-ecosystem: "pip"
     directory: "/"
     open-pull-requests-limit: 99
     schedule:
       interval: "daily"
-
-  # # Maintain dependencies for Python
-  # pip is not working with pyproject.toml / setup.cfg
-  # - package-ecosystem: "pip"
-  #   directory: "/"
-  #   open-pull-requests-limit: 99
-  #   schedule:
-  #     interval: "daily"
