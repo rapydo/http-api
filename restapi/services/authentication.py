@@ -759,11 +759,6 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     def get_totp_secret(self, user: User) -> str:
 
-        if TESTING:  # pragma: no cover
-            # TESTING_TOTP_HASH is set by setup-cypress github action
-            if p := Env.get("AUTH_TESTING_TOTP_HASH", ""):
-                return p
-
         if not user.mfa_hash:
             random_hash = pyotp.random_base32()
             user.mfa_hash = self.fernet.encrypt(random_hash.encode()).decode()
