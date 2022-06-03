@@ -779,6 +779,11 @@ class BaseAuthentication(metaclass=ABCMeta):
 
         if totp_code is None:
             raise Unauthorized("Verification code is missing")
+
+        # Used to mock tests
+        if TESTING and totp_code == "111111":  # pragma: no cover
+            return True
+
         secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code, valid_window=self.TOTP_VALIDITY_WINDOW):
