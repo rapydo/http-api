@@ -34,8 +34,7 @@ class Cache:
         }
 
     @staticmethod
-    # Return type becomes "Any" due to an unfollowed import
-    def get_instance(app: Flask) -> FlaskCache:  # type: ignore
+    def get_instance(app: Flask) -> FlaskCache:
 
         # This check prevent KeyError raised during tests
         # Exactly as reported here:
