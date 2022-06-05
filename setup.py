@@ -17,7 +17,7 @@ setup(
         "passlib[bcrypt]==1.7.4",
         "marshmallow==3.15.0",
         "webargs==8.1.0",
-        "apispec==5.2.0",
+        "apispec==5.2.2",
         "neomodel==4.0.8",
         "psycopg2-binary",
         "PyMySQL",
