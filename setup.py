@@ -12,7 +12,7 @@ setup(
         "Flask-Migrate==3.1.0",
         "Werkzeug==2.1.2",
         "gunicorn==20.1.0",
-        "PyJWT==2.3.0",
+        "PyJWT==2.4.0",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.4",
         "marshmallow==3.16.0",
