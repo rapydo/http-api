@@ -10,7 +10,7 @@ setup(
         "Flask-Cors==3.0.10",
         "Flask-SQLAlchemy==2.5.1",
         "Flask-Migrate==3.1.0",
-        "Werkzeug==2.1.0",
+        "Werkzeug==2.1.2",
         "gunicorn==20.1.0",
         "PyJWT==2.3.0",
         "pyOpenSSL",
