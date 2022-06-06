@@ -44,6 +44,6 @@ setup(
         "pytest-timeout==2.1.0",
         "pytest-sugar==0.9.4",
         "schemathesis==3.15.3",
-        "Faker==13.3.3",
+        "Faker==13.12.0",
     ]
 )
