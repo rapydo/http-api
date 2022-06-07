@@ -68,7 +68,7 @@ jobs:
           sleep 25
           rapydo logs
 
-          if [[ "${{github.event_name}}" == "pull_request" ]]; then
+          if [[ "${{github.actor}}" == "dependabot[bot]" ]]; then
             rapydo shell backend -u root 'bash -c "pip3 install --upgrade /http-api-package"'
           fi
 
@@ -94,7 +94,7 @@ jobs:
           curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
           rapydo logs --tail 20 proxy backend
 
-          if [[ "${{github.event_name}}" == "pull_request" ]]; then
+          if [[ "${{github.actor}}" == "dependabot[bot]" ]]; then
             rapydo shell backend -u root 'bash -c "pip3 install --upgrade /http-api-package"'
             rapydo reload backend
           fi
