@@ -4,9 +4,9 @@ from setuptools import setup
 
 setup(
     install_requires=[
-        "Flask==2.1.1",
+        "Flask==2.1.2",
         "flask-apispec==0.11.1",
-        "Flask-Caching==1.10.1",
+        "Flask-Caching==1.11.1",
         "Flask-Cors==3.0.10",
         "Flask-SQLAlchemy==2.5.1",
         "Flask-Migrate==3.1.0",
