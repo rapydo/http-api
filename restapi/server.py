@@ -281,6 +281,12 @@ def create_app(
             "ignore",
             message="_SixMetaPathImporter.find_spec",
         )
+        # from flask_caching 1.11.1...
+        # try to remove this once upgraded flask_caching in a near future
+        warnings.filterwarnings(
+            "ignore",
+            message="'load_object' is deprecated and will be removed in the future.",
+        )
 
         # Raised from sentry_sdk 1.5.11 with python 3.10 events
         warnings.filterwarnings(
