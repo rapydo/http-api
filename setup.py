@@ -26,7 +26,7 @@ setup(
         "celery[redis]==5.2.3",
         "flower==1.0.0",
         "celery-redbeat==2.0.0",
-        "amqp==5.1.0",
+        "amqp==5.1.1",
         "pyotp==2.6.0",
         "segno==1.4.1",
         "PyYAML==6.0",
