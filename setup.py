@@ -28,7 +28,7 @@ setup(
         "celery-redbeat==2.0.0",
         "amqp==5.1.1",
         "pyotp==2.6.0",
-        "segno==1.4.1",
+        "segno==1.5.2",
         "PyYAML==6.0",
         "loguru",
         "glom",
