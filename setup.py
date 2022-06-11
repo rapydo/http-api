@@ -23,7 +23,7 @@ setup(
         "PyMySQL",
         "redis==4.3.3",
         "pika",
-        "celery[redis]==5.2.3",
+        "celery[redis]==5.2.7",
         "flower==1.0.0",
         "celery-redbeat==2.0.0",
         "amqp==5.1.1",
