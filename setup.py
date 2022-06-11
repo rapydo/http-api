@@ -21,9 +21,9 @@ setup(
         "neomodel==4.0.8",
         "psycopg2-binary",
         "PyMySQL",
-        "redis==4.2.2",
+        "redis==4.3.3",
         "pika",
-        "celery[redis]==5.2.3",
+        "celery[redis]==5.2.7",
         "flower==1.0.0",
         "celery-redbeat==2.0.0",
         "amqp==5.1.1",
@@ -43,7 +43,7 @@ setup(
         "pytest-cov==3.0.0",
         "pytest-timeout==2.1.0",
         "pytest-sugar==0.9.4",
-        "schemathesis==3.15.3",
+        "schemathesis==3.15.4",
         "Faker==13.12.0",
     ]
 )
