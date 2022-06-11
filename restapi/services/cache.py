@@ -25,8 +25,7 @@ class Cache:
         }
 
     @staticmethod
-    # Return type becomes "Any" due to an unfollowed import
-    def get_instance(app: Flask) -> FlaskCache:  # type: ignore
+    def get_instance(app: Flask) -> FlaskCache:
 
         if not Connector.check_availability("redis"):
             raise ServiceUnavailable("Can't enable the cache without Redis")
