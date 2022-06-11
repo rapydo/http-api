@@ -89,10 +89,7 @@ jobs:
           sleep 60
           rapydo logs
           curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
-          if [[ "${{ matrix.template }}" == "extra" ]]; then
-            rapydo logs --tail 1 bot | grep "Bot is ready to accept requests";
-            rapydo remove bot;
-          fi
+
           rapydo logs --tail 20 proxy backend
 
           rapydo shell backend 'restapi tests --core --wait'
