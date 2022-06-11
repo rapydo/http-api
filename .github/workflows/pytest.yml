@@ -70,7 +70,10 @@ jobs:
 
 
           if [[ "${{github.actor}}" == "dependabot[bot]" ]] || [[ "${{github.event.pull_request.merged}}" == "true" ]]; then
-            rapydo shell backend -u root 'bash -c "pip3 install --upgrade /http-api-package"'
+            # Do not add --upgrade, to prevent:
+            # ERROR: Could not install packages due to an OSError:
+            #        [Errno 16] Device or resource busy: '/usr/local/lib/python3.10/dist-packages/restapi/'
+            rapydo shell backend -u root 'bash -c "pip3 install /http-api-package"'
           fi
 
           rapydo shell backend 'restapi tests --core --wait --destroy'
@@ -96,7 +99,10 @@ jobs:
           rapydo logs --tail 20 proxy backend
 
           if [[ "${{github.actor}}" == "dependabot[bot]" ]] || [[ "${{github.event.pull_request.merged}}" == "true" ]]; then
-            rapydo shell backend -u root 'bash -c "pip3 install --upgrade /http-api-package"'
+            # Do not add --upgrade, to prevent:
+            # ERROR: Could not install packages due to an OSError:
+            #        [Errno 16] Device or resource busy: '/usr/local/lib/python3.10/dist-packages/restapi/'
+            rapydo shell backend -u root 'bash -c "pip3 install /http-api-package"'
             rapydo reload backend
           fi
 
