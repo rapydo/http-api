@@ -22,6 +22,7 @@ from typing import (
 
 import certifi
 from celery import Celery, states
+from celery.app.task import Task
 from celery.exceptions import Ignore
 
 from restapi.config import (
@@ -46,6 +47,13 @@ from restapi.utilities.time import AllowedTimedeltaPeriods, get_timedelta
 REDBEAT_KEY_PREFIX: str = "redbeat:"
 
 F = TypeVar("F", bound=Callable[..., Any])
+
+
+# Monkey patch Task to accept a generic argument:
+# https://github.com/sbdchd/celery-types/issues/80
+Task.__class_getitem__ = classmethod(  # type: ignore [attr-defined]
+    lambda cls, *args, **kwargs: cls
+)
 
 
 class CeleryRetryTask(Exception):
