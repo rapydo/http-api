@@ -37,13 +37,13 @@ setup(
         "maxminddb-geolite2",
         "html2text",
         "orjson",
-        "sentry-sdk[flask]==1.5.12",
+        "sentry-sdk[flask]==1.6.0",
         "pytest",
         "pytest-flask==1.2.0",
         "pytest-cov==3.0.0",
         "pytest-timeout==2.1.0",
         "pytest-sugar==0.9.4",
         "schemathesis==3.15.4",
-        "Faker==13.13.0",
+        "Faker==13.14.0",
     ]
 )
