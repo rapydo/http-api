@@ -15,7 +15,7 @@ setup(
         "PyJWT==2.4.0",
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.4",
-        "marshmallow==3.16.0",
+        "marshmallow==3.17.0",
         "webargs==8.1.0",
         "apispec==5.2.2",
         "neomodel==4.0.8",
