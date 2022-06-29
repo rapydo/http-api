@@ -58,7 +58,7 @@ fi
 
 git remote add origin https://your_remote_git/your_project.git
 
-# REF contains the branch when commit, but contains refs/pull/78/merge on PRs
+# REF contains the branch when commit, but contains refs/pull/XXX/merge on PRs
 # with PRs use HEAD_REF
 
 # Strip out refs/heads/ prefix
