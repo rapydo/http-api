@@ -69,7 +69,6 @@ jobs:
           sleep 25
           rapydo logs
 
-
           if [[ "${{github.actor}}" == "dependabot[bot]" ]] || [[ "${{github.event_name}}" == "pull_request" ]] || [[ "${{github.event.pull_request.merged}}" == "true" ]]; then
             # Do not install at root level to prevent:
             # ERROR: Could not install packages due to an OSError:
