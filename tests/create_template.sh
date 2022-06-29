@@ -39,7 +39,7 @@ elif [[ "$TEMPLATE" == "extra" ]]; then
 
   rapydo --testing create ${PROJECT_NAME} --current \
                     --add-optionals \
-                    --extend prjbasebase \
+                    --extend prjbase \
                     --auth ${AUTH} \
                     --frontend no \
                     -s ftp \
