@@ -58,5 +58,7 @@ fi
 
 git remote add origin https://your_remote_git/your_project.git
 
-echo "Forcing http-api to branch ${FORCE_BRANCH}"
-sed -i "s|# branch: http-api-branch|branch: ${FORCE_BRANCH}|g" projects/${PROJECT_NAME}/project_configuration.yaml
+# Strip out refs/heads/ prefix
+BRANCH=${SOURCE_BRANCH/refs\/heads\//}
+echo "Forcing http-api to branch ${BRANCH}"
+sed -i "s|# branch: http-api-branch|branch: ${BRANCH}|g" projects/${PROJECT_NAME}/project_configuration.yaml
