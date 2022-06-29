@@ -39,7 +39,8 @@ jobs:
           python-version: "3.10"
       - name: Install
         env:
-          SOURCE_BRANCH: ${{ github.ref }}
+          REF_BRANCH: ${{ github.ref }}
+          HEAD_REF_BRANCH: ${{ github.head_ref }}
 
         run: |
 

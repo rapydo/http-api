@@ -58,7 +58,16 @@ fi
 
 git remote add origin https://your_remote_git/your_project.git
 
+# REF contains the branch when commit, but contains refs/pull/78/merge on PRs
+# with PRs use HEAD_REF
+
 # Strip out refs/heads/ prefix
-BRANCH=${SOURCE_BRANCH/refs\/heads\//}
+if [[ ! -z $HEAD_REF_BRANCH ]];
+then
+  BRANCH=${HEAD_REF_BRANCH/refs\/heads\//}
+else
+  BRANCH=${REF_BRANCH/refs\/heads\//}
+fi
+
 echo "Forcing http-api to branch ${BRANCH}"
 sed -i "s|# branch: \"http-api-branch\"|branch: \"${BRANCH}\"|g" projects/${PROJECT_NAME}/project_configuration.yaml
