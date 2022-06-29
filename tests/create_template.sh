@@ -58,15 +58,5 @@ fi
 
 git remote add origin https://your_remote_git/your_project.git
 
-# Should not be enough for both commits and pull requests?
-BRANCH="${{ github.ref }}"
-
-# if [[ ! -z $github.head_ref ]];
-# then
-#   BRANCH="${{ github.head_ref }}"
-# else
-#   BRANCH="${{ github.ref }}"
-# fi
-
-echo "Forcing http-api to branch ${BRANCH}"
-sed -i "s|# branch: http-api-branch|branch: ${BRANCH}|g" projects/${PROJECT_NAME}/project_configuration.yaml
+echo "Forcing http-api to branch ${FORCE_BRANCH}"
+sed -i "s|# branch: http-api-branch|branch: ${FORCE_BRANCH}|g" projects/${PROJECT_NAME}/project_configuration.yaml

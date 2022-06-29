@@ -38,6 +38,9 @@ jobs:
         with:
           python-version: "3.10"
       - name: Install
+        env:
+          FORCE_BRANCH: ${{ github.ref }}
+
         run: |
 
           # Randomize auth service to test some services
