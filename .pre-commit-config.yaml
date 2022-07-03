@@ -37,6 +37,7 @@ repos:
             "types-PyYAML",
             "types-orjson",
             "types-redis",
+            "types-setuptools",
             "pika-stubs",
             "celery-types",
             "sqlalchemy-stubs",
