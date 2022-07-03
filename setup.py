@@ -25,7 +25,7 @@ setup(
         "redis==4.3.3",
         "pika==1.3.0",
         "celery[redis]==5.2.7",
-        "flower==1.0.0",
+        "flower==1.1.0",
         "celery-redbeat==2.0.0",
         "amqp==5.1.1",
         "pyotp==2.6.0",
