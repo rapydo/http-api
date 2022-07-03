@@ -22,7 +22,7 @@ setup(
         "neomodel==4.0.8",
         "psycopg2-binary==2.9.3",
         "PyMySQL==1.0.2",
-        "redis==4.3.3",
+        "redis==4.3.4",
         "pika==1.3.0",
         "celery[redis]==5.2.7",
         "flower==1.1.0",
