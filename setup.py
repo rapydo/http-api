@@ -33,6 +33,7 @@ setup(
         "PyYAML==6.0",
         "loguru==0.6.0",
         "glom==22.1.0",
+        "requests==2.28.1",
         "psutil==5.9.1",
         "plumbum==1.7.2",
         "maxminddb-geolite2==2018.703",
