@@ -15,13 +15,12 @@ class Cache:
 
         redis = Env.load_variables_group(prefix="redis")
         return {
-            "CACHE_TYPE": "flask_caching.backends.redis",
+            "CACHE_TYPE": "RedisCache",
             "CACHE_REDIS_HOST": redis.get("host"),
             "CACHE_REDIS_PORT": redis.get("port"),
             "CACHE_REDIS_PASSWORD": redis.get("password"),
             # Usually 1=celery, 3=celery-beat
             "CACHE_REDIS_DB": "2",
-            # "CACHE_REDIS_URL": redis.get(""),
         }
 
     @staticmethod
