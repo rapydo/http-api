@@ -42,6 +42,7 @@ setup(
         "pyOpenSSL",
         "passlib[bcrypt]==1.7.4",
         "meinheld==1.0.2",
+        "gevent==21.12.0",
         "gunicorn==20.1.0",
         "marshmallow==3.14.1",
         "webargs==8.0.1",
