@@ -294,7 +294,8 @@ def create_app(
             message="SelectableGroups dict interface is deprecated. Use select.",
         )
 
-        mem.cache = Cache.get_instance(flask_app)
+        if Connector.check_availability("redis"):
+            mem.cache = Cache.get_instance(flask_app)
 
         endpoints_loader.load_endpoints()
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints
