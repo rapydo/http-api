@@ -44,7 +44,7 @@ setup(
         "pytest-flask==1.2.0",
         "pytest-cov==3.0.0",
         "pytest-timeout==2.1.0",
-        "pytest-sugar==0.9.4",
+        "pytest-sugar==0.9.5",
         "Faker==13.14.0",
     ]
 )
