@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable
 
 from flask import Flask
 from flask_caching import Cache as FlaskCache
@@ -11,22 +11,7 @@ from restapi.utilities.globals import mem
 
 class Cache:
     @staticmethod
-    def get_config() -> Dict[str, Union[Optional[str], int]]:
-
-        redis = Env.load_variables_group(prefix="redis")
-        return {
-            "CACHE_TYPE": "flask_caching.backends.redis",
-            "CACHE_REDIS_HOST": redis.get("host"),
-            "CACHE_REDIS_PORT": redis.get("port"),
-            "CACHE_REDIS_PASSWORD": redis.get("password"),
-            # Usually 1=celery, 3=celery-beat
-            "CACHE_REDIS_DB": "2",
-            # "CACHE_REDIS_URL": redis.get(""),
-        }
-
-    @staticmethod
-    # Return type becomes "Any" due to an unfollowed import
-    def get_instance(app: Flask) -> FlaskCache:  # type: ignore
+    def get_instance(app: Flask) -> FlaskCache:
 
         if not Connector.check_availability("redis"):
             raise ServiceUnavailable("Can't enable the cache without Redis")
@@ -35,8 +20,18 @@ class Cache:
         # Exactly as reported here:
         # https://github.com/sh4nks/flask-caching/issues/191
         if not hasattr(mem, "cache"):
-            cache_config = Cache.get_config()
-            mem.cache = FlaskCache(config=cache_config)
+
+            redis = Env.load_variables_group(prefix="redis")
+            mem.cache = FlaskCache(
+                config={
+                    "CACHE_TYPE": "RedisCache",
+                    "CACHE_REDIS_HOST": redis.get("host"),
+                    "CACHE_REDIS_PORT": redis.get("port"),
+                    "CACHE_REDIS_PASSWORD": redis.get("password"),
+                    # Usually 1=celery, 3=celery-beat
+                    "CACHE_REDIS_DB": "2",
+                }
+            )
 
         mem.cache.init_app(app)
 
