@@ -17,7 +17,7 @@ setup(
         "pyOpenSSL==22.0.0",
         "passlib[bcrypt]==1.7.4",
         "marshmallow==3.17.0",
-        "webargs==8.1.0",
+        "webargs==8.2.0",
         "apispec==5.2.2",
         "neomodel==4.0.8",
         "psycopg2-binary==2.9.3",
