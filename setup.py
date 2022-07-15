@@ -39,7 +39,7 @@ setup(
         "maxminddb-geolite2==2018.703",
         "html2text==2020.1.16",
         "orjson==3.7.7",
-        "sentry-sdk[flask]==1.6.0",
+        "sentry-sdk[flask]==1.7.1",
         "pytest==7.1.2",
         "pytest-flask==1.2.0",
         "pytest-cov==3.0.0",
