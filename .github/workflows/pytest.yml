@@ -118,7 +118,7 @@ jobs:
           [[ ! $(LOGURU_LEVEL=WARNING rapydo list services | grep -v frontend | grep -E "Exit|Restarting|Created") ]]
 
       - name: Coverage
-        uses: rapydo/actions/coverage@v1
+        uses: rapydo/actions/coverage@v2
         with:
           repository: ${{ matrix.template }}.${{ matrix.mode }}/submodules/http-api
           project: prj
