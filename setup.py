@@ -6,7 +6,7 @@ setup(
     install_requires=[
         "Flask==2.1.2",
         "flask-apispec==0.11.1",
-        "Flask-Caching==1.10.1",
+        "Flask-Caching==2.0.0",
         "Flask-Cors==3.0.10",
         "Flask-SQLAlchemy==2.5.1",
         "Flask-Migrate==3.1.0",
@@ -15,7 +15,7 @@ setup(
         "pyOpenSSL==22.0.0",
         "passlib[bcrypt]==1.7.4",
         "marshmallow==3.17.0",
-        "webargs==8.1.0",
+        "webargs==8.2.0",
         "apispec==5.2.2",
         "neomodel==4.0.8",
         "psycopg2-binary==2.9.3",
@@ -36,13 +36,13 @@ setup(
         "plumbum==1.7.2",
         "maxminddb-geolite2==2018.703",
         "html2text==2020.1.16",
-        "orjson==3.7.6",
+        "orjson==3.7.7",
         "sentry-sdk[flask]==1.6.0",
         "pytest==7.1.2",
         "pytest-flask==1.2.0",
         "pytest-cov==3.0.0",
         "pytest-timeout==2.1.0",
-        "pytest-sugar==0.9.4",
+        "pytest-sugar==0.9.5",
         "Faker==13.14.0",
     ]
 )
