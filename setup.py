@@ -11,8 +11,6 @@ setup(
         "Flask-SQLAlchemy==2.5.1",
         "Flask-Migrate==3.1.0",
         "Werkzeug==2.1.2",
-        "gunicorn==20.1.0",
-        "gevent==21.12.0",
         "PyJWT==2.4.0",
         "pyOpenSSL==22.0.0",
         "passlib[bcrypt]==1.7.4",
