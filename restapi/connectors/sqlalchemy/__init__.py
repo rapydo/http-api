@@ -501,7 +501,6 @@ class Authentication(BaseAuthentication):
     ) -> None:
 
         ip_address = self.get_remote_ip()
-        ip_loc = self.localize_ip(ip_address)
 
         if token_type is None:
             token_type = self.FULL_TOKEN
@@ -517,7 +516,7 @@ class Authentication(BaseAuthentication):
             last_access=now,
             expiration=exp,
             IP=ip_address,
-            location=ip_loc or "Unknown",
+            location="Unknown",
             # the following two are equivalent
             # user_id=user.id,
             emitted_for=user,
@@ -637,14 +636,13 @@ class Authentication(BaseAuthentication):
 
         date = datetime.now(pytz.utc)
         ip_address = self.get_remote_ip()
-        ip_location = self.localize_ip(ip_address)
 
         login_data: Dict[str, Any] = {}
 
         login_data["date"] = date
         login_data["username"] = username
         login_data["IP"] = ip_address
-        login_data["location"] = ip_location or "Unknown"
+        login_data["location"] = "Unknown"
         # the following two are equivalent
         if user:
             # login_data["user_id"] = user.id

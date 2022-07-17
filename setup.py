@@ -34,7 +34,6 @@ setup(
         "requests==2.28.1",
         "psutil==5.9.1",
         "plumbum==1.7.2",
-        "maxminddb-geolite2==2018.703",
         "html2text==2020.1.16",
         "orjson==3.7.7",
         "sentry-sdk[flask]==1.7.2",

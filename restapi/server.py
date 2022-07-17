@@ -17,7 +17,6 @@ from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
 from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
-from geolite2 import geolite2
 from neo4j.meta import ExperimentalWarning as Neo4jExperimentalWarning
 from sentry_sdk import init as sentry_sdk_init
 from sentry_sdk.integrations.flask import FlaskIntegration
@@ -171,11 +170,6 @@ def create_app(
         print_and_exit("Invalid Customizer class, it should inherit BaseCustomizer")
 
     Connector.init_app(app=flask_app, worker_mode=(mode == ServerModes.WORKER))
-
-    # Initialize reading of all files
-    mem.geo_reader = geolite2.reader()
-    # when to close??
-    # geolite2.close()
 
     if mode == ServerModes.INIT:
         Connector.project_init(options=options)

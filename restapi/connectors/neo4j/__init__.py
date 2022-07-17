@@ -435,7 +435,6 @@ class Authentication(BaseAuthentication):
     ) -> None:
 
         ip_address = self.get_remote_ip()
-        ip_loc = self.localize_ip(ip_address)
 
         if token_type is None:
             token_type = self.FULL_TOKEN
@@ -451,7 +450,7 @@ class Authentication(BaseAuthentication):
         token_node.last_access = now
         token_node.expiration = exp
         token_node.IP = ip_address
-        token_node.location = ip_loc or "Unknown"
+        token_node.location = "Unknown"
 
         token_node.save()
         # Save user updated in profile endpoint
@@ -548,13 +547,12 @@ class Authentication(BaseAuthentication):
 
         date = datetime.now(pytz.utc)
         ip_address = self.get_remote_ip()
-        ip_location = self.localize_ip(ip_address)
 
         login = self.db.Login()
         login.date = date
         login.username = username
         login.IP = ip_address
-        login.location = ip_location or "Unknown"
+        login.location = "Unknown"
         login.failed = failed
         # i.e. failed logins are not flushed by default
         # success logins are automatically flushed

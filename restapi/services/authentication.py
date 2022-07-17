@@ -408,37 +408,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         # Mocked IP to prevent tests failures when fn executed outside Flask context
         return "0.0.0.0"
 
-    @staticmethod
-    @lru_cache
-    def localize_ip(ip: str) -> Optional[str]:
-
-        try:
-            data = mem.geo_reader.get(ip)
-
-            if data is None:
-                return None
-
-            if "country" in data:
-                try:
-                    c = data["country"]["names"]["en"]
-                    return c  # type: ignore
-                except Exception:  # pragma: no cover
-                    log.error("Missing country.names.en in {}", data)
-                    return None
-            if "continent" in data:  # pragma: no cover
-                try:
-                    c = data["continent"]["names"]["en"]
-                    return c  # type: ignore
-
-                except Exception:
-                    log.error("Missing continent.names.en in {}", data)
-                    return None
-            return None  # pragma: no cover
-        except Exception as e:
-            log.error("{}. Input was {}", e, ip)
-
-        return None
-
     # ###################
     # # Tokens handling #
     # ###################

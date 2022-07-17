@@ -20,4 +20,3 @@ class mem:
     private_endpoints: Any
     authenticated_endpoints: Any
     docs: Any
-    geo_reader: Any
