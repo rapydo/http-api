@@ -6,7 +6,7 @@ setup(
     install_requires=[
         "Flask==2.1.2",
         "flask-apispec==0.11.1",
-        "Flask-Caching==2.0.0",
+        "Flask-Caching==2.0.1",
         "Flask-Cors==3.0.10",
         "Flask-SQLAlchemy==2.5.1",
         "Flask-Migrate==3.1.0",
