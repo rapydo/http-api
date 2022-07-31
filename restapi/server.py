@@ -368,17 +368,15 @@ def create_app(
                     log.error("Cannot register {}: {}", endpoint.cls.__name__, e)
 
     # marshmallow errors handler
-    # Can't get the typing to work with flask 2.1
-    flask_app.register_error_handler(422, handle_marshmallow_errors)  # type: ignore
-    flask_app.register_error_handler(400, handle_http_errors)  # type: ignore
-    flask_app.register_error_handler(404, handle_http_errors)  # type: ignore
-    flask_app.register_error_handler(405, handle_http_errors)  # type: ignore
-    flask_app.register_error_handler(500, handle_http_errors)  # type: ignore
+    flask_app.register_error_handler(422, handle_marshmallow_errors)
+    flask_app.register_error_handler(400, handle_http_errors)
+    flask_app.register_error_handler(404, handle_http_errors)
+    flask_app.register_error_handler(405, handle_http_errors)
+    flask_app.register_error_handler(500, handle_http_errors)
 
     # flask_app.before_request(inspect_request)
     # Logging responses
-    # Can't get the typing to work with flask 2.1
-    flask_app.after_request(handle_response)  # type: ignore
+    flask_app.after_request(handle_response)
 
     if SENTRY_URL is not None:  # pragma: no cover
 
