@@ -5,6 +5,7 @@
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{newVersion}}",
   "pre-commit": {
-    "enabled": true
+    "enabled": true,
+    "groupName": "pre-commit"
   }
 }
