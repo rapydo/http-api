@@ -5,7 +5,7 @@ from setuptools import setup
 setup(
     install_requires=[
         "Flask==2.1.3",
-        "flask-apispec==0.11.1",
+        "flask-apispec==0.11.2",
         "Flask-Caching==2.0.1",
         "Flask-Cors==3.0.10",
         "Flask-SQLAlchemy==2.5.1",
