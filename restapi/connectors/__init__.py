@@ -10,7 +10,7 @@ from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
 
 # mypy: ignore-errors
 from flask import Flask
-from flask import _app_ctx_stack as stack
+from flask.globals import app_ctx as stack
 
 from restapi.config import (
     ABS_RESTAPI_PATH,

@@ -4,13 +4,13 @@ from setuptools import setup
 
 setup(
     install_requires=[
-        "Flask==2.1.3",
-        "flask-apispec==0.11.1",
+        "Flask==2.2.2",
+        "flask-apispec==0.11.2",
         "Flask-Caching==2.0.1",
         "Flask-Cors==3.0.10",
         "Flask-SQLAlchemy==2.5.1",
         "Flask-Migrate==3.1.0",
-        "Werkzeug==2.2.1",
+        "Werkzeug==2.2.2",
         "PyJWT==2.4.0",
         "pyOpenSSL==22.0.0",
         "passlib[bcrypt]==1.7.4",
@@ -23,7 +23,7 @@ setup(
         "redis==4.3.4",
         "pika==1.3.0",
         "celery[redis]==5.2.7",
-        "flower==1.1.0",
+        "flower==1.2.0",
         "celery-redbeat==2.0.0",
         "amqp==5.1.1",
         "pyotp==2.6.0",

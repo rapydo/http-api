@@ -55,10 +55,8 @@ def launch() -> None:  # pragma: no cover
         "--with-threads",
     ]
 
-    # Call to untyped function "FlaskGroup" in typed context
-    fg_cli = FlaskGroup()  # type: ignore
-    # Call to untyped function "main" in typed context
-    fg_cli.main(prog_name="restapi", args=args)  # type: ignore
+    fg_cli = FlaskGroup()
+    fg_cli.main(prog_name="restapi", args=args)
     log.warning("Server shutdown")
 
 
