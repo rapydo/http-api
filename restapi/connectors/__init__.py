@@ -468,6 +468,16 @@ class Connector(metaclass=abc.ABCMeta):
 
         return name in Connector.services
 
+    @staticmethod
+    def is_init_time():
+
+        # When context is empty this is a connection at loading time
+        try:
+            return stack.top is None
+        # Working outside of application context:
+        except RuntimeError:
+            return True
+
     def get_instance(
         self: T,
         verification: Optional[int] = None,
@@ -485,6 +495,13 @@ class Connector(metaclass=abc.ABCMeta):
         if expiration is None:
             # this should be the default value for this connector
             expiration = Env.to_int(self.variables.get("expiration_time"))
+
+        # this is a connection at loading time, do not save it
+        if self.is_init_time():
+            log.debug("First connection for {}", self.name)
+            # can raise ServiceUnavailable exception
+            obj = self.initialize_connection(expiration, verification, **kwargs)
+            return obj
 
         unique_hash = str(sorted(kwargs.items()))
 
