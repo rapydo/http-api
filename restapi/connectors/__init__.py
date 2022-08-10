@@ -8,9 +8,8 @@ from pathlib import Path
 from types import ModuleType, TracebackType
 from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
 
-# mypy: ignore-errors
 from flask import Flask
-from flask import app_ctx as stack
+from flask.globals import app_ctx as stack
 
 from restapi.config import (
     ABS_RESTAPI_PATH,
