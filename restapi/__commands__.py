@@ -52,6 +52,7 @@ def launch() -> None:  # pragma: no cover
         Env.get("FLASK_PORT", "8080"),
         "--reload",
         "--no-debugger",
+        "--eager-loading",
         "--with-threads",
     ]
 
