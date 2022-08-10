@@ -40,7 +40,7 @@ from restapi.customizer import BaseCustomizer
 from restapi.env import Env
 from restapi.rest.loader import EndpointsLoader
 from restapi.rest.response import (
-    ExtendedJSONEncoder,
+    ExtendedJSONProvider,
     handle_http_errors,
     handle_marshmallow_errors,
     handle_response,
@@ -131,11 +131,12 @@ def create_app(
 
     # Flask configuration from config file
     flask_app.config.from_object(config)
-    flask_app.json_encoder = ExtendedJSONEncoder
+    flask_app.json = ExtendedJSONProvider(flask_app)
 
     # Used to force flask to avoid json sorting and ensure that
     # the output to reflect the order of field in the Marshmallow schema
-    flask_app.config["JSON_SORT_KEYS"] = False
+    # flask_app.config["JSON_SORT_KEYS"] = False
+    flask_app.json.sort_keys = False
 
     log.debug("Flask app configured")
 
@@ -280,6 +281,13 @@ def create_app(
         warnings.filterwarnings(
             "ignore",
             message="SelectableGroups dict interface is deprecated. Use select.",
+        )
+
+        # Raised from sentry_sdk 1.9.0 with flask 2.2.2
+        # and from flask_sqlalchemy 2.5.1 with flask 2.2.2
+        warnings.filterwarnings(
+            "ignore",
+            message="'_app_ctx_stack' is deprecated and will be removed in Flask 2.3.",
         )
 
         if Connector.check_availability("redis"):
