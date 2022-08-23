@@ -81,10 +81,7 @@ class ProfileActivation(EndpointResource):
 
         return self.response("Account activated")
 
-    @decorators.use_kwargs(
-        # This is because Email is not typed on marshmallow
-        {"username": fields.Email(required=True)}  # type: ignore
-    )
+    @decorators.use_kwargs({"username": fields.Email(required=True)})
     @decorators.endpoint(
         path="/auth/profile/activate",
         summary="Ask a new activation link",
