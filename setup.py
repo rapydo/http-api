@@ -37,7 +37,7 @@ setup(
         "html2text==2020.1.16",
         "orjson==3.8.0",
         "sentry-sdk[flask]==1.9.0",
-        "pytest==7.1.2",
+        "pytest==7.1.3",
         "pytest-flask==1.2.0",
         "pytest-cov==3.0.0",
         "pytest-timeout==2.1.0",
