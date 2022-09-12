@@ -32,7 +32,7 @@ setup(
         "loguru==0.6.0",
         "glom==22.1.0",
         "requests==2.28.1",
-        "psutil==5.9.1",
+        "psutil==5.9.2",
         "plumbum==1.7.2",
         "html2text==2020.1.16",
         "orjson==3.8.0",
