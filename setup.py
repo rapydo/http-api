@@ -26,7 +26,7 @@ setup(
         "flower==1.2.0",
         "celery-redbeat==2.0.0",
         "amqp==5.1.1",
-        "pyotp==2.6.0",
+        "pyotp==2.7.0",
         "segno==1.5.2",
         "PyYAML==6.0",
         "loguru==0.6.0",
