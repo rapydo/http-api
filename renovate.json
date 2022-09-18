@@ -7,5 +7,12 @@
   "pre-commit": {
     "enabled": true,
     "groupName": "pre-commit"
-  }
+  },
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeStrategy": "squash"
+    }
+  ]
 }
