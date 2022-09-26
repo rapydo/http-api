@@ -36,7 +36,7 @@ setup(
         "plumbum==1.7.2",
         "html2text==2020.1.16",
         "orjson==3.8.0",
-        "sentry-sdk[flask]==1.9.0",
+        "sentry-sdk[flask]==1.9.9",
         "pytest==7.1.3",
         "pytest-flask==1.2.0",
         "pytest-cov==3.0.0",
