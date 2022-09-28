@@ -83,6 +83,7 @@ setup(
         "hypothesis==6.40.3",
         "Faker==11.3.0",
         "Telethon==1.24.0",
+        "httpx==0.23.0",
     ],
     classifiers=[
         "Programming Language :: Python",
