@@ -282,6 +282,12 @@ def create_app(
             message="SelectableGroups dict interface is deprecated. Use select.",
         )
 
+        # Raised from apispec 5.2.2 with setuptools 65
+        warnings.filterwarnings(
+            "ignore",
+            message="distutils Version classes are deprecated.",
+        )
+
         if Connector.check_availability("redis"):
             mem.cache = Cache.get_instance(flask_app)
 
