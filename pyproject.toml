@@ -62,6 +62,24 @@ dev = [
     "pytest-sugar==0.9.5",
     "Faker==15.0.0",
 ]
+types = [
+    "rapydo_http[dev]",
+    "mypy",
+    "lxml",
+    "html5lib",
+    "types-pytz",
+    "types-urllib3",
+    "types-python-dateutil",
+    "types-requests",
+    "types-certifi",
+    "types-click",
+    "types-PyYAML",
+    "types-orjson",
+    "types-redis",
+    "pika-stubs",
+    "celery-types",
+    "sqlalchemy-stubs",
+]
 
 [project.urls]
 homepage = "https://rapydo.github.io/docs"

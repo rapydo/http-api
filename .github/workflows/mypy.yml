@@ -25,22 +25,7 @@ jobs:
         run: |
           sudo apt-get install --yes libgeos-dev
           python -m pip install --upgrade pip
-          pip install \
-            mypy \
-            lxml \
-            html5lib \
-            types-requests \
-            types-pytz \
-            types-python-dateutil \
-            types-certifi \
-            types-click \
-            types-PyYAML \
-            types-orjson \
-            types-redis \
-            pika-stubs \
-            celery-types \
-            sqlalchemy-stubs
-          pip install --upgrade --no-cache-dir --editable .
+          pip install --upgrade --no-cache-dir --editable .[types]
 
       - name: Run MyPy
         run: |
