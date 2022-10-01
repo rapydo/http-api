@@ -8,6 +8,9 @@
     "enabled": true,
     "groupName": "pre-commit"
   },
+  "pip_requirements": {
+    "fileMatch": ["^requirements.dev.txt$", "^requirements.types.txt$"]
+  },
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],
