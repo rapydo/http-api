@@ -524,8 +524,8 @@ class CeleryExt(Connector):
         task: str,
         every: Union[str, int, timedelta],
         period: AllowedTimedeltaPeriods = "seconds",
-        args: List[Any] = None,
-        kwargs: Dict[str, Any] = None,
+        args: Optional[List[Any]] = None,
+        kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         if args is None:
             args = []
@@ -568,8 +568,8 @@ class CeleryExt(Connector):
         day_of_week: str = "*",
         day_of_month: str = "*",
         month_of_year: str = "*",
-        args: List[Any] = None,
-        kwargs: Dict[str, Any] = None,
+        args: Optional[List[Any]] = None,
+        kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
 
         if args is None:
