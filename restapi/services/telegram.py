@@ -48,10 +48,11 @@ class Bot:
 
         self.commands: Dict[str, str] = {}
         self.variables = Env.load_variables_group(prefix="telegram")
-        if not self.variables.get("api_key"):  # pragma: no cover
+        api_key = self.variables.get("api_key")
+        if not api_key:  # pragma: no cover
             raise ServiceUnavailable("Missing API KEY")
-        self.updater = Updater(
-            self.variables.get("api_key"),
+        self.updater: Any = Updater(
+            api_key,
             # Starting from v13 use_context is True by default
             # use_context=True,
             workers=Env.to_int(self.variables.get("workers"), default=1),
