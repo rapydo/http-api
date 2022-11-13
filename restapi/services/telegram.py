@@ -51,7 +51,7 @@ class Bot:
         api_key = self.variables.get("api_key")
         if not api_key:  # pragma: no cover
             raise ServiceUnavailable("Missing API KEY")
-        self.updater = Updater(
+        self.updater: Any = Updater(
             api_key,
             # Starting from v13 use_context is True by default
             # use_context=True,
