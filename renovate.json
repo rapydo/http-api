@@ -6,7 +6,9 @@
   "commitMessageExtra": "to {{newVersion}}",
   "pre-commit": {
     "enabled": true,
-    "groupName": "pre-commit"
+    "groupName": "pre-commit",
+    "automerge": true,
+    "automergeStrategy": "squash"
   },
   "pip_requirements": {
     "fileMatch": ["^requirements.dev.txt$", "^requirements.types.txt$"]
