@@ -400,7 +400,8 @@ def create_app(
             # sentry_sdk_init(transport=print)
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
-    log.info("Boot completed")
+    version = get_project_configuration("project.version", default="0.0.1")
+    log.info("Boot completed (version {}, rapydo {})", version, restapi_version)
     if PRODUCTION and not TESTING and name == MAIN_SERVER_NAME:  # pragma: no cover
         save_event_log(
             event=Events.server_startup,
