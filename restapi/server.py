@@ -21,6 +21,7 @@ from neo4j.meta import ExperimentalWarning as Neo4jExperimentalWarning
 from sentry_sdk import init as sentry_sdk_init
 from sentry_sdk.integrations.flask import FlaskIntegration
 
+from restapi import __version__ as restapi_version
 from restapi import config
 from restapi.config import (
     ABS_RESTAPI_PATH,
@@ -403,7 +404,13 @@ def create_app(
     if PRODUCTION and not TESTING and name == MAIN_SERVER_NAME:  # pragma: no cover
         save_event_log(
             event=Events.server_startup,
-            payload={"server": name},
+            payload={
+                "server": name,
+                "version": get_project_configuration(
+                    "project.version", default="0.0.1"
+                ),
+                "rapydo": restapi_version,
+            },
             user=None,
             target=None,
         )
