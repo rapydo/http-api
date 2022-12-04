@@ -73,24 +73,6 @@ def parse_postgres_duplication_error(excpt: List[str]) -> Optional[str]:
     return None
 
 
-def parse_mysql_duplication_error(excpt: List[str]) -> Optional[str]:
-
-    if m0 := re.search(r".*Duplicate entry '(.*)' for key '(.*)'.*", excpt[0]):
-
-        val = m0.group(1)
-        prop = m0.group(2)
-
-        # table name can be "tablename" or "`tablename`"
-        # => match all non-space and non-backticks characters optioanlly wrapped among `
-        m = re.search(r".*INSERT INTO `?([^\s`]+)`? \(.*", excpt[1])
-
-        if m:
-            table = m.group(1)
-            return f"A {table.title()} already exists with {prop}: {val}"
-
-    return None  # pragma: no cover
-
-
 def parse_missing_error(excpt: List[str]) -> Optional[str]:
 
     if m := re.search(
@@ -131,9 +113,6 @@ def catch_db_exceptions(func: F) -> F:
             message = str(e).split("\n")
 
             if error := parse_postgres_duplication_error(message):
-                raise DatabaseDuplicatedEntry(error)
-
-            if error := parse_mysql_duplication_error(message):
                 raise DatabaseDuplicatedEntry(error)
 
             if error := parse_missing_error(message):
@@ -177,7 +156,7 @@ def catch_db_exceptions(func: F) -> F:
 
 
 class SQLAlchemy(Connector):
-    # Used to suppress ProgrammingError raised by MySQL during DB initialization
+    # Used to suppress some errors raised during DB initialization
     DB_INITIALIZING = False
 
     def __init__(self) -> None:
@@ -541,7 +520,6 @@ class Authentication(BaseAuthentication):
         if token_entry.user_id is None or token_entry.user_id != user.id:
             return False
 
-        # offset-naive datetime to compare with MySQL
         now = get_now(token_entry.expiration.tzinfo)
 
         if now > token_entry.expiration:

@@ -876,10 +876,8 @@ class BaseAuthentication(metaclass=ABCMeta):
             last_pwd_change = EPOCH
 
         if self.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == EPOCH:
-
             message["actions"].append("FIRST LOGIN")
             message["errors"].append("Please change your temporary password")
-
             self.log_event(Events.password_expired, user=user)
 
             if totp_authentication:
@@ -887,19 +885,13 @@ class BaseAuthentication(metaclass=ABCMeta):
                 message["qr_code"] = [self.get_qrcode(user)]
 
         elif self.MAX_PASSWORD_VALIDITY:
-
             valid_until = last_pwd_change + self.MAX_PASSWORD_VALIDITY
-
-            # offset-naive datetime to compare with MySQL
             now = get_now(last_pwd_change.tzinfo)
-
             expired = last_pwd_change == EPOCH or valid_until < now
 
             if expired:
-
                 message["actions"].append("PASSWORD EXPIRED")
                 message["errors"].append("Your password is expired, please change it")
-
                 self.log_event(Events.password_expired, user=user)
 
         return message

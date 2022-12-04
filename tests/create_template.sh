@@ -7,8 +7,6 @@ PROJECT_NAME="prj"
 
 if [[ "$TEMPLATE" == "postgres" ]]; then
   rapydo create ${PROJECT_NAME} --auth postgres --frontend no -e AUTH_TOKEN_IP_GRACE_PERIOD=2
-elif [[ "$TEMPLATE" == "mysql" ]]; then
-  rapydo create ${PROJECT_NAME} --auth mysql --frontend no -e AUTH_TOKEN_IP_GRACE_PERIOD=2
 elif [[ "$TEMPLATE" == "neo4j" ]]; then
   rapydo create ${PROJECT_NAME} --auth neo4j --frontend no -e AUTH_TOKEN_IP_GRACE_PERIOD=2
 elif [[ "$TEMPLATE" == "celery-rabbit-rabbit" ]]; then
