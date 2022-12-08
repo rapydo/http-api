@@ -14,7 +14,6 @@ jobs:
         template:
           [
             noauth,
-            extra,
             neo4j,
             postgres,
             celery-rabbit-redis,
@@ -22,8 +21,6 @@ jobs:
             celery-redis-redis,
             celery-redis-mongo,
             celery-rabbit-rabbit,
-            mysql,
-            mongo,
           ]
         mode: [dev, prod]
 
