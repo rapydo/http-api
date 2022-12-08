@@ -67,5 +67,8 @@ else
   BRANCH=${REF_BRANCH/refs\/heads\//}
 fi
 
+# Also strip out tags from the branch
+BRANCH=${BRANCH/refs\/tags\/v/}
+
 echo "Forcing http-api to branch ${BRANCH}"
 sed -i "s|# branch: \"http-api-branch\"|branch: \"${BRANCH}\"|g" projects/${PROJECT_NAME}/project_configuration.yaml
