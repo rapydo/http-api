@@ -1,10 +1,5 @@
 """ Models for the relational database """
-from restapi.connectors.sqlalchemy import SQLAlchemy, db
-
-DEFAULT_COLLATION = None
-if SQLAlchemy.is_mysql():
-    # Required by MySQL to accept unicode strings (like chinese)
-    DEFAULT_COLLATION = "utf8_unicode_ci"
+from restapi.connectors.sqlalchemy import db
 
 ####################################
 # Define multi-multi relation
@@ -29,8 +24,8 @@ class User(db.Model):  # type: ignore
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(db.String(36), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    name = db.Column(db.String(255, collation=DEFAULT_COLLATION), nullable=False)
-    surname = db.Column(db.String(255, collation=DEFAULT_COLLATION), nullable=False)
+    name = db.Column(db.String(255, collation=None), nullable=False)
+    surname = db.Column(db.String(255, collation=None), nullable=False)
     authmethod = db.Column(db.String(20), nullable=False)
     password = db.Column(db.String(255), nullable=False)
     mfa_hash = db.Column(db.String(255))

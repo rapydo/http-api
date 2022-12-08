@@ -2,10 +2,11 @@ from typing import Optional
 
 from restapi import decorators
 from restapi.config import TESTING
+from restapi.connectors import Connector
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import User
 
-if TESTING:
+if TESTING and Connector.check_availability("redis"):
 
     class TestShortCache(EndpointResource):
         """

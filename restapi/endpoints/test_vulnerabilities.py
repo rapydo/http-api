@@ -16,7 +16,6 @@ if TESTING:
 
             neo4j_enabled = Connector.check_availability("neo4j")
             sql_enabled = Connector.check_availability("sqlalchemy")
-            mysql_enabled = sql_enabled and sqlalchemy.SQLAlchemy.is_mysql()
             postgres_enabled = sql_enabled and not sqlalchemy.SQLAlchemy.is_mysql()
 
             # This is just a stub... to be completed
@@ -34,14 +33,6 @@ if TESTING:
                 sql = sqlalchemy.get_instance()
 
                 t = sqlalchemy.text('SELECT * FROM "group" WHERE shortname = :value')
-                sql.db.engine.execute(t, value=value)
-
-                sql.Group.query.filter_by(shortname=value).first()
-
-            elif mysql_enabled:
-                sql = sqlalchemy.get_instance()
-
-                t = sqlalchemy.text("SELECT * FROM `group` WHERE shortname = :value")
                 sql.db.engine.execute(t, value=value)
 
                 sql.Group.query.filter_by(shortname=value).first()

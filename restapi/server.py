@@ -17,11 +17,11 @@ from apispec.ext.marshmallow import MarshmallowPlugin
 from flask import Flask
 from flask_apispec import FlaskApiSpec
 from flask_cors import CORS
-from geolite2 import geolite2
 from neo4j.meta import ExperimentalWarning as Neo4jExperimentalWarning
 from sentry_sdk import init as sentry_sdk_init
 from sentry_sdk.integrations.flask import FlaskIntegration
 
+from restapi import __version__ as restapi_version
 from restapi import config
 from restapi.config import (
     ABS_RESTAPI_PATH,
@@ -172,11 +172,6 @@ def create_app(
 
     Connector.init_app(app=flask_app, worker_mode=(mode == ServerModes.WORKER))
 
-    # Initialize reading of all files
-    mem.geo_reader = geolite2.reader()
-    # when to close??
-    # geolite2.close()
-
     if mode == ServerModes.INIT:
         Connector.project_init(options=options)
 
@@ -288,7 +283,14 @@ def create_app(
             message="SelectableGroups dict interface is deprecated. Use select.",
         )
 
-        mem.cache = Cache.get_instance(flask_app)
+        # Raised from apispec 5.2.2 with setuptools 65
+        warnings.filterwarnings(
+            "ignore",
+            message="distutils Version classes are deprecated.",
+        )
+
+        if Connector.check_availability("redis"):
+            mem.cache = Cache.get_instance(flask_app)
 
         endpoints_loader.load_endpoints()
         mem.authenticated_endpoints = endpoints_loader.authenticated_endpoints
@@ -373,17 +375,15 @@ def create_app(
                     log.error("Cannot register {}: {}", endpoint.cls.__name__, e)
 
     # marshmallow errors handler
-    # Can't get the typing to work with flask 2.1
-    flask_app.register_error_handler(422, handle_marshmallow_errors)  # type: ignore
-    flask_app.register_error_handler(400, handle_http_errors)  # type: ignore
-    flask_app.register_error_handler(404, handle_http_errors)  # type: ignore
-    flask_app.register_error_handler(405, handle_http_errors)  # type: ignore
-    flask_app.register_error_handler(500, handle_http_errors)  # type: ignore
+    flask_app.register_error_handler(422, handle_marshmallow_errors)
+    flask_app.register_error_handler(400, handle_http_errors)
+    flask_app.register_error_handler(404, handle_http_errors)
+    flask_app.register_error_handler(405, handle_http_errors)
+    flask_app.register_error_handler(500, handle_http_errors)
 
     # flask_app.before_request(inspect_request)
     # Logging responses
-    # Can't get the typing to work with flask 2.1
-    flask_app.after_request(handle_response)  # type: ignore
+    flask_app.after_request(handle_response)
 
     if SENTRY_URL is not None:  # pragma: no cover
 
@@ -400,11 +400,18 @@ def create_app(
             # sentry_sdk_init(transport=print)
             log.info("Skipping Sentry, only enabled in PRODUCTION mode")
 
-    log.info("Boot completed")
+    version = get_project_configuration("project.version", default="0.0.1")
+    log.info("Boot completed (version {}, rapydo {})", version, restapi_version)
     if PRODUCTION and not TESTING and name == MAIN_SERVER_NAME:  # pragma: no cover
         save_event_log(
             event=Events.server_startup,
-            payload={"server": name},
+            payload={
+                "server": name,
+                "version": get_project_configuration(
+                    "project.version", default="0.0.1"
+                ),
+                "rapydo": restapi_version,
+            },
             user=None,
             target=None,
         )

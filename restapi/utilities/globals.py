@@ -13,12 +13,10 @@ from flask_caching import Cache
 
 class mem:
 
-    # Type of variable becomes "Any" due to an unfollowed import
-    cache: Cache  # type: ignore
+    cache: Cache
     customizer: Any
     initializer: Any
     configuration: Dict[str, Any]
     private_endpoints: Any
     authenticated_endpoints: Any
     docs: Any
-    geo_reader: Any

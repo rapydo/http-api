@@ -21,7 +21,7 @@ def test_cli() -> None:
 
     response = runner.invoke(cli.verify, ["--services", "neo4j"])
     assert response.exit_code == 2
-    assert "Error: No such option: --services" in response.output
+    assert "No such option: --services" in response.output
 
     response = runner.invoke(cli.verify, ["--service", "x"])
     assert response.exit_code == 1
@@ -76,22 +76,23 @@ def test_cli() -> None:
 
     from restapi.server import create_app
 
-    create_app(name="Cache clearing")
+    if Connector.check_availability("redis"):
+        create_app(name="Cache clearing")
 
-    # make_name prevents the use of rapydo default make_name function, that is only
-    # working from the endpoints context since it is based on tokens from flask.requests
-    @decorators.cache(timeout=3600, make_name=None)
-    def random_values() -> int:
-        return random.randrange(0, 100000)
+        # make_name prevents the use of rapydo default make_name function, that is only
+        # working on endpoints context since it is based on tokens from flask.request
+        @decorators.cache(timeout=3600, make_name=None)
+        def random_values() -> int:
+            return random.randrange(0, 100000)
 
-    val = random_values()
-    time.sleep(0.9)
-    assert random_values() == val
-    time.sleep(0.9)
-    assert random_values() == val
+        val = random_values()
+        time.sleep(0.9)
+        assert random_values() == val
+        time.sleep(0.9)
+        assert random_values() == val
 
-    # Let's clear the cache
-    response = runner.invoke(cli.clearcache, [])
-    assert response.exit_code == 0
+        # Let's clear the cache
+        response = runner.invoke(cli.clearcache, [])
+        assert response.exit_code == 0
 
-    assert random_values() != val
+        assert random_values() != val

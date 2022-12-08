@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base"],
+  "commitMessageAction": "Bump",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newVersion}}",
+  "pre-commit": {
+    "enabled": true,
+    "groupName": "pre-commit",
+    "automerge": true,
+    "automergeStrategy": "squash"
+  },
+  "pip_requirements": {
+    "fileMatch": ["^requirements.dev.txt$", "^requirements.types.txt$"]
+  },
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeStrategy": "squash"
+    }
+  ]
+}

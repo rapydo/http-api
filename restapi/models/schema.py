@@ -134,8 +134,7 @@ class Neo4jSchema(Schema):
                 elif isinstance(prop, properties.FloatProperty):
                     self.declared_fields[attribute] = fields.Float()
                 elif isinstance(prop, properties.EmailProperty):
-                    # This is because Nested is not typed on marshmallow
-                    self.declared_fields[attribute] = fields.Email()  # type: ignore
+                    self.declared_fields[attribute] = fields.Email()
                 elif isinstance(prop, properties.DateTimeProperty):
                     self.declared_fields[attribute] = fields.AwareDateTime()
                 elif isinstance(prop, properties.DateProperty):

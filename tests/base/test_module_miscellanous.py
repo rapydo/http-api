@@ -126,8 +126,7 @@ class TestApp(BaseTests):
         assert ResponseMaker.get_schema_type(f, fields.AwareDateTime()) == "datetime"
         assert ResponseMaker.get_schema_type(f, fields.NaiveDateTime()) == "datetime"
         assert ResponseMaker.get_schema_type(f, fields.Decimal()) == "number"
-        # This is because Email is not typed on marshmallow
-        assert ResponseMaker.get_schema_type(f, fields.Email()) == "email"  # type: ignore
+        assert ResponseMaker.get_schema_type(f, fields.Email()) == "email"
         assert ResponseMaker.get_schema_type(f, fields.Float()) == "number"
         assert ResponseMaker.get_schema_type(f, fields.Int()) == "int"
         assert ResponseMaker.get_schema_type(f, fields.Integer()) == "int"
@@ -258,7 +257,6 @@ class TestApp(BaseTests):
 
         assert get_host_type("backend-server") == "backend-server"
         assert get_host_type("celery") == "celery"
-        assert get_host_type("telegram-bot") == "telegram-bot"
         assert get_host_type("celery-beat") == "celery-beat"
         assert get_host_type("flower") == "flower"
         assert get_host_type("whateverelse") == "celery"

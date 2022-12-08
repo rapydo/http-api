@@ -276,19 +276,6 @@ class TestApp(BaseTests):
             auth.verify_totp(user, totp.at(now - t30s - t30s - t30s))
 
     @staticmethod
-    def test_ip_management() -> None:
-
-        auth = Connector.get_authentication_instance()
-
-        ip_data = auth.localize_ip("8.8.8.8")
-
-        assert ip_data is not None
-        # I don't know if this tests will be stable...
-        assert ip_data == "United States"
-
-        assert auth.localize_ip("8.8.8.8, 4.4.4.4") is None
-
-    @staticmethod
     def test_login_management(faker: Faker) -> None:
 
         auth = Connector.get_authentication_instance()

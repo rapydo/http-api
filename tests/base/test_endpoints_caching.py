@@ -1,7 +1,12 @@
 import time
 from datetime import datetime
 
+import pytest
+from flask import Flask
+
+from restapi.connectors import Connector
 from restapi.env import Env
+from restapi.exceptions import ServiceUnavailable
 from restapi.services.cache import Cache
 from restapi.tests import API_URI, BaseTests, FlaskClient
 from restapi.utilities.logs import log
@@ -9,8 +14,23 @@ from restapi.utilities.logs import log
 UUID = 0
 COUNTER = 1
 
+CONNECTOR_AVAILABLE = Connector.check_availability("redis")
 
-class TestApp(BaseTests):
+
+@pytest.mark.skipif(
+    CONNECTOR_AVAILABLE, reason="This test needs Redis to be not available"
+)
+class TestAppNoRedis(BaseTests):
+    def test_caching_autocleaning(self, app: Flask) -> None:
+
+        with pytest.raises(ServiceUnavailable):
+            Cache.get_instance(app)
+
+
+@pytest.mark.skipif(
+    not CONNECTOR_AVAILABLE, reason="This test needs Redis to be available"
+)
+class TestAppWithRedis(BaseTests):
     def test_caching_autocleaning(self, client: FlaskClient) -> None:
 
         if Env.get_bool("AUTH_ENABLE"):

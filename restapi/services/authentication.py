@@ -31,7 +31,6 @@ from passlib.context import CryptContext
 
 from restapi.config import (
     BACKEND_HOSTNAME,
-    BOT_HOSTNAME,
     HOST_TYPE,
     JWT_SECRET_FILE,
     PRODUCTION,
@@ -73,7 +72,7 @@ class AuthMissingTOTP(Exception):
 
 def import_secret(abs_filename: Path) -> bytes:
 
-    if HOST_TYPE != BACKEND_HOSTNAME and HOST_TYPE != BOT_HOSTNAME:  # pragma: no cover
+    if HOST_TYPE != BACKEND_HOSTNAME:  # pragma: no cover
         return Fernet.generate_key()
 
     try:
@@ -96,7 +95,7 @@ DEFAULT_GROUP_NAME = "Default"
 DEFAULT_GROUP_DESCR = "Default group"
 
 DISABLE_UNUSED_CREDENTIALS_AFTER_MIN_TESTNIG_VALUE = 60
-MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE = 60
+MAX_PASSWORD_VALIDITY_MIN_TESTNIG_VALUE = 120
 MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE = 10
 LOGIN_BAN_TIME_MAX_TESTING_VALUE = 10
 
@@ -408,37 +407,6 @@ class BaseAuthentication(metaclass=ABCMeta):
 
         # Mocked IP to prevent tests failures when fn executed outside Flask context
         return "0.0.0.0"
-
-    @staticmethod
-    @lru_cache
-    def localize_ip(ip: str) -> Optional[str]:
-
-        try:
-            data = mem.geo_reader.get(ip)
-
-            if data is None:
-                return None
-
-            if "country" in data:
-                try:
-                    c = data["country"]["names"]["en"]
-                    return c  # type: ignore
-                except Exception:  # pragma: no cover
-                    log.error("Missing country.names.en in {}", data)
-                    return None
-            if "continent" in data:  # pragma: no cover
-                try:
-                    c = data["continent"]["names"]["en"]
-                    return c  # type: ignore
-
-                except Exception:
-                    log.error("Missing continent.names.en in {}", data)
-                    return None
-            return None  # pragma: no cover
-        except Exception as e:
-            log.error("{}. Input was {}", e, ip)
-
-        return None
 
     # ###################
     # # Tokens handling #
@@ -760,11 +728,6 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     def get_totp_secret(self, user: User) -> str:
 
-        if TESTING:  # pragma: no cover
-            # TESTING_TOTP_HASH is set by setup-cypress github action
-            if p := Env.get("AUTH_TESTING_TOTP_HASH", ""):
-                return p
-
         if not user.mfa_hash:
             random_hash = pyotp.random_base32()
             user.mfa_hash = self.fernet.encrypt(random_hash.encode()).decode()
@@ -780,6 +743,11 @@ class BaseAuthentication(metaclass=ABCMeta):
 
         if totp_code is None:
             raise Unauthorized("Verification code is missing")
+
+        # Used to mock tests
+        if TESTING and totp_code == "111111":  # pragma: no cover
+            return True
+
         secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code, valid_window=self.TOTP_VALIDITY_WINDOW):
@@ -908,10 +876,8 @@ class BaseAuthentication(metaclass=ABCMeta):
             last_pwd_change = EPOCH
 
         if self.FORCE_FIRST_PASSWORD_CHANGE and last_pwd_change == EPOCH:
-
             message["actions"].append("FIRST LOGIN")
             message["errors"].append("Please change your temporary password")
-
             self.log_event(Events.password_expired, user=user)
 
             if totp_authentication:
@@ -919,19 +885,13 @@ class BaseAuthentication(metaclass=ABCMeta):
                 message["qr_code"] = [self.get_qrcode(user)]
 
         elif self.MAX_PASSWORD_VALIDITY:
-
             valid_until = last_pwd_change + self.MAX_PASSWORD_VALIDITY
-
-            # offset-naive datetime to compare with MySQL
             now = get_now(last_pwd_change.tzinfo)
-
             expired = last_pwd_change == EPOCH or valid_until < now
 
             if expired:
-
                 message["actions"].append("PASSWORD EXPIRED")
                 message["errors"].append("Your password is expired, please change it")
-
                 self.log_event(Events.password_expired, user=user)
 
         return message

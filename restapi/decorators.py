@@ -55,8 +55,7 @@ def use_kwargs(
     # this use_kwargs is used override the default location (json)
     # with a more extensive default location (body)
     # This trick will prevent to add location='body' to mostly all models
-    # Please note that body is also used as "in" parameter in swagger specs and well
-    # accepted by schemathesis
+    # Please note that body is also used as "in" parameter in swagger specs
     if location is None:
         location = "body"
 

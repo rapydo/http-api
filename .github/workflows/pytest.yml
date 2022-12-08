@@ -2,7 +2,13 @@ name: Test
 
 on:
   push:
+  pull_request:
   workflow_dispatch:
+
+# Cancel previous running jobs on the same branch in case of new pushs
+concurrency:
+  group: http-api-tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -21,32 +27,29 @@ jobs:
             celery-redis-redis,
             celery-rabbit-redis,
             celery-rabbit-rabbit,
-            mysql,
           ]
         mode: [dev, prod]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
       - name: Install
+        env:
+          REF_BRANCH: ${{ github.ref }}
+          HEAD_REF_BRANCH: ${{ github.head_ref }}
+
         run: |
 
           # Randomize auth service to test some services
           # double neo4j to balance with sql databases
-          auth_services=(postgres mysql neo4j neo4j)
+          auth_services=(postgres neo4j)
           RANDOM_AUTH=${auth_services[$(($RANDOM % ${#auth_services[@]}))]}
           echo "Selected random authentication service = ${RANDOM_AUTH}"
           # Make the environment variable available to next steps
           echo "RANDOM_AUTH=${RANDOM_AUTH}" >> $GITHUB_ENV
-          echo "TELEGRAM_ADMINS=${{ secrets.TELEGRAM_ADMINS }}" >> $GITHUB_ENV
-          echo "TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}" >> $GITHUB_ENV
-          echo "TELEGRAM_APP_HASH=${{ secrets.TELEGRAM_APP_HASH }}" >> $GITHUB_ENV
-          echo "TELEGRAM_APP_ID=${{ secrets.TELEGRAM_APP_ID }}" >> $GITHUB_ENV
-          echo "TELEGRAM_BOTNAME=${{ secrets.TELEGRAM_BOTNAME }}" >> $GITHUB_ENV
-          echo "TELETHON_SESSION=${{ secrets.TELETHON_SESSION }}" >> $GITHUB_ENV
 
           python -m pip install --upgrade pip
           CURRENT_VERSION=$(grep __version__ restapi/__init__.py | sed 's/__version__ = //' | tr -d '"')
@@ -65,9 +68,16 @@ jobs:
           rapydo --testing --project prj init
           rapydo pull --quiet
           bash ../tests/customize_template.sh ${{ matrix.template }}
-          rapydo -e ACTIVATE_TELEGRAM=0 start
+          rapydo start
           sleep 25
           rapydo logs
+
+          if [[ "${{github.actor}}" == "dependabot[bot]" ]] || [[ "${{github.event_name}}" == "pull_request" ]] || [[ "${{github.event.pull_request.merged}}" == "true" ]]; then
+            # Do not install at root level to prevent:
+            # ERROR: Could not install packages due to an OSError:
+            #        [Errno 16] Device or resource busy: '/usr/local/lib/python3.10/dist-packages/restapi/'
+            rapydo shell backend -u developer 'bash -c "pip3 install /http-api-package"'
+          fi
 
           rapydo shell backend 'restapi tests --core --wait --destroy'
 
@@ -89,11 +99,15 @@ jobs:
           sleep 60
           rapydo logs
           curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
-          if [[ "${{ matrix.template }}" == "extra" ]]; then
-            rapydo logs --tail 1 bot | grep "Bot is ready to accept requests";
-            rapydo remove bot;
-          fi
           rapydo logs --tail 20 proxy backend
+
+          if [[ "${{github.actor}}" == "dependabot[bot]" ]] || [[ "${{github.event_name}}" == "pull_request" ]] || [[ "${{github.event.pull_request.merged}}" == "true" ]]; then
+            # Do not install at root level to prevent:
+            # ERROR: Could not install packages due to an OSError:
+            #        [Errno 16] Device or resource busy: '/usr/local/lib/python3.10/dist-packages/restapi/'
+            rapydo shell backend -u developer 'bash -c "pip3 install /http-api-package"'
+            rapydo reload backend
+          fi
 
           rapydo shell backend 'restapi tests --core --wait'
 
@@ -103,7 +117,7 @@ jobs:
           [[ ! $(LOGURU_LEVEL=WARNING rapydo list services | grep -v frontend | grep -E "Exit|Restarting|Created") ]]
 
       - name: Coverage
-        uses: rapydo/actions/coverage@v1
+        uses: rapydo/actions/coverage@v2
         with:
           repository: ${{ matrix.template }}.${{ matrix.mode }}/submodules/http-api
           project: prj

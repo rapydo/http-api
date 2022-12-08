@@ -2,7 +2,13 @@ name: MyPy
 
 on:
   push:
+  pull_request:
   workflow_dispatch:
+
+# Cancel previous running jobs on the same branch in case of new pushs
+concurrency:
+  group: http-api-mypy-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   mypy:
@@ -10,31 +16,16 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
-      - name: Install MyPy
+          python-version: "3.11"
+      - name: Install MyPy and pre-commit
         run: |
           sudo apt-get install --yes libgeos-dev
-          python -m pip install --upgrade pip
-          pip install \
-            mypy \
-            lxml \
-            html5lib \
-            types-requests \
-            types-pytz \
-            types-python-dateutil \
-            types-certifi \
-            types-click \
-            types-PyYAML \
-            types-orjson \
-            types-redis \
-            pika-stubs \
-            celery-types \
-            sqlalchemy-stubs
-          pip install --upgrade --no-cache-dir --editable .
+          python -m pip install --upgrade pip pre-commit
+          pip install --upgrade --no-cache-dir --editable .[types]
 
       - name: Run MyPy
         run: |
@@ -53,11 +44,9 @@ jobs:
             neomodel \
             psycopg2 \
             redbeat \
-            geolite2 \
             plumbum \
             psutil \
             passlib \
-            telethon \
             ; do
             echo "[mypy-${lib}.*]" >> mypy.ini
             echo "ignore_missing_imports = True" >> mypy.ini
@@ -68,7 +57,12 @@ jobs:
           cat report/index.txt
 
       - name: Save Report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: mypy-report
           path: report
+
+      - name: Run Pre-commit
+        run: |
+          export GITGUARDIAN_API_KEY=${{ secrets.GITGUARDIAN_API_KEY }}
+          pre-commit run --all

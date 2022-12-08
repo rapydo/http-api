@@ -23,7 +23,7 @@ copyright = "2022, RAPyDo"
 author = "RAPyDo"
 
 # The full version, including alpha/beta/rc tags
-release = "2.3"
+release = "2.4"
 
 
 # -- General configuration ---------------------------------------------------
@@ -41,7 +41,7 @@ extensions = [
 ]
 
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
-autodoc_mock_imports = ["restapi.services.bot", "restapi.services.telegram"]
+# autodoc_mock_imports = ["mymodule"]
 # autodoc_typehints = "description"
 autodoc_typehints = "both"
 always_document_param_types = True

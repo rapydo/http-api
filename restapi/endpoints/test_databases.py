@@ -40,7 +40,7 @@ if TESTING:
                 self.auth.save_group(group)  # pragma: no cover
                 return self.response("0")  # pragma: no cover
 
-            # This is just to limit schemathesis to create troubles :-)
+            # This was just to limit schemathesis to create troubles :-)
             if not re.match(r"^[A-Za-z]+$", data):
                 raise BadRequest(f"Invalid input name {data}")
 
