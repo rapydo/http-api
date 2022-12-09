@@ -6,7 +6,12 @@ import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
-from smtplib import SMTPAuthenticationError, SMTPException, SMTPServerDisconnected
+from smtplib import (
+    SMTPAuthenticationError,
+    SMTPConnectError,
+    SMTPException,
+    SMTPServerDisconnected,
+)
 from threading import Thread
 from typing import List, Optional, Union
 
@@ -36,7 +41,7 @@ class Mail(Connector):
 
     @staticmethod
     def get_connection_exception() -> ExceptionsList:
-        return (socket.gaierror, SMTPAuthenticationError)
+        return (socket.gaierror, SMTPAuthenticationError, SMTPConnectError)
 
     def connect(self, **kwargs: str) -> "Mail":
         self.instance_variables.update(kwargs)
