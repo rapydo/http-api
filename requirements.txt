@@ -8,7 +8,7 @@ Werkzeug==2.2.2
 PyJWT==2.6.0
 pyOpenSSL==22.1.0
 passlib[bcrypt]==1.7.4
-marshmallow==3.17.1
+marshmallow==3.19.0
 webargs==8.2.0
 apispec==5.2.2
 neomodel==4.0.8
