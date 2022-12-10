@@ -5,14 +5,13 @@ import time
 from datetime import date, datetime
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from urllib import parse as urllib_parse
 
 import orjson
 from flask import Response as FlaskResponse
 from flask import jsonify, render_template, request
-from flask.json import JSONEncoder
-from flask.json.provider import JSONProvider
+from flask.json.provider import DefaultJSONProvider
 from marshmallow import fields as marshmallow_fields
 from marshmallow.utils import _Missing
 from werkzeug.exceptions import HTTPException
@@ -30,7 +29,7 @@ from restapi.types import Response, ResponseContent
 from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
 
 
-def jsonifier(content: Any) -> Any:
+def jsonifier(content: Any) -> str:
     if isinstance(content, set):
         return jsonifier(list(content))
     if isinstance(content, (datetime, date)):
@@ -43,18 +42,12 @@ def jsonifier(content: Any) -> Any:
     return orjson.dumps(content).decode("UTF8")
 
 
-class ExtendedJSONEncoder(JSONProvider):
+class ExtendedJSONEncoder(DefaultJSONProvider):
     def dumps(self, obj: Any, **kwargs: Any) -> str:
-        if isinstance(obj, (datetime, date)):
-            return obj.isoformat()
-        if isinstance(obj, Path):
-            return str(obj)
-        if isinstance(obj, set):
-            obj = list(obj)
-        if isinstance(obj, decimal.Decimal):
-            obj = float(obj)
-        # Otherwise: TypeError: Object of type xxx is not JSON serializable
-        return super().dumps(obj, **kwargs)  # pragma: no cover
+        return jsonifier(obj)
+
+    def loads(self, s: Union[str, bytes], **kwargs: Any) -> Any:
+        return orjson.loads(s)
 
 
 def handle_http_errors(error: HTTPException) -> Response:

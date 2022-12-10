@@ -137,7 +137,7 @@ def create_app(
 
     # Used to force flask to avoid json sorting and ensure that
     # the output to reflect the order of field in the Marshmallow schema
-    flask_app.json.sort_keys = False  # type: ignore
+    flask_app.json.sort_keys = False
 
     log.debug("Flask app configured")
 
