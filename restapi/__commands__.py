@@ -57,9 +57,9 @@ def launch() -> None:  # pragma: no cover
     ]
 
     # Call to untyped function "FlaskGroup" in typed context
-    fg_cli = FlaskGroup()  # type: ignore
+    fg_cli = FlaskGroup()
     # Call to untyped function "main" in typed context
-    fg_cli.main(prog_name="restapi", args=args)  # type: ignore
+    fg_cli.main(prog_name="restapi", args=args)
     log.warning("Server shutdown")
 
 
