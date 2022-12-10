@@ -89,6 +89,7 @@ def create_app(
 ) -> Flask:
     """Create the server istance for Flask application"""
 
+    mem.boot_completed = False
     if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover
         print_and_exit("Unable to execute tests in production")
 
@@ -402,4 +403,5 @@ def create_app(
             target=None,
         )
 
+    mem.boot_completed = True
     return flask_app

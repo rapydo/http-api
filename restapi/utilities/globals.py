@@ -12,7 +12,6 @@ from flask_caching import Cache
 
 
 class mem:
-
     cache: Cache
     customizer: Any
     initializer: Any
@@ -20,3 +19,4 @@ class mem:
     private_endpoints: Any
     authenticated_endpoints: Any
     docs: Any
+    boot_completed: bool
