@@ -10,8 +10,8 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 
 import pytz
 from flask_migrate import Migrate
-from flask_sqlalchemy import Model
 from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
+from flask_sqlalchemy.model import Model
 from psycopg2 import OperationalError as PsycopgOperationalError
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.base import Connection, Engine
@@ -169,7 +169,7 @@ class SQLAlchemy(Connector):
 
     # This is used to return Models in a type-safe way
     # Return type becomes "Any" due to an unfollowed import
-    def __getattr__(self, name: str) -> Model:  # type: ignore
+    def __getattr__(self, name: str) -> Any:  # type: ignore
         if name in self._models:
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
@@ -649,14 +649,12 @@ class Authentication(BaseAuthentication):
         self, username: Optional[str] = None, only_unflushed: bool = False
     ) -> List[Login]:
 
+        login_query = self.db.Login.query
         if not username:
-            logins = self.db.Login.query.all()
-        elif only_unflushed:
-            logins = self.db.Login.query.filter_by(username=username, flushed=False)
-        else:
-            logins = self.db.Login.query.filter_by(username=username)
-
-        return [x for x in logins]
+            return [x for x in login_query.all()]
+        if only_unflushed:
+            return [x for x in login_query.filter_by(username=username, flushed=False)]
+        return [x for x in login_query.filter_by(username=username)]
 
     def flush_failed_logins(self, username: str) -> None:
 
