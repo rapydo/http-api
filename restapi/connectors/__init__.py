@@ -8,9 +8,7 @@ from pathlib import Path
 from types import ModuleType, TracebackType
 from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
 
-# mypy: ignore-errors
 from flask import Flask
-from flask import _app_ctx_stack as stack
 
 from restapi.config import (
     ABS_RESTAPI_PATH,
@@ -486,9 +484,8 @@ class Connector(metaclass=abc.ABCMeta):
             # this should be the default value for this connector
             expiration = Env.to_int(self.variables.get("expiration_time"))
 
-        # When context is empty this is a connection at loading time
-        # Do not save it
-        if stack.top is None:
+        # This is a connection at loading timedo not save it
+        if not mem.boot_completed:
             log.debug("First connection for {}", self.name)
             # can raise ServiceUnavailable exception
             obj = self.initialize_connection(expiration, verification, **kwargs)
