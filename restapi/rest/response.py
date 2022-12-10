@@ -41,7 +41,9 @@ def jsonifier(content: Any) -> str:
             return str(obj)
         raise TypeError
 
-    return orjson.dumps(content, default=default).decode("UTF8")
+    return orjson.dumps(
+        content, default=default, option=orjson.OPT_NON_STR_KEYS
+    ).decode("UTF8")
 
 
 class ExtendedJSONEncoder(DefaultJSONProvider):

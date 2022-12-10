@@ -19,4 +19,6 @@ class mem:
     private_endpoints: Any
     authenticated_endpoints: Any
     docs: Any
+    # default to True to save connectors by default
+    # is set False during server boot
     boot_completed: bool = True

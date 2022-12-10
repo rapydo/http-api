@@ -175,7 +175,9 @@ class Neo4jChoice(fields.Field):
             for k, v in choices_model:
                 self.choices_dict.setdefault(k, v)
 
-    def _serialize(self, value: Any, attr: str, obj: Any, **kwargs: Any) -> Any:
+    def _serialize(
+        self, value: Any, attr: Optional[str], obj: Any, **kwargs: Any
+    ) -> Any:
         return {
             "key": value,
             # the value correspondance from choices_dict or value as default
@@ -197,7 +199,7 @@ class Neo4jRelationshipToMany(Nested):
     # Signature of "_serialize" incompatible with supertype "Nested"
     # This is because Nested is not typed on marshmallow
     def _serialize(  # type: ignore
-        self, value: Any, attr: str, obj: Any, **kwargs: Any
+        self, value: Any, attr: Optional[str], obj: Any, **kwargs: Any
     ) -> Any:
         self.many = True
         # This is because Nested is not typed on marshmallow
@@ -211,7 +213,7 @@ class Neo4jRelationshipToSingle(Nested):
     def _serialize(  # type: ignore
         self,
         value: Any,
-        attr: str,
+        attr: Optional[str],
         obj: Any,
         **kwargs: Any,
     ) -> Any:
@@ -223,7 +225,9 @@ class Neo4jRelationshipToSingle(Nested):
 
 class Neo4jRelationshipToCount(fields.Int):
     # value: StructuredRel
-    def _serialize(self, value: Any, attr: str, obj: Any, **kwargs: Any) -> Any:
+    def _serialize(
+        self, value: Any, attr: Optional[str], obj: Any, **kwargs: Any
+    ) -> Any:
         return self._format_num(len(value))
 
 
