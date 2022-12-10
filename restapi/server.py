@@ -137,7 +137,7 @@ def create_app(
 
     # Used to force flask to avoid json sorting and ensure that
     # the output to reflect the order of field in the Marshmallow schema
-    flask_app.config["JSON_SORT_KEYS"] = False
+    flask_app.json.sort_keys = False  # type: ignore
 
     log.debug("Flask app configured")
 
@@ -288,6 +288,12 @@ def create_app(
         warnings.filterwarnings(
             "ignore",
             message="distutils Version classes are deprecated.",
+        )
+
+        # Raised from flask-sqlalchemy 2.5, be removed with 3.0
+        warnings.filterwarnings(
+            "ignore",
+            message="'_app_ctx_stack' is deprecated and will be removed in Flask 2.3",
         )
 
         if Connector.check_availability("redis"):
