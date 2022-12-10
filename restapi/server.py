@@ -133,7 +133,7 @@ def create_app(
 
     # Flask configuration from config file
     flask_app.config.from_object(config)
-    flask_app.json_encoder = ExtendedJSONEncoder
+    flask_app.json_provider_class = ExtendedJSONEncoder
 
     # Used to force flask to avoid json sorting and ensure that
     # the output to reflect the order of field in the Marshmallow schema
