@@ -23,6 +23,7 @@ from restapi.config import (
     GZIP_THRESHOLD,
     get_project_configuration,
 )
+from flask.json.provider import JSONProvider
 from restapi.models import GET_SCHEMA_KEY, Schema, fields, validate
 from restapi.services.authentication import BaseAuthentication
 from restapi.types import Response, ResponseContent
@@ -42,8 +43,8 @@ def jsonifier(content: Any) -> Any:
     return orjson.dumps(content).decode("UTF8")
 
 
-class ExtendedJSONEncoder(JSONEncoder):
-    def default(self, o: Any) -> Any:
+class ExtendedJSONEncoder(JSONProvider):
+    def dumps(self, o: Any, **kwargs: Any) -> Any:
         if isinstance(o, set):
             return list(o)
         if isinstance(o, (datetime, date)):
@@ -53,7 +54,7 @@ class ExtendedJSONEncoder(JSONEncoder):
         if isinstance(o, Path):
             return str(o)
         # Otherwise: TypeError: Object of type xxx is not JSON serializable
-        return super().default(o)  # pragma: no cover
+        return super().dumps(o, **kwargs)  # pragma: no cover
 
 
 def handle_http_errors(error: HTTPException) -> Response:
