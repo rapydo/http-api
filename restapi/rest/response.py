@@ -12,6 +12,7 @@ import orjson
 from flask import Response as FlaskResponse
 from flask import jsonify, render_template, request
 from flask.json import JSONEncoder
+from flask.json.provider import JSONProvider
 from marshmallow import fields as marshmallow_fields
 from marshmallow.utils import _Missing
 from werkzeug.exceptions import HTTPException
@@ -23,7 +24,6 @@ from restapi.config import (
     GZIP_THRESHOLD,
     get_project_configuration,
 )
-from flask.json.provider import JSONProvider
 from restapi.models import GET_SCHEMA_KEY, Schema, fields, validate
 from restapi.services.authentication import BaseAuthentication
 from restapi.types import Response, ResponseContent
@@ -44,17 +44,17 @@ def jsonifier(content: Any) -> Any:
 
 
 class ExtendedJSONEncoder(JSONProvider):
-    def dumps(self, o: Any, **kwargs: Any) -> Any:
-        if isinstance(o, set):
-            return list(o)
-        if isinstance(o, (datetime, date)):
-            return o.isoformat()
-        if isinstance(o, decimal.Decimal):
-            return float(o)
-        if isinstance(o, Path):
-            return str(o)
+    def dumps(self, obj: Any, **kwargs: Any) -> str:
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        if isinstance(obj, Path):
+            return str(obj)
+        if isinstance(obj, set):
+            obj = list(obj)
+        if isinstance(obj, decimal.Decimal):
+            obj = float(obj)
         # Otherwise: TypeError: Object of type xxx is not JSON serializable
-        return super().dumps(o, **kwargs)  # pragma: no cover
+        return super().dumps(obj, **kwargs)  # pragma: no cover
 
 
 def handle_http_errors(error: HTTPException) -> Response:
