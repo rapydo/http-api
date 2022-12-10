@@ -13,6 +13,7 @@ from restapi.connectors import Connector
 from restapi.env import Env
 from restapi.server import ServerModes
 from restapi.utilities import print_and_exit
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.processes import find_process, wait_socket
 
@@ -68,6 +69,7 @@ def launch() -> None:  # pragma: no cover
 def verify(service: str) -> None:
     """Verify if a service is connected"""
 
+    mem.boot_completed = False
     if not Connector.check_availability(service):
         print_and_exit("Service {} not detected", service)
 
