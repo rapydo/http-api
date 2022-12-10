@@ -30,16 +30,18 @@ from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
 
 
 def jsonifier(content: Any) -> str:
-    if isinstance(content, set):
-        content = list(content)
-    elif isinstance(content, (datetime, date)):
-        content = content.isoformat()
-    elif isinstance(content, Decimal):
-        content = float(content)
-    elif isinstance(content, Path):
-        content = str(content)
+    def default(obj: Any) -> Any:
+        if isinstance(obj, set):
+            return list(obj)
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        if isinstance(obj, Decimal):
+            return float(obj)
+        if isinstance(obj, Path):
+            return str(obj)
+        raise TypeError
 
-    return orjson.dumps(content).decode("UTF8")
+    return orjson.dumps(content, default=default).decode("UTF8")
 
 
 class ExtendedJSONEncoder(DefaultJSONProvider):
