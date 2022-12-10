@@ -135,10 +135,6 @@ def create_app(
     flask_app.config.from_object(config)
     flask_app.json = ExtendedJSONEncoder(flask_app)
 
-    # Used to force flask to avoid json sorting and ensure that
-    # the output to reflect the order of field in the Marshmallow schema
-    flask_app.json.sort_keys = False
-
     log.debug("Flask app configured")
 
     if PRODUCTION:
