@@ -1,8 +1,8 @@
-import decimal
 import gzip
 import sys
 import time
 from datetime import date, datetime
+from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
@@ -31,13 +31,13 @@ from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
 
 def jsonifier(content: Any) -> str:
     if isinstance(content, set):
-        return jsonifier(list(content))
-    if isinstance(content, (datetime, date)):
-        return jsonifier(content.isoformat())
-    if isinstance(content, decimal.Decimal):
-        return jsonifier(float(content))
-    if isinstance(content, Path):
-        return jsonifier(str(content))
+        content = list(content)
+    elif isinstance(content, (datetime, date)):
+        content = content.isoformat()
+    elif isinstance(content, Decimal):
+        content = float(content)
+    elif isinstance(content, Path):
+        content = str(content)
 
     return orjson.dumps(content).decode("UTF8")
 

@@ -9,19 +9,21 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 
 import pytz
-import sqlalchemy
 from flask_migrate import Migrate
 from flask_sqlalchemy import Model
 from flask_sqlalchemy import SQLAlchemy as OriginalAlchemy
 from psycopg2 import OperationalError as PsycopgOperationalError
 from sqlalchemy import create_engine, text
-from sqlalchemy.engine.base import Connection
+from sqlalchemy.engine.base import Connection, Engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import (
+    DatabaseError,
     IntegrityError,
     InternalError,
+    InvalidRequestError,
     OperationalError,
     ProgrammingError,
+    StatementError,
 )
 from sqlalchemy.orm import Session, scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
@@ -162,6 +164,7 @@ class SQLAlchemy(Connector):
     def __init__(self) -> None:
         # Type of variable becomes "Any" due to an unfollowed import
         self.db: OriginalAlchemy = None  # type: ignore
+        self.engine_bis: Optional[Engine] = None
         super().__init__()
 
     # This is used to return Models in a type-safe way
@@ -226,8 +229,8 @@ class SQLAlchemy(Connector):
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...
 
-        db.engine_bis = create_engine(uri, encoding="utf8")
-        db.session = scoped_session(sessionmaker(bind=db.engine_bis))
+        self.engine_bis = create_engine(uri, encoding="utf8")
+        db.session = scoped_session(sessionmaker(bind=self.engine_bis))
         db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore
         db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore
         # db.update_properties = self.update_properties
@@ -299,7 +302,8 @@ class SQLAlchemy(Connector):
                 sql = text("SELECT 1")
                 instance.db.engine.execute(sql)
 
-                instance.db.session.remove()
+                # Call to untyped function "remove" in typed context
+                instance.db.session.remove()  # type: ignore
                 close_all_sessions()
                 # massive destruction
                 log.critical("Destroy current SQL data")
@@ -378,12 +382,12 @@ class Authentication(BaseAuthentication):
             if user_id:
                 return self.db.User.query.filter_by(uuid=user_id).first()
 
-        except (sqlalchemy.exc.StatementError, sqlalchemy.exc.InvalidRequestError) as e:
+        except (StatementError, InvalidRequestError) as e:
             log.error(e)
             raise ServiceUnavailable("Backend database is unavailable")
         except (
-            sqlalchemy.exc.DatabaseError,
-            sqlalchemy.exc.OperationalError,
+            DatabaseError,
+            OperationalError,
         ) as e:  # pragma: no cover
             raise e
 

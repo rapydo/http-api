@@ -290,6 +290,12 @@ def create_app(
             message="distutils Version classes are deprecated.",
         )
 
+        # Raised from flask-sqlalchemy 2.5, be removed with 3.0
+        warnings.filterwarnings(
+            "ignore",
+            message="'_app_ctx_stack' is deprecated and will be removed in Flask 2.3",
+        )
+
         if Connector.check_availability("redis"):
             mem.cache = Cache.get_instance(flask_app)
 
