@@ -11,7 +11,7 @@ from urllib import parse as urllib_parse
 import orjson
 from flask import Response as FlaskResponse
 from flask import jsonify, render_template, request
-from flask.json.provider import DefaultJSONProvider
+from flask.json.provider import JSONProvider
 from marshmallow import fields as marshmallow_fields
 from marshmallow.utils import _Missing
 from werkzeug.exceptions import HTTPException
@@ -46,7 +46,7 @@ def jsonifier(content: Any) -> str:
     ).decode("UTF8")
 
 
-class ExtendedJSONEncoder(DefaultJSONProvider):
+class ExtendedJSONEncoder(JSONProvider):
     def dumps(self, obj: Any, **kwargs: Any) -> str:
         return jsonifier(obj)
 
