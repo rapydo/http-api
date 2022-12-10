@@ -19,4 +19,4 @@ class mem:
     private_endpoints: Any
     authenticated_endpoints: Any
     docs: Any
-    boot_completed: bool
+    boot_completed: bool = True

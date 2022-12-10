@@ -167,9 +167,7 @@ class SQLAlchemy(Connector):
         self.engine_bis: Optional[Engine] = None
         super().__init__()
 
-    # This is used to return Models in a type-safe way
-    # Return type becomes "Any" due to an unfollowed import
-    def __getattr__(self, name: str) -> Any:  # type: ignore
+    def __getattr__(self, name: str) -> Any:
         if name in self._models:
             return self._models[name]
         raise AttributeError(f"Model {name} not found")
@@ -311,7 +309,7 @@ class SQLAlchemy(Connector):
 
     @staticmethod
     # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
-    def update_properties(instance: Model, properties: Dict[str, Any]) -> None:  # type: ignore
+    def update_properties(instance: Model, properties: Dict[str, Any]) -> None:
 
         for field, value in properties.items():
             # Call to untyped function "set_attribute" in typed context
