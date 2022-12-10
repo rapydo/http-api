@@ -25,10 +25,10 @@ def test_init() -> None:
         Connector.disconnect_all()
 
     try:
-        create_app(mode=ServerModes.INIT)
+        create_app(name="Flask Tests", mode=ServerModes.INIT, options={})
         # This is only a rough retry to prevent random errors from sqlalchemy
     except Exception:  # pragma: no cover
-        create_app(mode=ServerModes.INIT)
+        create_app(name="Flask Tests", mode=ServerModes.INIT, options={})
 
     auth = Connector.get_authentication_instance()
     try:

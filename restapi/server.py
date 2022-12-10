@@ -84,9 +84,9 @@ def teardown_handler(
 
 
 def create_app(
-    name: str = __name__,
-    mode: ServerModes = ServerModes.NORMAL,
-    options: Optional[Dict[str, bool]] = None,
+    name: str,
+    mode: ServerModes,
+    options: Dict[str, bool],
 ) -> Flask:
     """Create the server istance for Flask application"""
 

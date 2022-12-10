@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 
 from flask import Flask
 
@@ -32,9 +32,8 @@ T = TypeVar("T", bound="Connector")
 
 CONNECTORS_FOLDER = "connectors"
 NO_AUTH = "NO_AUTHENTICATION"
+DEFAULT_DATETIME = datetime.fromtimestamp(0)
 
-# thread-id.ConnectorName.params-unique-key = instance
-InstancesCache = Dict[int, Dict[str, Dict[str, T]]]
 # service-name => dict of variables
 Services = Dict[str, Dict[str, str]]
 
@@ -42,22 +41,21 @@ ExceptionsList = Optional[Tuple[Type[Exception]]]
 
 
 class Connector(metaclass=abc.ABCMeta):
-
     authentication_service: str = Env.get("AUTH_SERVICE", NO_AUTH)
     # Available services with associated env variables
     services: Services = {}
 
     # Assigned by init_app
-    app: Flask = None
+    app: Optional[Flask] = None
 
     # Used by get_authentication_module
     _authentication_module: Optional[ModuleType] = None
 
     # Returned by __getattr__ in neo4j and sqlalchemy connectors
-    _models: Dict[str, Type] = {}
+    _models: Dict[str, Type[Any]] = {}
 
     # Used by set_object and get_object
-    _instances: InstancesCache = {}
+    _instances: Dict[str, T] = {}  # type: ignore
 
     def __init__(self) -> None:
 
@@ -79,6 +77,10 @@ class Connector(metaclass=abc.ABCMeta):
             from flask import current_app
 
             self.app = current_app
+
+        self.connection_verification_time: Optional[datetime] = None
+        self.connection_expiration_time: Optional[datetime] = None
+        self.connection_time: datetime = DEFAULT_DATETIME
 
     @staticmethod
     def init() -> None:
@@ -103,7 +105,7 @@ class Connector(metaclass=abc.ABCMeta):
             Path(CUSTOM_PACKAGE), CUSTOM_PACKAGE, Connector.services
         )
 
-        Connector.load_models(Connector.services.keys())
+        Connector.load_models(list(Connector.services.keys()))
 
     def __del__(self) -> None:
         if not self.disconnected:
@@ -131,7 +133,7 @@ class Connector(metaclass=abc.ABCMeta):
         return None
 
     @abc.abstractmethod
-    def connect(self: T, **kwargs: Any) -> Generic[T]:  # pragma: no cover
+    def connect(self: T, **kwargs: Any) -> T:  # pragma: no cover
         return self
 
     @abc.abstractmethod
@@ -200,7 +202,10 @@ class Connector(metaclass=abc.ABCMeta):
             connector_module = Connector.get_module(connector_name, module)
             connector_class = Connector.get_class(connector_module)
 
-            # Can't test connector misconfiguration...
+            # Can't test connector misconfigurations...
+            if not connector_module:  # pragma: no cover
+                log.error("No connector module found in {}", connector)
+                continue
             if not connector_class:  # pragma: no cover
                 log.error("No connector class found in {}", connector)
                 continue
@@ -213,7 +218,7 @@ class Connector(metaclass=abc.ABCMeta):
                 connector_module.get_instance
                 connector_class()
             except AttributeError as e:  # pragma: no cover
-                print_and_exit(e)
+                print_and_exit(str(e))
 
             services[connector_name] = variables
 
@@ -221,6 +226,7 @@ class Connector(metaclass=abc.ABCMeta):
 
         return services
 
+    @staticmethod
     def load_models(connectors: List[str]) -> None:
 
         for connector in connectors:
@@ -267,10 +273,10 @@ class Connector(metaclass=abc.ABCMeta):
         )
 
     @staticmethod
-    def get_class(connector_module: Optional[ModuleType]) -> Optional[Type]:
+    def get_class(connector_module: Optional[ModuleType]) -> Optional[Type[Any]]:
 
         if not connector_module:  # pragma: no cover
-            return False
+            return None
 
         classes = Meta.get_new_classes_from_module(connector_module)
         for connector_class in classes.values():
@@ -294,7 +300,9 @@ class Connector(metaclass=abc.ABCMeta):
             log.critical("{} not available", Connector.authentication_service)
             raise ServiceUnavailable("Authentication service not available")
 
-        return Connector._authentication_module.Authentication()
+        return cast(
+            BaseAuthentication, Connector._authentication_module.Authentication()
+        )
 
     @staticmethod
     def init_app(app: Flask, worker_mode: bool = False) -> None:
@@ -315,7 +323,7 @@ class Connector(metaclass=abc.ABCMeta):
         authentication_instance.module_initialization()
 
     @staticmethod
-    def project_init(options: Optional[Dict[str, bool]] = None) -> None:
+    def project_init(options: Dict[str, bool]) -> None:
 
         if Connector.authentication_service != NO_AUTH:
             authentication_instance = Connector.get_authentication_instance()
@@ -323,13 +331,17 @@ class Connector(metaclass=abc.ABCMeta):
             connector_module = Connector.get_module(
                 Connector.authentication_service, BACKEND_PACKAGE
             )
+            if not connector_module:  # pragma: no cover
+                return None
+
             connector = connector_module.get_instance()
 
             log.debug("Initializing {}", Connector.authentication_service)
             connector.initialize()
 
-            if options is None:
-                options: Dict[str, bool] = {}
+            if not Connector.app:  # pragma: no cover
+                log.error("Connector.app found uninitilizated at runtime")
+                return None
 
             with Connector.app.app_context():
                 authentication_instance.init_auth_db(options)
@@ -354,6 +366,9 @@ class Connector(metaclass=abc.ABCMeta):
             connector_module = Connector.get_module(
                 Connector.authentication_service, BACKEND_PACKAGE
             )
+            if not connector_module:  # pragma: no cover
+                return None
+
             connector = connector_module.get_instance()
 
             log.debug("Destroying {}", Connector.authentication_service)
@@ -362,9 +377,9 @@ class Connector(metaclass=abc.ABCMeta):
     @classmethod
     def set_models(
         cls,
-        base_models: Dict[str, Type],
-        extended_models: Dict[str, Type],
-        custom_models: Dict[str, Type],
+        base_models: Dict[str, Type[Any]],
+        extended_models: Dict[str, Type[Any]],
+        custom_models: Dict[str, Type[Any]],
     ) -> None:
 
         # Join models as described by issue #16
@@ -390,41 +405,40 @@ class Connector(metaclass=abc.ABCMeta):
         return not host.endswith(".dockerized.io")
 
     @classmethod
-    def set_object(cls, name: str, obj: T, key: str = "[]") -> None:
-        """set object into internal array"""
-
+    def get_instance_cache_key(cls, name: str, key: str) -> str:
         tid = os.getpid()
-        cls._instances.setdefault(tid, {})
-        cls._instances[tid].setdefault(name, {})
-        cls._instances[tid][name][key] = obj
+        return f"{tid}:{name}:{key}"
 
     @classmethod
-    def get_object(cls, name: str, key: str = "[]") -> Optional[T]:
-        """recover object if any"""
+    def set_object(cls, name: str, key: str, obj: T) -> None:
+        """set object into internal array"""
+        cache_key = cls.get_instance_cache_key(name, key)
+        cls._instances[cache_key] = obj
 
-        tid = os.getpid()
-        cls._instances.setdefault(tid, {})
-        cls._instances[tid].setdefault(name, {})
-        return cls._instances[tid][name].get(key, None)
+    @classmethod
+    def get_object(cls, name: str, key: str) -> Optional["Connector"]:
+        """recover object if any"""
+        cache_key = cls.get_instance_cache_key(name, key)
+        return cast(Optional["Connector"], cls._instances.get(cache_key))
 
     # From server.teardown... not executed during tests
     @classmethod
     def disconnect_all(cls) -> None:  # pragma: no cover
-        for connectors in cls._instances.values():
-            for instances in connectors.values():
-                for instance in instances.values():
-                    if not instance.disconnected:
-                        log.info(
-                            "Disconnecting {} {}", instance.name, hex(id(instance))
-                        )
-                        instance.disconnect()
+        for instance in cls._instances.values():
+            if not instance.disconnected:  # type: ignore
+                log.info(
+                    "Disconnecting {} {}",
+                    instance.name,  # type: ignore
+                    hex(id(instance)),
+                )
+                instance.disconnect()  # type: ignore
 
         cls._instances.clear()
 
         log.info("[{}] All connectors disconnected", os.getpid())
 
     def initialize_connection(
-        self, expiration: int, verification: int, **kwargs: str
+        self: T, expiration: int, verification: int, **kwargs: str
     ) -> T:
 
         # Create a new instance of itself
@@ -438,12 +452,7 @@ class Connector(metaclass=abc.ABCMeta):
             obj = obj.connect(**kwargs)
         except exceptions as e:
             log.error("{} raised {}: {}", obj.name, e.__class__.__name__, e)
-            raise ServiceUnavailable(
-                {
-                    "Service Unavailable": "This service is temporarily unavailable, "
-                    "please retry in a few minutes"
-                }
-            )
+            raise ServiceUnavailable(f"Service {self.name} is not available")
 
         obj.connection_time = datetime.now()
 
@@ -488,50 +497,49 @@ class Connector(metaclass=abc.ABCMeta):
         if not mem.boot_completed:
             log.debug("First connection for {}", self.name)
             # can raise ServiceUnavailable exception
-            obj = self.initialize_connection(expiration, verification, **kwargs)
-            return obj
+            return self.initialize_connection(expiration, verification, **kwargs)
 
         unique_hash = str(sorted(kwargs.items()))
 
-        obj = self.get_object(name=self.name, key=unique_hash)
+        cached_obj = self.get_object(name=self.name, key=unique_hash)
 
         # if an expiration time is set, verify the instance age
-        if obj and obj.connection_expiration_time:
+        if cached_obj and cached_obj.connection_expiration_time:
 
             # the instance is invalidated if older than the expiration time
-            if datetime.now() >= obj.connection_expiration_time:
+            if datetime.now() >= cached_obj.connection_expiration_time:
 
                 log.info("{} connection is expired", self.name)
-                obj.disconnect()
-                obj = None
+                cached_obj.disconnect()
+                cached_obj = None
 
         # If a verification time is set, verify the instance age
-        if obj and obj.connection_verification_time:
+        if cached_obj and cached_obj.connection_verification_time:
             now = datetime.now()
 
             # the instance is verified if older than the verification time
-            if now >= obj.connection_verification_time:
+            if now >= cached_obj.connection_verification_time:
                 # if the connection is still valid, set a new verification time
-                if obj.is_connected():
+                if cached_obj.is_connected():
                     # Set the new verification time
                     ver = timedelta(seconds=verification)
-                    obj.connection_verification_time = now + ver
+                    cached_obj.connection_verification_time = now + ver
                 # if the connection is no longer valid, invalidate the instance
                 else:  # pragma: no cover
                     log.info(
                         "{} is no longer connected, connector invalidated", self.name
                     )
-                    obj.disconnected = True
+                    cached_obj.disconnected = True
 
         # return the instance only if still connected
         # (and not invalidated by the verification check)
-        if obj and not obj.disconnected:
-            return obj
+        if cached_obj and not cached_obj.disconnected:
+            return cast(T, cached_obj)
 
         # can raise ServiceUnavailable exception
-        obj = self.initialize_connection(expiration, verification, **kwargs)
-        self.set_object(name=self.name, obj=obj, key=unique_hash)
-        return obj
+        instance = self.initialize_connection(expiration, verification, **kwargs)
+        self.set_object(name=self.name, key=unique_hash, obj=instance)
+        return instance
 
 
 Connector.init()

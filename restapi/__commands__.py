@@ -11,6 +11,7 @@ from restapi import __package__ as current_package
 from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE, PRODUCTION
 from restapi.connectors import Connector
 from restapi.env import Env
+from restapi.server import ServerModes
 from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 from restapi.utilities.processes import find_process, wait_socket
@@ -203,7 +204,7 @@ def clean() -> None:  # pragma: no cover
 
     log.info("Launching destruction app")
 
-    create_app(name="Removing data", mode=ServerModes.DESTROY)
+    create_app(name="Removing data", mode=ServerModes.DESTROY, options={})
 
     log.info("Destruction completed")
 
@@ -216,7 +217,7 @@ def forced_clean() -> None:  # pragma: no cover
 
     log.info("Launching destruction app")
 
-    create_app(name="Removing data", mode=ServerModes.DESTROY)
+    create_app(name="Removing data", mode=ServerModes.DESTROY, options={})
 
     log.info("Destruction completed")
 
@@ -309,7 +310,7 @@ def clearcache() -> None:
     from restapi.server import create_app
     from restapi.services.cache import Cache
 
-    create_app(name="Cache clearing")
+    create_app(name="Cache clearing", mode=ServerModes.NORMAL, options={})
 
     Cache.clear()
 

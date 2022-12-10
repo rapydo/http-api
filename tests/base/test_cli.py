@@ -9,6 +9,7 @@ from click.testing import CliRunner
 from restapi import __commands__ as cli
 from restapi import decorators
 from restapi.connectors import Connector
+from restapi.server import ServerModes
 
 
 def test_cli() -> None:
@@ -77,7 +78,7 @@ def test_cli() -> None:
     from restapi.server import create_app
 
     if Connector.check_availability("redis"):
-        create_app(name="Cache clearing")
+        create_app(name="Cache clearing", mode=ServerModes.NORMAL, options={})
 
         # make_name prevents the use of rapydo default make_name function, that is only
         # working on endpoints context since it is based on tokens from flask.request

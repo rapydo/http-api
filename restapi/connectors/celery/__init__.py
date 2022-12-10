@@ -231,7 +231,8 @@ class CeleryExt(Connector):
             def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
 
                 try:
-                    with CeleryExt.app.app_context():
+                    # app is officially Optional[Flask]... but can never be None at runtime
+                    with CeleryExt.app.app_context():  # type: ignore
                         return func(self, *args, **kwargs)
                 except Ignore as ex:
 
