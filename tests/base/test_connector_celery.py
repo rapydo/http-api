@@ -190,7 +190,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
     with connector.get_instance() as obj:
         assert obj is not None
 
-    app = create_app(mode=ServerModes.WORKER)
+    app = create_app(name="Flask Tests", mode=ServerModes.WORKER, options={})
     assert app is not None
 
 

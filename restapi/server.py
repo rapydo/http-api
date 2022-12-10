@@ -84,12 +84,13 @@ def teardown_handler(
 
 
 def create_app(
-    name: str = __name__,
-    mode: ServerModes = ServerModes.NORMAL,
-    options: Optional[Dict[str, bool]] = None,
+    name: str,
+    mode: ServerModes,
+    options: Dict[str, bool],
 ) -> Flask:
     """Create the server istance for Flask application"""
 
+    mem.boot_completed = False
     if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover
         print_and_exit("Unable to execute tests in production")
 
@@ -132,11 +133,11 @@ def create_app(
 
     # Flask configuration from config file
     flask_app.config.from_object(config)
-    flask_app.json_encoder = ExtendedJSONEncoder
+    flask_app.json = ExtendedJSONEncoder(flask_app)
 
     # Used to force flask to avoid json sorting and ensure that
     # the output to reflect the order of field in the Marshmallow schema
-    flask_app.config["JSON_SORT_KEYS"] = False
+    flask_app.json.sort_keys = False
 
     log.debug("Flask app configured")
 
@@ -416,4 +417,5 @@ def create_app(
             target=None,
         )
 
+    mem.boot_completed = True
     return flask_app

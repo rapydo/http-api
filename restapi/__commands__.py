@@ -11,7 +11,9 @@ from restapi import __package__ as current_package
 from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE, PRODUCTION
 from restapi.connectors import Connector
 from restapi.env import Env
+from restapi.server import ServerModes
 from restapi.utilities import print_and_exit
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.processes import find_process, wait_socket
 
@@ -52,14 +54,13 @@ def launch() -> None:  # pragma: no cover
         Env.get("FLASK_PORT", "8080"),
         "--reload",
         "--no-debugger",
-        "--eager-loading",
         "--with-threads",
     ]
 
     # Call to untyped function "FlaskGroup" in typed context
-    fg_cli = FlaskGroup()  # type: ignore
+    fg_cli = FlaskGroup()
     # Call to untyped function "main" in typed context
-    fg_cli.main(prog_name="restapi", args=args)  # type: ignore
+    fg_cli.main(prog_name="restapi", args=args)
     log.warning("Server shutdown")
 
 
@@ -68,6 +69,7 @@ def launch() -> None:  # pragma: no cover
 def verify(service: str) -> None:
     """Verify if a service is connected"""
 
+    mem.boot_completed = False
     if not Connector.check_availability(service):
         print_and_exit("Service {} not detected", service)
 
@@ -204,7 +206,7 @@ def clean() -> None:  # pragma: no cover
 
     log.info("Launching destruction app")
 
-    create_app(name="Removing data", mode=ServerModes.DESTROY)
+    create_app(name="Removing data", mode=ServerModes.DESTROY, options={})
 
     log.info("Destruction completed")
 
@@ -217,7 +219,7 @@ def forced_clean() -> None:  # pragma: no cover
 
     log.info("Launching destruction app")
 
-    create_app(name="Removing data", mode=ServerModes.DESTROY)
+    create_app(name="Removing data", mode=ServerModes.DESTROY, options={})
 
     log.info("Destruction completed")
 
@@ -310,7 +312,7 @@ def clearcache() -> None:
     from restapi.server import create_app
     from restapi.services.cache import Cache
 
-    create_app(name="Cache clearing")
+    create_app(name="Cache clearing", mode=ServerModes.NORMAL, options={})
 
     Cache.clear()
 

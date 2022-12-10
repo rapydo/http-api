@@ -26,7 +26,7 @@ def test_destroy() -> None:
     user = auth.get_user(username=BaseAuthentication.default_user)
     assert user is not None
 
-    create_app(mode=ServerModes.DESTROY)
+    create_app(name="Flask Tests", mode=ServerModes.DESTROY, options={})
 
     if Connector.check_availability("sqlalchemy"):
         with pytest.raises(ServiceUnavailable):

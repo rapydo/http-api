@@ -9,6 +9,8 @@ celery_app = instance.celery_app
 
 if HOST_TYPE != DOCS:
     # Reload Flask app code for the worker (needed to have the app context available)
-    celery.CeleryExt.app = create_app(mode=ServerModes.WORKER)
+    celery.CeleryExt.app = create_app(
+        name="Celery Worker", mode=ServerModes.WORKER, options={}
+    )
 
     log.debug("Celery worker is ready {}", celery_app)
