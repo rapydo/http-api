@@ -33,7 +33,7 @@ elif max_login_attempts == 0:
                 self.do_login(client, data["email"], "wrong", status_code=401)
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.failed_login.value
+            assert events[0].event == Events.failed_login
             assert events[0].payload["username"] == data["email"]
             assert events[0].url == "/auth/login"
 
@@ -42,7 +42,7 @@ elif max_login_attempts == 0:
             assert headers is not None
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.login.value
+            assert events[0].event == Events.login
             assert events[0].user == data["email"]
             assert events[0].url == "/auth/login"
 
@@ -98,7 +98,7 @@ else:
                 self.do_login(client, data["email"], "wrong", status_code=401)
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.failed_login.value
+            assert events[0].event == Events.failed_login
             assert events[0].payload["username"] == data["email"]
             assert events[0].url == "/auth/login"
 
@@ -111,7 +111,7 @@ else:
             assert headers is None
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.refused_login.value
+            assert events[0].event == Events.refused_login
             assert events[0].payload["username"] == data["email"]
             assert (
                 events[0].payload["motivation"]
@@ -125,7 +125,7 @@ else:
             assert self.get_content(r) == BAN_MESSAGE
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.refused_login.value
+            assert events[0].event == Events.refused_login
             assert events[0].payload["username"] == data["email"]
             assert (
                 events[0].payload["motivation"]
@@ -139,7 +139,7 @@ else:
             assert headers is not None
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.login.value
+            assert events[0].event == Events.login
             assert events[0].user == data["email"]
             assert events[0].url == "/auth/login"
 
@@ -194,7 +194,7 @@ else:
             assert r.status_code == 200
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.login_unlock.value
+            assert events[0].event == Events.login_unlock
             assert events[0].user == data["email"]
             assert events[0].target_type == "User"
             assert events[0].url == f"/auth/login/unlock/{token}"
@@ -359,7 +359,7 @@ else:
                 )
 
                 events = self.get_last_events(1)
-                assert events[0].event == Events.refused_login.value
+                assert events[0].event == Events.refused_login
                 assert events[0].payload["username"] == registration_data["email"]
                 assert events[0].payload["motivation"] == "account not active"
                 assert events[0].url == "/auth/login"
@@ -376,7 +376,7 @@ else:
                     )
 
                 events = self.get_last_events(1)
-                assert events[0].event == Events.failed_login.value
+                assert events[0].event == Events.failed_login
                 assert events[0].payload["username"] == registration_data["email"]
                 assert events[0].url == "/auth/login"
 
@@ -390,7 +390,7 @@ else:
                 assert self.get_content(r) == BAN_MESSAGE
 
                 events = self.get_last_events(1)
-                assert events[0].event == Events.refused_login.value
+                assert events[0].event == Events.refused_login
                 assert events[0].payload["username"] == registration_data["email"]
                 assert (
                     events[0].payload["motivation"]
@@ -407,7 +407,7 @@ else:
                 assert self.get_content(r) == BAN_MESSAGE
 
                 events = self.get_last_events(1)
-                assert events[0].event == Events.refused_login.value
+                assert events[0].event == Events.refused_login
                 assert events[0].payload["username"] == registration_data["email"]
                 assert (
                     events[0].payload["motivation"]
@@ -472,7 +472,7 @@ else:
                     )
 
                 events = self.get_last_events(1)
-                assert events[0].event == Events.failed_login.value
+                assert events[0].event == Events.failed_login
                 assert "username" not in events[0].payload
                 assert "totp" in events[0].payload
                 assert events[0].payload["totp"] == OBSCURE_VALUE
@@ -487,7 +487,7 @@ else:
                 assert headers is None
 
                 events = self.get_last_events(1)
-                assert events[0].event == Events.refused_login.value
+                assert events[0].event == Events.refused_login
                 assert events[0].payload["username"] == data["email"]
                 assert (
                     events[0].payload["motivation"]
@@ -502,7 +502,7 @@ else:
                 assert headers is not None
 
                 events = self.get_last_events(1)
-                assert events[0].event == Events.login.value
+                assert events[0].event == Events.login
                 assert events[0].user == data["email"]
                 assert events[0].url == "/auth/login"
 

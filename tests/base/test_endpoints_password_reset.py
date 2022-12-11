@@ -40,7 +40,7 @@ class TestApp(BaseTests):
         assert r.status_code == 200
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.reset_password_request.value
+        assert events[0].event == Events.reset_password_request
         assert events[0].user == data["reset_email"]
         assert events[0].url == "/auth/reset"
 
@@ -127,11 +127,11 @@ class TestApp(BaseTests):
         events = self.get_last_events(100)
         events.reverse()
         for event in events:
-            if event.event == Events.delete.value:
+            if event.event == Events.delete:
                 assert event.target_type == "Token"
                 continue
 
-            assert event.event == Events.change_password.value
+            assert event.event == Events.change_password
             assert event.user == BaseAuthentication.default_user
             break
 
@@ -159,11 +159,11 @@ class TestApp(BaseTests):
         events = self.get_last_events(100)
         events.reverse()
         for event in events:
-            if event.event == Events.delete.value:
+            if event.event == Events.delete:
                 assert event.target_type == "Token"
                 continue
 
-            assert event.event == Events.change_password.value
+            assert event.event == Events.change_password
             assert event.user == BaseAuthentication.default_user
             break
 

@@ -37,7 +37,7 @@ class TestApp2(BaseTests):
         assert error == "Sorry, this account is expired"
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.refused_login.value
+        assert events[0].event == Events.refused_login
         assert events[0].payload["username"] == data["email"]
         assert events[0].payload["motivation"] == "account expired"
         assert events[0].url == "/auth/login"
@@ -54,7 +54,7 @@ class TestApp2(BaseTests):
             assert self.get_content(r) == "Sorry, this account is expired"
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.refused_login.value
+            assert events[0].event == Events.refused_login
             assert events[0].payload["username"] == data["email"]
             assert events[0].payload["motivation"] == "account expired"
             assert events[0].url == "/auth/reset"
@@ -86,7 +86,7 @@ class TestApp2(BaseTests):
         assert error == "Sorry, this account is expired"
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.refused_login.value
+        assert events[0].event == Events.refused_login
         assert events[0].payload["username"] == data["email"]
         assert events[0].payload["motivation"] == "account expired"
         assert events[0].url == "/auth/login"
@@ -127,7 +127,7 @@ class TestApp2(BaseTests):
         assert error == "Sorry, this account is expired"
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.refused_login.value
+        assert events[0].event == Events.refused_login
         assert events[0].payload["username"] == data["email"]
         assert events[0].payload["motivation"] == "account expired"
         assert events[0].url == "/auth/login"
