@@ -131,7 +131,7 @@ class TestApp(BaseTests):
         assert self.get_content(r) == registration_message
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.create.value
+        assert events[0].event == Events.create
         assert events[0].user == "-"
         assert events[0].target_type == "User"
         assert "name" in events[0].payload
