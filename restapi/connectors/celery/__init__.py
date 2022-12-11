@@ -607,9 +607,15 @@ instance = CeleryExt()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
+    retries: int = 1,
+    retry_wait: int = 0,
     **kwargs: str,
 ) -> "CeleryExt":
 
     return instance.get_instance(
-        verification=verification, expiration=expiration, **kwargs
+        verification=verification,
+        expiration=expiration,
+        retries=retries,
+        retry_wait=retry_wait,
+        **kwargs,
     )
