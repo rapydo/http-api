@@ -274,7 +274,7 @@ def save_event_log(
     log.log(
         "EVENT",
         "",
-        event=event,
+        event=event.value,
         ip=ip,
         user=user.email if user else "-",
         target_id=target_id,
