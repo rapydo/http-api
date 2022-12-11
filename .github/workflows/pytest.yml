@@ -24,6 +24,7 @@ jobs:
             extra,
             legacy38,
             legacy39,
+            legacy310,
             neo4j,
             postgres,
             celery-redis-redis,
