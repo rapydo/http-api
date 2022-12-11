@@ -221,7 +221,7 @@ class BaseTests:
                 if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
 
                     events = cls.get_last_events(1)
-                    assert events[0].event == Events.password_expired
+                    assert events[0].event == Events.password_expired.value
                     # assert events[0].user == USER
 
                     newpwd = cls.faker.password(strong=True)

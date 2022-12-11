@@ -49,12 +49,12 @@ if Env.get_int("AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER") > 0:
             assert resp == "Sorry, this account is blocked for inactivity"
 
             events = self.get_last_events(2)
-            assert events[0].event == Events.refused_login
+            assert events[0].event == Events.refused_login.value
             assert events[0].payload["username"] == BaseTests.unused_credentials[0]
             assert (
                 events[0].payload["motivation"] == "account blocked due to inactivity"
             )
-            assert events[1].event == Events.refused_login
+            assert events[1].event == Events.refused_login.value
             assert events[1].payload["username"] == BaseTests.unused_credentials[0]
             assert (
                 events[1].payload["motivation"] == "account blocked due to inactivity"

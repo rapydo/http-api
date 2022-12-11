@@ -168,7 +168,7 @@ class TestApp(BaseTests):
 
             # Another User is created
             events = self.get_last_events(1, filters={"target_type": "User"})
-            assert events[0].event == Events.create
+            assert events[0].event == Events.create.value
             assert events[0].user == user_email
             assert events[0].target_type == "User"
             assert events[0].target_id != event_target_id1
@@ -210,7 +210,7 @@ class TestApp(BaseTests):
 
             # User 1 modified (same target_id as above)
             events = self.get_last_events(1, filters={"target_type": "User"})
-            assert events[0].event == Events.modify
+            assert events[0].event == Events.modify.value
             assert events[0].user == user_email
             assert events[0].target_type == "User"
             assert events[0].target_id == event_target_id1
@@ -242,7 +242,7 @@ class TestApp(BaseTests):
 
             # Access to user 2
             events = self.get_last_events(1, filters={"target_type": "User"})
-            assert events[0].event == Events.access
+            assert events[0].event == Events.access.value
             assert events[0].user == user_email
             assert events[0].target_type == "User"
             assert events[0].target_id == event_target_id2
@@ -258,7 +258,7 @@ class TestApp(BaseTests):
 
             # User 1 is deleted (same target_id as above)
             events = self.get_last_events(1, filters={"target_type": "User"})
-            assert events[0].event == Events.delete
+            assert events[0].event == Events.delete.value
             assert events[0].user == user_email
             assert events[0].target_type == "User"
             assert events[0].target_id == event_target_id1
@@ -277,7 +277,7 @@ class TestApp(BaseTests):
 
             # User 2 modified (same target_id as above)
             events = self.get_last_events(1, filters={"target_type": "User"})
-            assert events[0].event == Events.modify
+            assert events[0].event == Events.modify.value
             assert events[0].user == user_email
             assert events[0].target_type == "User"
             assert events[0].target_id == event_target_id2
@@ -339,7 +339,7 @@ class TestApp(BaseTests):
 
             # User 2 is deleted (same target_id as above)
             events = self.get_last_events(1, filters={"target_type": "User"})
-            assert events[0].event == Events.delete
+            assert events[0].event == Events.delete.value
             assert events[0].user == user_email
             assert events[0].target_type == "User"
             assert events[0].target_id == event_target_id2
@@ -365,7 +365,7 @@ class TestApp(BaseTests):
 
             # Default user is modified
             events = self.get_last_events(1, filters={"target_type": "User"})
-            assert events[0].event == Events.modify
+            assert events[0].event == Events.modify.value
             assert events[0].user == user_email
             assert events[0].target_type == "User"
             assert events[0].target_id != event_target_id1

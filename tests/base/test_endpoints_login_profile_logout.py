@@ -27,7 +27,7 @@ class TestApp(BaseTests):
         self.do_login(client, USER.upper(), PWD)
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.login
+        assert events[0].event == Events.login.value
         assert events[0].user == USER
         assert events[0].url == "/auth/login"
 
@@ -41,7 +41,7 @@ class TestApp(BaseTests):
         self.do_login(client, USER, PWD.upper(), status_code=401)
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.failed_login
+        assert events[0].event == Events.failed_login.value
         assert events[0].payload["username"] == USER
         assert events[0].url == "/auth/login"
 
@@ -54,7 +54,7 @@ class TestApp(BaseTests):
         headers, _ = self.do_login(client, None, None)
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.login
+        assert events[0].event == Events.login.value
         assert events[0].user == USER
         assert events[0].url == "/auth/login"
 
@@ -63,7 +63,7 @@ class TestApp(BaseTests):
         headers, token = self.do_login(client, None, None)
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.login
+        assert events[0].event == Events.login.value
         assert events[0].user == USER
         assert events[0].url == "/auth/login"
 
@@ -99,7 +99,7 @@ class TestApp(BaseTests):
         )
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.failed_login
+        assert events[0].event == Events.failed_login.value
         assert events[0].payload["username"] == random_email
         assert events[0].url == "/auth/login"
 
@@ -232,7 +232,7 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.modify
+        assert events[0].event == Events.modify.value
         assert events[0].user == BaseAuthentication.default_user
         assert events[0].target_type == "User"
         assert events[0].url == "/auth/profile"
@@ -263,7 +263,7 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.modify
+        assert events[0].event == Events.modify.value
         assert events[0].user == BaseAuthentication.default_user
         assert events[0].target_type == "User"
         assert events[0].url == "/auth/profile"
@@ -338,11 +338,11 @@ class TestApp(BaseTests):
         events = self.get_last_events(100)
         events.reverse()
         for event in events:
-            if event.event == Events.delete:
+            if event.event == Events.delete.value:
                 assert event.target_type == "Token"
                 continue
 
-            assert event.event == Events.change_password
+            assert event.event == Events.change_password.value
             assert event.user == BaseAuthentication.default_user
             break
 
@@ -365,11 +365,11 @@ class TestApp(BaseTests):
         events = self.get_last_events(100)
         events.reverse()
         for event in events:
-            if event.event == Events.delete:
+            if event.event == Events.delete.value:
                 assert event.target_type == "Token"
                 continue
 
-            assert event.event == Events.change_password
+            assert event.event == Events.change_password.value
             assert event.user == BaseAuthentication.default_user
             break
 
@@ -394,12 +394,12 @@ class TestApp(BaseTests):
 
         events = self.get_last_events(2)
 
-        assert events[0].event == Events.delete
+        assert events[0].event == Events.delete.value
         assert events[0].user == "-"
         assert events[0].target_type == "Token"
         assert events[0].url == "/auth/logout"
 
-        assert events[1].event == Events.logout
+        assert events[1].event == Events.logout.value
         assert events[1].user == BaseAuthentication.default_user
         assert events[1].url == "/auth/logout"
 
@@ -501,7 +501,7 @@ class TestApp(BaseTests):
             # ... not implemented
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.password_expired
+            assert events[0].event == Events.password_expired.value
             assert events[0].user == username
 
             data["totp_code"] = "000000"
@@ -510,7 +510,7 @@ class TestApp(BaseTests):
             assert self.get_content(r) == "Verification code is not valid"
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.failed_login
+            assert events[0].event == Events.failed_login.value
             assert events[0].user == username
             assert "totp" in events[0].payload
             assert events[0].payload["totp"] == OBSCURE_VALUE
@@ -530,7 +530,7 @@ class TestApp(BaseTests):
             assert r.status_code == 200
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.login
+            assert events[0].event == Events.login.value
             assert events[0].user == username
             assert events[0].url == "/auth/login"
 
@@ -559,7 +559,7 @@ class TestApp(BaseTests):
             assert self.get_content(r) == "Verification code is not valid"
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.failed_login
+            assert events[0].event == Events.failed_login.value
             assert events[0].user == username
             assert "totp" in events[0].payload
             assert events[0].payload["totp"] == OBSCURE_VALUE
@@ -579,7 +579,7 @@ class TestApp(BaseTests):
             assert r.status_code == 200
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.login
+            assert events[0].event == Events.login.value
             assert events[0].user == username
             assert events[0].url == "/auth/login"
 
@@ -605,7 +605,7 @@ class TestApp(BaseTests):
             assert self.get_content(r) == "Verification code is not valid"
 
             events = self.get_last_events(1)
-            assert events[0].event == Events.failed_login
+            assert events[0].event == Events.failed_login.value
             assert events[0].user == username
             assert "totp" in events[0].payload
             assert events[0].payload["totp"] == OBSCURE_VALUE
@@ -629,11 +629,11 @@ class TestApp(BaseTests):
             events = self.get_last_events(100)
             events.reverse()
             for event in events:
-                if event.event == Events.delete:
+                if event.event == Events.delete.value:
                     assert event.target_type == "Token"
                     continue
 
-                assert event.event == Events.change_password
+                assert event.event == Events.change_password.value
                 assert event.user == username
                 break
 

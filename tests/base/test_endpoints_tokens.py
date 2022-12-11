@@ -236,7 +236,7 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.delete
+        assert events[0].event == Events.delete.value
         assert events[0].target_type == "Token"
         # Tokens does not have a uuid...
         # assert events[0].target_id == token_id
@@ -288,7 +288,7 @@ class TestApp(BaseTests):
         assert r.status_code == 204
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.delete
+        assert events[0].event == Events.delete.value
         assert events[0].target_type == "Token"
         # Tokens does not have a uuid...
         # assert events[0].target_id == token_id

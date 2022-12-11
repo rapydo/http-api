@@ -174,11 +174,11 @@ class TestApp(BaseTests):
         assert self.get_content(r) == "Sorry, this account is not active"
 
         events = self.get_last_events(2)
-        assert events[0].event == Events.refused_login
+        assert events[0].event == Events.refused_login.value
         assert events[0].payload["username"] == data["reset_email"]
         assert events[0].payload["motivation"] == "account not active"
 
-        assert events[1].event == Events.refused_login
+        assert events[1].event == Events.refused_login.value
         assert events[1].payload["username"] == data["reset_email"]
         assert events[1].payload["motivation"] == "account not active"
 
@@ -242,7 +242,7 @@ class TestApp(BaseTests):
         assert self.get_content(r) == "Account activated"
 
         events = self.get_last_events(1)
-        assert events[0].event == Events.activation
+        assert events[0].event == Events.activation.value
         assert events[0].user == registration_data["email"]
         assert events[0].target_type == "User"
         assert events[0].url == f"/auth/profile/activate/{token}"

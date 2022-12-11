@@ -127,7 +127,7 @@ class TestApp(BaseTests):
 
             events = self.get_last_events(1, filters={"target_type": "Group"})
             # Group modified (same target_id as above)
-            assert events[0].event == Events.modify
+            assert events[0].event == Events.modify.value
             assert events[0].user == user_email
             assert events[0].target_type == "Group"
             assert events[0].target_id == event_target_id
@@ -155,7 +155,7 @@ class TestApp(BaseTests):
 
             events = self.get_last_events(1, filters={"target_type": "Group"})
             # Group is deleted (same target_id as above)
-            assert events[0].event == Events.delete
+            assert events[0].event == Events.delete.value
             assert events[0].user == user_email
             assert events[0].target_type == "Group"
             assert events[0].target_id == event_target_id
@@ -222,7 +222,7 @@ class TestApp(BaseTests):
 
             events = self.get_last_events(1, filters={"target_type": "User"})
             # User modified, payload contains the created group
-            assert events[0].event == Events.modify
+            assert events[0].event == Events.modify.value
             assert events[0].user == user_email
             assert events[0].target_type == "User"
             assert events[0].target_id == user_uuid
