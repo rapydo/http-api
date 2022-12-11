@@ -62,7 +62,7 @@ class TestApp(BaseTests):
             assert isinstance(uuid, str)
 
             events = self.get_last_events(1, filters={"target_type": "Group"})
-            assert events[0].event == Events.create
+            assert events[0].event == Events.create.value
             assert events[0].user == user_email
             assert events[0].target_type == "Group"
             assert events[0].url == "/api/admin/groups"
@@ -193,7 +193,7 @@ class TestApp(BaseTests):
 
             events = self.get_last_events(1, filters={"target_type": "Group"})
             # A new group is created
-            assert events[0].event == Events.create
+            assert events[0].event == Events.create.value
             # Created via admin utility
             assert events[0].user == BaseAuthentication.default_user
             assert events[0].target_type == "Group"

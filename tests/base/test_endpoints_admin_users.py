@@ -62,7 +62,7 @@ class TestApp(BaseTests):
 
             # A new User is created
             events = self.get_last_events(1, filters={"target_type": "User"})
-            assert events[0].event == Events.create
+            assert events[0].event == Events.create.value
             assert events[0].user == user_email
             assert events[0].target_type == "User"
             assert events[0].url == "/api/admin/users"
@@ -131,7 +131,7 @@ class TestApp(BaseTests):
 
             # Access to the user
             events = self.get_last_events(1, filters={"target_type": "User"})
-            assert events[0].event == Events.access
+            assert events[0].event == Events.access.value
             assert events[0].user == user_email
             assert events[0].target_type == "User"
             assert events[0].target_id == event_target_id1
