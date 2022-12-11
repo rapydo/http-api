@@ -3,6 +3,7 @@ Set of modules for the connection and handling of external services
 """
 import abc
 import os
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import ModuleType, TracebackType
@@ -472,6 +473,8 @@ class Connector(metaclass=abc.ABCMeta):
         self: T,
         verification: Optional[int] = None,
         expiration: Optional[int] = None,
+        retries: int = 1,
+        retry_wait: int = 0,
         **kwargs: str,
     ) -> T:
 
@@ -532,7 +535,15 @@ class Connector(metaclass=abc.ABCMeta):
             return obj
 
         # can raise ServiceUnavailable exception
-        obj = self.initialize_connection(expiration, verification, **kwargs)
+        for retry in range(retries):
+            try:
+                obj = self.initialize_connection(expiration, verification, **kwargs)
+                break
+            except ServiceUnavailable as e:
+                # This is the last iteration:
+                if retry == retries - 1:
+                    raise e
+                time.sleep(retry_wait)
         self.set_object(name=self.name, obj=obj, key=unique_hash)
         return obj
 
