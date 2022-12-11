@@ -32,7 +32,7 @@ elif [[ "$TEMPLATE" == "extra" ]]; then
   rapydo create prjbase --auth ${AUTH} --frontend no -e PROXIED_CONNECTION=1
   # the --testing flag here (not included in others templates) will extend the
   # customizer class with additinal input/output fields to test these customizations
-  # The flag is not included in all templates to be able to also tests the cases
+  # The flag is not included in all templates to be able to also test the cases
   # when input and output models are not extended
 
   rapydo --testing create ${PROJECT_NAME} --current \
@@ -47,8 +47,31 @@ elif [[ "$TEMPLATE" == "extra" ]]; then
                     -e AUTH_MAX_LOGIN_ATTEMPTS=10 \
                     -e AUTH_SECOND_FACTOR_AUTHENTICATION=1 \
                     -e AUTH_TOKEN_IP_GRACE_PERIOD=2
-# no longer needed because it is a default during tests now
-                    #-e AUTH_LOGIN_BAN_TIME=10 \
+
+elif [[ "$TEMPLATE" == "legacy38" ]]; then
+  rapydo create ${PROJECT_NAME} --add-optionals \
+                    --auth ${AUTH} \
+                    --frontend no \
+                    -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=1 \
+                    -e AUTH_MAX_PASSWORD_VALIDITY=60 \
+                    -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=60 \
+                    -e AUTH_MAX_LOGIN_ATTEMPTS=10 \
+                    -e AUTH_SECOND_FACTOR_AUTHENTICATION=1 \
+                    -e AUTH_TOKEN_IP_GRACE_PERIOD=2 \
+                    -e BACKEND_PYTHON_VERSION=3.8 \
+
+elif [[ "$TEMPLATE" == "legacy39" ]]; then
+  rapydo create ${PROJECT_NAME} --add-optionals \
+                    --auth ${AUTH} \
+                    --frontend no \
+                    -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=1 \
+                    -e AUTH_MAX_PASSWORD_VALIDITY=60 \
+                    -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=60 \
+                    -e AUTH_MAX_LOGIN_ATTEMPTS=10 \
+                    -e AUTH_SECOND_FACTOR_AUTHENTICATION=1 \
+                    -e AUTH_TOKEN_IP_GRACE_PERIOD=2 \
+                    -e BACKEND_PYTHON_VERSION=3.9 \
+
 else
   echo "Unknown template: ${TEMPLATE}";
   exit 1;

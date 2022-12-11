@@ -22,6 +22,8 @@ jobs:
             noauth,
             low_security,
             extra,
+            legacy38,
+            legacy39,
             neo4j,
             postgres,
             celery-redis-redis,

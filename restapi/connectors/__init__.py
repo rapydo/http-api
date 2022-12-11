@@ -485,14 +485,14 @@ class Connector(metaclass=abc.ABCMeta):
         **kwargs: str,
     ) -> T:
 
-        if not Connector.check_availability(self.name):
-            raise ServiceUnavailable(f"Service {self.name} is not available")
-
         if retries < 1:
             raise ServiceUnavailable(f"Invalid retry value: {retries}")
 
         if retry_wait < 0:
             raise ServiceUnavailable(f"Invalid retry wait value: {retry_wait}")
+
+        if not Connector.check_availability(self.name):
+            raise ServiceUnavailable(f"Service {self.name} is not available")
 
         if verification is None:
             # this should be the default value for this connector
