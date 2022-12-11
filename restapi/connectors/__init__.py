@@ -3,6 +3,7 @@ Set of modules for the connection and handling of external services
 """
 import abc
 import os
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import ModuleType, TracebackType
@@ -479,11 +480,19 @@ class Connector(metaclass=abc.ABCMeta):
         self: T,
         verification: Optional[int] = None,
         expiration: Optional[int] = None,
+        retries: int = 1,
+        retry_wait: int = 0,
         **kwargs: str,
     ) -> T:
 
         if not Connector.check_availability(self.name):
             raise ServiceUnavailable(f"Service {self.name} is not available")
+
+        if retries < 1:
+            raise ServiceUnavailable(f"Invalid retry value: {retries}")
+
+        if retry_wait < 0:
+            raise ServiceUnavailable(f"Invalid retry wait value: {retry_wait}")
 
         if verification is None:
             # this should be the default value for this connector
@@ -537,7 +546,18 @@ class Connector(metaclass=abc.ABCMeta):
             return cast(T, cached_obj)
 
         # can raise ServiceUnavailable exception
-        instance = self.initialize_connection(expiration, verification, **kwargs)
+        for retry in range(retries):
+            try:
+                instance = self.initialize_connection(
+                    expiration, verification, **kwargs
+                )
+                break
+            except ServiceUnavailable as e:
+                # This is the last iteration:
+                if retry == retries - 1:
+                    raise e
+                time.sleep(retry_wait)
+
         self.set_object(name=self.name, key=unique_hash, obj=instance)
         return instance
 

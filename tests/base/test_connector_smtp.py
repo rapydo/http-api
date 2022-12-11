@@ -1,3 +1,6 @@
+import time
+from unittest.mock import patch
+
 import pytest
 from faker import Faker
 from flask import Flask
@@ -141,3 +144,31 @@ def test_smtp(app: Flask, faker: Faker) -> None:
     obj.disconnect()
 
     assert not obj.is_connected()
+
+    with pytest.raises(ServiceUnavailable, match=r"Invalid retry value: 0"):
+        connector.get_instance(retries=0, retry_wait=0)
+    with pytest.raises(ServiceUnavailable, match=r"Invalid retry value: -1"):
+        connector.get_instance(retries=-1, retry_wait=0)
+    with pytest.raises(ServiceUnavailable, match=r"Invalid retry wait value: -1"):
+        connector.get_instance(retries=1, retry_wait=-1)
+    obj = connector.get_instance(retries=1, retry_wait=0)
+    assert obj is not None
+
+    MOCKED_RETURN = connector.get_instance()
+    # Clean the cache
+    Connector.disconnect_all()
+    WAIT = 1
+    with patch.object(Connector, "initialize_connection") as mock:
+        start = time.time()
+        mock.side_effect = [
+            ServiceUnavailable("first"),
+            ServiceUnavailable("second"),
+            MOCKED_RETURN,
+        ]
+        obj = connector.get_instance(retries=10, retry_wait=WAIT)
+
+        assert mock.call_count == 3
+        assert obj == MOCKED_RETURN
+        end = time.time()
+
+        assert end - start > WAIT
