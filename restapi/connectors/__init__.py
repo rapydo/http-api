@@ -106,7 +106,7 @@ class Connector(metaclass=abc.ABCMeta):
             Path(CUSTOM_PACKAGE), CUSTOM_PACKAGE, Connector.services
         )
 
-        Connector.load_models(list(Connector.services.keys()))
+        # Connector.load_models(list(Connector.services.keys()))
 
     def __del__(self) -> None:
         if not self.disconnected:

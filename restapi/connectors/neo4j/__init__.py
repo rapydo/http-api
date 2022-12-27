@@ -170,6 +170,7 @@ class NeoModel(Connector):
         StructuredNode.save = catch_db_exceptions(StructuredNode.save)
         NodeSet.get = catch_db_exceptions(NodeSet.get)
 
+        self.load_models(["neo4j"])
         self.db = db
         return self
 

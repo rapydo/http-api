@@ -2,8 +2,8 @@ Flask==2.2.2
 flask-apispec==0.11.4
 Flask-Caching==2.0.1
 Flask-Cors==3.0.10
-Flask-SQLAlchemy==3.0.2
 Flask-Migrate==4.0.0
+SQLAlchemy==1.4.45
 Werkzeug==2.2.2
 PyJWT==2.6.0
 pyOpenSSL==22.1.0

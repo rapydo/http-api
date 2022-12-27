@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.connectors import Connector, neo4j, sqlalchemy
@@ -35,7 +37,10 @@ if TESTING:
                 t = sqlalchemy.text('SELECT * FROM "group" WHERE shortname = :value')
                 sql.db.engine.execute(t, value=value)
 
-                sql.Group.query.filter_by(shortname=value).first()
+                # sql.Group.query.filter_by(shortname=value).first()
+                sql.db.session.execute(
+                    select(sql.Group).where(sql.Group.shortname == value)
+                ).scalar()
 
         @decorators.use_kwargs({"payload": fields.Str(required=True)}, location="query")
         @decorators.endpoint(
