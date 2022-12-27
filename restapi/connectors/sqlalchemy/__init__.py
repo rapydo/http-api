@@ -9,7 +9,8 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 
 import pytz
-from flask_migrate import Migrate
+
+# from flask_migrate import Migrate
 from psycopg2 import OperationalError as PsycopgOperationalError
 from sqlalchemy import MetaData, create_engine, inspect, select, text
 from sqlalchemy.engine.base import Connection, Engine
@@ -220,15 +221,15 @@ class SQLAlchemy(Connector):
         #     'users':        'mysqldb://localhost/users',
         #     'appmeta':      'sqlite:////path/to/appmeta.db'
         # }
-        if self.app:
-            self.app.config["SQLALCHEMY_DATABASE_URI"] = uri
-            # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
-            self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+        # if self.app:
+        #     self.app.config["SQLALCHEMY_DATABASE_URI"] = uri
+        #     # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
+        #     self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-            # The Alembic package, which handles the migration work, does not recognize
-            # type changes in columns by default. If you want that fine level of
-            # detection you need to enable the compare_type option
-            Migrate(self.app, db, compare_type=True)
+        #     # The Alembic package, which handles the migration work, does not recognize
+        #     # type changes in columns by default. If you want that fine level of
+        #     # detection you need to enable the compare_type option
+        #     Migrate(self.app, db, compare_type=True)
 
         # Overwrite db.session created by flask_alchemy due to errors
         # with transaction when concurrent requests...
@@ -317,6 +318,10 @@ class SQLAlchemy(Connector):
 class Authentication(BaseAuthentication):
     def __init__(self) -> None:
         self.db: SQLAlchemy = get_instance()
+
+    def init_auth_db(self, options: Dict[str, bool]) -> None:
+        self.db.initialize()
+        return super().init_auth_db(options)
 
     # Also used by POST user
     def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
