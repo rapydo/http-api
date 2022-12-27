@@ -307,12 +307,10 @@ class SQLAlchemy(Connector):
         instance.db.drop_all()
 
     @staticmethod
-    # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
     def update_properties(instance: Any, properties: Dict[str, Any]) -> None:
 
         for field, value in properties.items():
-            # Call to untyped function "set_attribute" in typed context
-            set_attribute(instance, field, value)  # type: ignore
+            set_attribute(instance, field, value)
 
 
 class Authentication(BaseAuthentication):
