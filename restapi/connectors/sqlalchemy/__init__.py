@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 import pytz
 from flask_migrate import Migrate
 from psycopg2 import OperationalError as PsycopgOperationalError
-from sqlalchemy import create_engine, select, text
+from sqlalchemy import MetaData, create_engine, select, text
 from sqlalchemy.engine.base import Connection, Engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import (
@@ -283,35 +283,28 @@ class SQLAlchemy(Connector):
         return not self.disconnected
 
     def initialize(self) -> None:
-
         instance = self.get_instance()
+        sql = text("SELECT 1")
+        instance.db.session.execute(sql)
 
-        if self.app:
-            with self.app.app_context():
+        meta = MetaData()
 
-                sql = text("SELECT 1")
-                instance.db.engine.execute(sql)
-
-                SQLAlchemy.DB_INITIALIZING = True
-                instance.db.create_all()
-                SQLAlchemy.DB_INITIALIZING = False
+        SQLAlchemy.DB_INITIALIZING = True
+        # instance.db.create_all()
+        meta.create_all(self.engine_bis)
+        SQLAlchemy.DB_INITIALIZING = False
 
     def destroy(self) -> None:
-
         instance = self.get_instance()
+        sql = text("SELECT 1")
+        instance.db.session.execute(sql)
 
-        if self.app:
-            with self.app.app_context():
-
-                sql = text("SELECT 1")
-                instance.db.engine.execute(sql)
-
-                # Call to untyped function "remove" in typed context
-                instance.db.session.remove()  # type: ignore
-                close_all_sessions()
-                # massive destruction
-                log.critical("Destroy current SQL data")
-                instance.db.drop_all()
+        # Call to untyped function "remove" in typed context
+        instance.db.session.remove()  # type: ignore
+        close_all_sessions()
+        # massive destruction
+        log.critical("Destroy current SQL data")
+        instance.db.drop_all()
 
     @staticmethod
     # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
