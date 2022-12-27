@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 import pytz
 from flask_migrate import Migrate
 from psycopg2 import OperationalError as PsycopgOperationalError
-from sqlalchemy import MetaData, create_engine, select, text
+from sqlalchemy import MetaData, create_engine, inspect, select, text
 from sqlalchemy.engine.base import Connection, Engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import (
@@ -299,12 +299,13 @@ class SQLAlchemy(Connector):
         sql = text("SELECT 1")
         instance.db.session.execute(sql)
 
-        # Call to untyped function "remove" in typed context
-        instance.db.session.remove()  # type: ignore
+        instance.db.session.remove()
         close_all_sessions()
         # massive destruction
         log.critical("Destroy current SQL data")
-        instance.db.drop_all()
+        meta = MetaData()
+        meta.drop_all(self.engine_bis)
+        # instance.db.drop_all()
 
     @staticmethod
     def update_properties(instance: Any, properties: Dict[str, Any]) -> None:
@@ -468,6 +469,8 @@ class Authentication(BaseAuthentication):
     def get_roles(self) -> List[RoleObj]:
         # roles = []
         # for role in self.db.Role.query.all():
+        if not inspect(self.db.engine_bis).has_table("role"):
+            return []
         return list(self.db.session.execute(select(self.db.Role)).scalars())
         #     if role:
         #         roles.append(role)
