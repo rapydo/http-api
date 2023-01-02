@@ -12,7 +12,7 @@ import pytz
 
 # from flask_migrate import Migrate
 from psycopg2 import OperationalError as PsycopgOperationalError
-from sqlalchemy import MetaData, create_engine, inspect, select, text
+from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.engine.base import Connection, Engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import (
@@ -288,11 +288,9 @@ class SQLAlchemy(Connector):
         sql = text("SELECT 1")
         instance.db.session.execute(sql)
 
-        meta = MetaData()
-
         SQLAlchemy.DB_INITIALIZING = True
         # instance.db.create_all()
-        meta.create_all(self.engine_bis)
+        instance.db.metadata.create_all(self.engine_bis)
         SQLAlchemy.DB_INITIALIZING = False
 
     def destroy(self) -> None:
@@ -304,15 +302,14 @@ class SQLAlchemy(Connector):
         close_all_sessions()
         # massive destruction
         log.critical("Destroy current SQL data")
-        meta = MetaData()
-        meta.drop_all(self.engine_bis)
+        instance.db.metadata.drop_all(self.engine_bis)
         # instance.db.drop_all()
 
     @staticmethod
     def update_properties(instance: Any, properties: Dict[str, Any]) -> None:
 
         for field, value in properties.items():
-            set_attribute(instance, field, value)
+            set_attribute(instance, field, value)  # type: ignore
 
 
 class Authentication(BaseAuthentication):
