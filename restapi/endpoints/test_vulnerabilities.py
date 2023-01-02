@@ -35,7 +35,7 @@ if TESTING:
                 sql = sqlalchemy.get_instance()
 
                 t = sqlalchemy.text('SELECT * FROM "group" WHERE shortname = :value')
-                sql.db.engine.execute(t, value=value)
+                sql.db.session.execute(t, value=value)
 
                 # sql.Group.query.filter_by(shortname=value).first()
                 sql.db.session.execute(
