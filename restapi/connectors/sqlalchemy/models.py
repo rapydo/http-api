@@ -13,7 +13,6 @@ from sqlalchemy.orm import backref, relationship
 
 from restapi.connectors.sqlalchemy import db
 
-####################################
 # Define multi-multi relation
 roles_users = Table(
     "roles_users",
@@ -23,9 +22,7 @@ roles_users = Table(
 )
 
 
-####################################
-
-# # Base type Model becomes "Any" due to an unfollowed import# Define models
+# Base type Model becomes "Any" due to an unfollowed import
 class Role(db):  # type: ignore
     __tablename__ = "role"
 
@@ -34,7 +31,7 @@ class Role(db):  # type: ignore
     description = Column(String(255), nullable=False)
 
 
-# # Base type Model becomes "Any" due to an unfollowed import
+# Base type Model becomes "Any" due to an unfollowed import
 class User(db):  # type: ignore
     __tablename__ = "user"
 
@@ -69,7 +66,7 @@ class User(db):  # type: ignore
     # + has `logins` backref from Login
 
 
-# # Base type Model becomes "Any" due to an unfollowed import
+# Base type Model becomes "Any" due to an unfollowed import
 class Token(db):  # type: ignore
     __tablename__ = "token"
 
@@ -100,7 +97,7 @@ class Group(db):  # type: ignore
     # + has `members` backref from User
 
 
-# # Base type Model becomes "Any" due to an unfollowed import
+# Base type Model becomes "Any" due to an unfollowed import
 class Login(db):  # type: ignore
     __tablename__ = "login"
 

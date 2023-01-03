@@ -37,7 +37,6 @@ jobs:
             flask_apispec \
             flask_caching \
             flask_cors \
-            flask_sqlalchemy \
             flask_migrate \
             neo4j \
             neobolt \

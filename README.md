@@ -12,7 +12,6 @@ Based on:
 - PyJWT
 - passlib
 - pyotp With segno
-- Flask-SQLAlchemy
 - Neomodel
 - PyMySQL
 - Redis-py

@@ -1,6 +1,5 @@
 """
-SQLalchemy connector based on Flask-SQLalchemy, with automatic integration in
-rapydo framework
+Connector based on SQLalchemy with automatic integration with RAPyDo framework
 """
 
 import re
@@ -57,8 +56,7 @@ from restapi.utilities.logs import Events, log
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
-# all instances have to use the same alchemy object
-# db = OriginalAlchemy()
+# used as a base to define Models
 db = declarative_base()
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -187,7 +185,6 @@ class SQLAlchemy(Connector):
             Env.get("AUTH_SERVICE", "NO_AUTHENTICATION") == "sqlalchemy"
             and Env.get("ALCHEMY_DBTYPE", "postgresql") == "mysql+pymysql"
         )
-        # return self.variables.get("dbtype", "postgresql") == "mysql+pymysql"
 
     @staticmethod
     def get_connection_exception() -> ExceptionsList:
@@ -215,24 +212,6 @@ class SQLAlchemy(Connector):
             database=variables.get("db"),
             query=query,
         )
-        # TODO: in case we need different connection binds
-        # (multiple connections with sql) then:
-        # SQLALCHEMY_BINDS = {
-        #     'users':        'mysqldb://localhost/users',
-        #     'appmeta':      'sqlite:////path/to/appmeta.db'
-        # }
-        # if self.app:
-        #     self.app.config["SQLALCHEMY_DATABASE_URI"] = uri
-        #     # self.app.config['SQLALCHEMY_POOL_TIMEOUT'] = 3
-        #     self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-        #     # The Alembic package, which handles the migration work, does not recognize
-        #     # type changes in columns by default. If you want that fine level of
-        #     # detection you need to enable the compare_type option
-        #     Migrate(self.app, db, compare_type=True)
-
-        # Overwrite db.session created by flask_alchemy due to errors
-        # with transaction when concurrent requests...
 
         self.engine_bis = create_engine(uri, encoding="utf8")
         db.session = scoped_session(sessionmaker(bind=self.engine_bis))
@@ -247,23 +226,6 @@ class SQLAlchemy(Connector):
         Connection._execute_context = catch_db_exceptions(Connection._execute_context)  # type: ignore
 
         sql = text("SELECT 1")
-        # if self.app:
-        #     # This is to prevent multiple app initialization and avoid the error:
-        #     #   A setup function was called after the first request was handled.
-        #     #   This usually indicates a bug in the application where a module was
-        #     #   not imported and decorators or other functionality was called too late.
-        #     #   To fix this make sure to import all your view modules,
-        #     #   database models and everything related at a central place before
-        #     #   the application starts serving requests.
-        #     if "sqlalchemy" not in self.app.extensions:
-        #         db.init_app(self.app)
-
-        #     # This is needed to test the connection
-        #     with self.app.app_context():
-        #         db.engine.execute(sql)
-        # # This is to test the connection when executed from the cli (i.e. outside flask)
-
-        # else:
         db.session.execute(sql)
 
         self.load_models(["sqlalchemy"])
@@ -289,7 +251,6 @@ class SQLAlchemy(Connector):
         instance.db.session.execute(sql)
 
         SQLAlchemy.DB_INITIALIZING = True
-        # instance.db.create_all()
         instance.db.metadata.create_all(self.engine_bis)
         SQLAlchemy.DB_INITIALIZING = False
 
@@ -303,7 +264,6 @@ class SQLAlchemy(Connector):
         # massive destruction
         log.critical("Destroy current SQL data")
         instance.db.metadata.drop_all(self.engine_bis)
-        # instance.db.drop_all()
 
     @staticmethod
     def update_properties(instance: Any, properties: Dict[str, Any]) -> None:
@@ -348,7 +308,6 @@ class Authentication(BaseAuthentication):
         # link roles into users
         user.roles = []
         for role in roles:
-            # sqlrole = self.db.Role.query.filter_by(name=role).first()
             sqlrole = self.db.session.execute(
                 select(self.db.Role).where(self.db.Role.name == role)
             ).scalar()
@@ -380,13 +339,11 @@ class Authentication(BaseAuthentication):
         try:
 
             if username:
-                # return self.db.User.query.filter_by(email=username).first()
                 return self.db.session.execute(
                     select(self.db.User).where(self.db.User.email == username)
                 ).scalar()
 
             if user_id:
-                # return self.db.User.query.filter_by(uuid=user_id).first()
                 return self.db.session.execute(
                     select(self.db.User).where(self.db.User.uuid == user_id)
                 ).scalar()
@@ -404,7 +361,6 @@ class Authentication(BaseAuthentication):
         return None
 
     def get_users(self) -> List[User]:
-        # return cast(List[User], self.db.User.query.all())
         return list(self.db.session.execute(select(self.db.User)).scalars())
 
     def save_user(self, user: User) -> bool:
@@ -428,13 +384,11 @@ class Authentication(BaseAuthentication):
         self, group_id: Optional[str] = None, name: Optional[str] = None
     ) -> Optional[Group]:
         if group_id:
-            # return self.db.Group.query.filter_by(uuid=group_id).first()
             return self.db.session.execute(
                 select(self.db.Group).where(self.db.Group.uuid == group_id)
             ).scalar()
 
         if name:
-            # return self.db.Group.query.filter_by(shortname=name).first()
             return self.db.session.execute(
                 select(self.db.Group).where(self.db.Group.shortname == name)
             ).scalar()
@@ -442,7 +396,6 @@ class Authentication(BaseAuthentication):
         return None
 
     def get_groups(self) -> List[Group]:
-        # return cast(List[Group], self.db.Group.query.all())
         return list(self.db.session.execute(select(self.db.Group)).scalars())
 
     def get_user_group(self, user: User) -> Group:
@@ -469,18 +422,11 @@ class Authentication(BaseAuthentication):
         return True
 
     def get_roles(self) -> List[RoleObj]:
-        # roles = []
-        # for role in self.db.Role.query.all():
         if not inspect(self.db.engine_bis).has_table("role"):
             return []
         return list(self.db.session.execute(select(self.db.Role)).scalars())
-        #     if role:
-        #         roles.append(role)
-
-        # return roles
 
     def get_roles_from_user(self, user: Optional[User]) -> List[str]:
-
         # No user for non authenticated endpoints -> return no role
         if user is None:
             return []
@@ -520,8 +466,6 @@ class Authentication(BaseAuthentication):
             expiration=exp,
             IP=ip_address,
             location="Unknown",
-            # the following two are equivalent
-            # user_id=user.id,
             emitted_for=user,
         )
 
@@ -536,11 +480,9 @@ class Authentication(BaseAuthentication):
             self.db.session.rollback()
 
     def verify_token_validity(self, jti: str, user: User) -> bool:
-
         token_entry = self.db.session.execute(
             select(self.db.Token).where(self.db.Token.jti == jti)
         ).scalar()
-        # token_entry = self.db.Token.query.filter_by(jti=jti).first()
 
         if token_entry is None:
             return False
@@ -591,14 +533,11 @@ class Authentication(BaseAuthentication):
         tokens = None
 
         if get_all:
-            # tokens = self.db.Token.query.all()
             tokens = self.db.session.execute(select(self.db.Token)).scalars()
 
         elif user:
-            # tokens = user.tokens.all()
             tokens = user.tokens
         elif token_jti:
-            # tokens = [self.db.Token.query.filter_by(jti=token_jti).first()]
             tokens = self.db.session.execute(
                 select(self.db.Token).where(self.db.Token.jti == token_jti)
             ).scalars()
@@ -626,8 +565,6 @@ class Authentication(BaseAuthentication):
         return tokens_list
 
     def invalidate_token(self, token: str) -> bool:
-
-        # token_entry = self.db.Token.query.filter_by(token=token).first()
         token_entry = self.db.session.execute(
             select(self.db.Token).where(self.db.Token.token == token)
         ).scalar()
@@ -657,9 +594,7 @@ class Authentication(BaseAuthentication):
         login_data["username"] = username
         login_data["IP"] = ip_address
         login_data["location"] = "Unknown"
-        # the following two are equivalent
         if user:
-            # login_data["user_id"] = user.id
             login_data["user"] = user
         login_data["failed"] = failed
         # i.e. failed logins are not flushed by default
@@ -680,14 +615,6 @@ class Authentication(BaseAuthentication):
     def get_logins(
         self, username: Optional[str] = None, only_unflushed: bool = False
     ) -> List[Login]:
-
-        # login_query = self.db.Login.query
-        # if not username:
-        #     return [x for x in login_query.all()]
-        # if only_unflushed:
-        #     return [x for x in login_query.filter_by(username=username, flushed=False)]
-        # return [x for x in login_query.filter_by(username=username)]
-
         logins = select(self.db.Login)
         if username:
             logins = logins.where(self.db.Login.username == username)
@@ -696,7 +623,6 @@ class Authentication(BaseAuthentication):
         return list(self.db.session.execute(logins).scalars())
 
     def flush_failed_logins(self, username: str) -> None:
-
         for login in self.db.session.execute(
             select(self.db.Login)
             .where(self.db.Login.username == username)
@@ -704,7 +630,6 @@ class Authentication(BaseAuthentication):
                 self.db.Login.flushed == False,  # noqa
             )
         ).scalars():
-            # for login in self.db.Login.query.filter_by(username=username, flushed=False):
             login.flushed = True
             self.db.session.add(login)
 
