@@ -222,12 +222,6 @@ def create_app(
             warnings.simplefilter("always", ResourceWarning)
             warnings.simplefilter("default", Neo4jExperimentalWarning)
 
-            # Remove me in a near future, this is due to hypothesis with pytest 7
-            # https://github.com/HypothesisWorks/hypothesis/issues/3222
-            warnings.filterwarnings(
-                "ignore", message="A private pytest class or function was used."
-            )
-
         elif PRODUCTION:  # pragma: no cover
             warnings.simplefilter("ignore", Warning)
             warnings.simplefilter("always", UserWarning)
@@ -267,23 +261,10 @@ def create_app(
         # ignore warning messages on flask socket after teardown
         warnings.filterwarnings("ignore", message="unclosed <socket.socket")
 
-        # from flask_caching 1.10.1 with python 3.10 on core tests...
-        # try to remove this once upgraded flask_caching in a near future
-        warnings.filterwarnings(
-            "ignore",
-            message="_SixMetaPathImporter.find_spec",
-        )
-
         # Raised from sentry_sdk 1.5.11 with python 3.10 events
         warnings.filterwarnings(
             "ignore",
             message="SelectableGroups dict interface is deprecated. Use select.",
-        )
-
-        # Raised from apispec 5.2.2 with setuptools 65
-        warnings.filterwarnings(
-            "ignore",
-            message="distutils Version classes are deprecated.",
         )
 
         if Connector.check_availability("redis"):

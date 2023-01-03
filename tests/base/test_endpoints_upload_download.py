@@ -1,6 +1,5 @@
 import io
 import os
-import warnings
 from typing import Dict
 
 from faker import Faker
@@ -27,10 +26,6 @@ class TestUploadAndDownload(BaseTests):
     def test_simple_upload_and_download(
         self, client: FlaskClient, faker: Faker
     ) -> None:
-
-        warnings.filterwarnings(
-            "ignore", message="unclosed file <_io.BufferedReader name="
-        )
 
         self.fcontent = faker.paragraph()
         self.save("fcontent", self.fcontent)
@@ -145,10 +140,6 @@ class TestUploadAndDownload(BaseTests):
     def test_chunked_upload_and_download(
         self, client: FlaskClient, faker: Faker
     ) -> None:
-
-        warnings.filterwarnings(
-            "ignore", message="unclosed file <_io.BufferedReader name="
-        )
 
         self.fname = self.get("fname")
         self.fcontent = self.get("fcontent")
