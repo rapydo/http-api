@@ -8,8 +8,6 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 
 import pytz
-
-# from flask_migrate import Migrate
 from psycopg2 import OperationalError as PsycopgOperationalError
 from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.engine.base import Connection, Engine
