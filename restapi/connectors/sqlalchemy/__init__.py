@@ -218,7 +218,10 @@ class SQLAlchemy(Connector):
             query=query,
         )
 
-        self.engine_bis = create_engine(uri, encoding="utf8")
+        poolsize = Env.to_int(variables.get("poolsize"), 30)
+        self.engine_bis = create_engine(
+            uri, encoding="utf8", pool_size=poolsize, max_overflow=poolsize + 10
+        )
         db.session = scoped_session(sessionmaker(bind=self.engine_bis))
         db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore
         db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore
