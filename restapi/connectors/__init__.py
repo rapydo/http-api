@@ -7,7 +7,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Any, Dict, Optional, Tuple, Type, TypeVar, cast
 
 from flask import Flask
 
@@ -61,7 +61,7 @@ class Connector(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
 
         # This is the lower-cased class name (neomodel, celeryext)
-        self.name = self.__class__.__name__.lower()
+        # self.name = self.__class__.__name__.lower()
         # This is the folder name corresponding to the connector name (neo4j, celery, )
         # self.__class__.__module__ == restapi.connectors.sqlalchemy
         # .split(".") == ['restapi', 'connectors', 'sqlalchemy']
@@ -105,8 +105,6 @@ class Connector(metaclass=abc.ABCMeta):
         Connector.services = Connector.load_connectors(
             Path(CUSTOM_PACKAGE), CUSTOM_PACKAGE, Connector.services
         )
-
-        # Connector.load_models(list(Connector.services.keys()))
 
     def __del__(self) -> None:
         if not self.disconnected:
@@ -228,46 +226,6 @@ class Connector(metaclass=abc.ABCMeta):
         return services
 
     @staticmethod
-    def load_models(connectors: List[str]) -> None:
-
-        for connector in connectors:
-            # Models are strictly core-dependent. If you need to enable models starting
-            # from a custom connector this function has to be refactored:
-            # 1) now is checked the existence of models.py in ABS_RESTAPI_PATH/connector
-            # 2) Core model is mandatory
-            # 3) Connector class, used to inject models is taken from BACKEND_PACKAGE
-
-            models_path = ABS_RESTAPI_PATH.joinpath(
-                CONNECTORS_FOLDER, connector, "models.py"
-            )
-
-            if not models_path.is_file():
-                log.debug("No model found for {}", connector)
-                continue
-
-            log.debug("Loading models from {}", connector)
-            base_models = Meta.import_models(connector, BACKEND_PACKAGE, mandatory=True)
-            if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
-                extended_models = {}
-            else:
-                extended_models = Meta.import_models(connector, EXTENDED_PACKAGE)
-            custom_models = Meta.import_models(connector, CUSTOM_PACKAGE)
-
-            log.debug(
-                "Models loaded from {}: core {}, extended {}, custom {}",
-                connector,
-                len(base_models),
-                len(extended_models),
-                len(custom_models),
-            )
-            connector_module = Connector.get_module(connector, BACKEND_PACKAGE)
-            connector_class = Connector.get_class(connector_module)
-            if connector_class:
-                connector_class.set_models(base_models, extended_models, custom_models)
-            else:  # pragma: no cover
-                log.error("Connector class not found for {}", connector)
-
-    @staticmethod
     def get_module(connector: str, module: str) -> Optional[ModuleType]:
         return Meta.get_module_from_string(
             ".".join((module, CONNECTORS_FOLDER, connector))
@@ -374,6 +332,23 @@ class Connector(metaclass=abc.ABCMeta):
 
             log.debug("Destroying {}", Connector.authentication_service)
             connector.destroy()
+
+    def load_models(self) -> None:
+        base_models = Meta.import_models(self.name, BACKEND_PACKAGE, mandatory=True)
+        if EXTENDED_PACKAGE == EXTENDED_PROJECT_DISABLED:
+            extended_models = {}
+        else:
+            extended_models = Meta.import_models(self.name, EXTENDED_PACKAGE)
+        custom_models = Meta.import_models(self.name, CUSTOM_PACKAGE)
+
+        log.debug(
+            "Models loaded from {}: core {}, extended {}, custom {}",
+            self.name,
+            len(base_models),
+            len(extended_models),
+            len(custom_models),
+        )
+        self.set_models(base_models, extended_models, custom_models)
 
     @classmethod
     def set_models(

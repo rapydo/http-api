@@ -32,6 +32,12 @@ from sqlalchemy.orm import (  # type: ignore
 from sqlalchemy.orm.attributes import set_attribute
 from sqlalchemy.orm.session import close_all_sessions
 
+from restapi.config import (
+    BACKEND_PACKAGE,
+    CUSTOM_PACKAGE,
+    EXTENDED_PACKAGE,
+    EXTENDED_PROJECT_DISABLED,
+)
 from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
 from restapi.exceptions import (
@@ -51,6 +57,7 @@ from restapi.services.authentication import (
     User,
 )
 from restapi.utilities.logs import Events, log
+from restapi.utilities.meta import Meta
 from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
@@ -226,7 +233,7 @@ class SQLAlchemy(Connector):
         sql = text("SELECT 1")
         db.session.execute(sql)
 
-        self.load_models(["sqlalchemy"])
+        self.load_models()
         self.db = db
         return self
 
