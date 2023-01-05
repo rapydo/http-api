@@ -231,7 +231,7 @@ class RabbitExt(Connector):
         # A list of all bindings in which a given exchange is the source.
         r = requests.get(
             f"{schema}{host}:{port}/api/exchanges/{vhost}/{exchange}/bindings/source",
-            auth=HTTPBasicAuth(user, password),
+            auth=HTTPBasicAuth(user, password),  # type: ignore
             # this verify=False is needed because APIs are called on
             # the internal docker network where the TLS certificate is invalid
             verify=False,
