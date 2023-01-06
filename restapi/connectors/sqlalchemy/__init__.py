@@ -167,7 +167,7 @@ class SQLAlchemy(Connector):
     def __init__(self) -> None:
         # Type of variable becomes "Any" due to an unfollowed import
         self.db: Any = None
-        self.engine_bis: Optional[Engine] = None
+        self.engine: Optional[Engine] = None
         super().__init__()
 
     def __getattr__(self, name: str) -> Any:
@@ -212,14 +212,14 @@ class SQLAlchemy(Connector):
         )
 
         poolsize = Env.to_int(variables.get("poolsize"), 30)
-        self.engine_bis = create_engine(
+        self.engine = create_engine(
             uri,
             encoding="utf8",
             pool_size=poolsize,
             max_overflow=poolsize + 10,
             future=True,
         )
-        db.session = scoped_session(sessionmaker(bind=self.engine_bis))
+        db.session = scoped_session(sessionmaker(bind=self.engine))
         db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore
         db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore
         # db.update_properties = self.update_properties
@@ -256,7 +256,7 @@ class SQLAlchemy(Connector):
         instance.db.session.execute(sql)
 
         SQLAlchemy.DB_INITIALIZING = True
-        instance.db.metadata.create_all(self.engine_bis)
+        instance.db.metadata.create_all(self.engine)
         SQLAlchemy.DB_INITIALIZING = False
 
     def destroy(self) -> None:
@@ -268,7 +268,7 @@ class SQLAlchemy(Connector):
         close_all_sessions()
         # massive destruction
         log.critical("Destroy current SQL data")
-        instance.db.metadata.drop_all(self.engine_bis)
+        instance.db.metadata.drop_all(self.engine)
 
     @staticmethod
     def update_properties(instance: Any, properties: Dict[str, Any]) -> None:
@@ -427,7 +427,7 @@ class Authentication(BaseAuthentication):
         return True
 
     def get_roles(self) -> List[RoleObj]:
-        if not inspect(self.db.engine_bis).has_table("role"):
+        if not inspect(self.db.engine).has_table("role"):
             return []
         return list(self.db.session.execute(select(self.db.Role)).scalars())
 
