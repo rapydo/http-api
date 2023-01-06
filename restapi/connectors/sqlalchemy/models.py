@@ -9,7 +9,7 @@ from sqlalchemy import (
     Table,
     Text,
 )
-from sqlalchemy.orm import backref, relationship
+from sqlalchemy.orm import relationship
 
 from restapi.connectors.sqlalchemy import db
 
@@ -29,6 +29,13 @@ class Role(db):  # type: ignore
     id = Column(Integer, primary_key=True)
     name = Column(String(80), unique=True, nullable=False)
     description = Column(String(255), nullable=False)
+
+    users = relationship(
+        "User",
+        secondary=roles_users,
+        back_populates="roles",
+        cascade_backrefs=False,
+    )  # type: ignore[var-annotated]
 
 
 # Base type Model becomes "Any" due to an unfollowed import
@@ -53,17 +60,25 @@ class User(db):  # type: ignore
     roles = relationship(
         "Role",
         secondary=roles_users,
-        backref=backref("users", lazy="dynamic"),  # type: ignore[no-untyped-call]
+        back_populates="users",
     )  # type: ignore[var-annotated]
     group_id = Column(Integer, ForeignKey("group.id"))
     belongs_to = relationship(
         "Group",
-        backref=backref("members"),  # type: ignore[no-untyped-call]
+        back_populates="members",
+        cascade_backrefs=False,
         foreign_keys=[group_id],
     )  # type: ignore[var-annotated]
-
-    # + has `tokens` backref from Token
-    # + has `logins` backref from Login
+    tokens = relationship(
+        "Token",
+        back_populates="emitted_for",
+        cascade_backrefs=False,
+    )  # type: ignore[var-annotated]
+    logins = relationship(
+        "Login",
+        back_populates="user",
+        cascade_backrefs=False,
+    )  # type: ignore[var-annotated]
 
 
 # Base type Model becomes "Any" due to an unfollowed import
@@ -81,7 +96,9 @@ class Token(db):  # type: ignore
     location = Column(String(256))
     user_id = Column(Integer, ForeignKey("user.id"))
     emitted_for = relationship(
-        "User", backref=backref("tokens", lazy="dynamic")  # type: ignore[no-untyped-call]
+        "User",
+        back_populates="tokens",
+        cascade_backrefs=False,
     )  # type: ignore[var-annotated]
 
 
@@ -94,7 +111,11 @@ class Group(db):  # type: ignore
     shortname = Column(String(64), unique=True, nullable=False)
     fullname = Column(String(256), nullable=False)
 
-    # + has `members` backref from User
+    members = relationship(
+        "User",
+        back_populates="belongs_to",
+        cascade_backrefs=False,
+    )  # type: ignore[var-annotated]
 
 
 # Base type Model becomes "Any" due to an unfollowed import
@@ -109,7 +130,9 @@ class Login(db):  # type: ignore
     location = Column(String(256))
     user_id = Column(Integer, ForeignKey("user.id"), nullable=True)
     user = relationship(
-        "User", backref=backref("logins", lazy="dynamic")  # type: ignore[no-untyped-call]
+        "User",
+        back_populates="logins",
+        cascade_backrefs=False,
     )  # type: ignore[var-annotated]
     failed = Column(Boolean, default=False)
     flushed = Column(Boolean, default=False)
