@@ -26,6 +26,10 @@ roles_users = Table(
 class Role(db):  # type: ignore
     __tablename__ = "role"
 
+    def __repr__(self) -> str:
+        name = self.__class__.__name__
+        return f"{name}({self.id}, {self.name})"
+
     id = Column(Integer, primary_key=True)
     name = Column(String(80), unique=True, nullable=False)
     description = Column(String(255), nullable=False)
@@ -41,6 +45,10 @@ class Role(db):  # type: ignore
 # Base type Model becomes "Any" due to an unfollowed import
 class User(db):  # type: ignore
     __tablename__ = "user"
+
+    def __repr__(self) -> str:
+        name = self.__class__.__name__
+        return f"{name}({self.id}, {self.email})"
 
     id = Column(Integer, primary_key=True)
     uuid = Column(String(36), unique=True, nullable=False)
@@ -85,6 +93,10 @@ class User(db):  # type: ignore
 class Token(db):  # type: ignore
     __tablename__ = "token"
 
+    def __repr__(self) -> str:
+        name = self.__class__.__name__
+        return f"{name}({self.id})"
+
     id = Column(Integer, primary_key=True)
     jti = Column(String(36), unique=True, nullable=False)
     token = Column(Text, nullable=False)
@@ -106,6 +118,10 @@ class Token(db):  # type: ignore
 class Group(db):  # type: ignore
     __tablename__ = "group"
 
+    def __repr__(self) -> str:
+        name = self.__class__.__name__
+        return f"{name}({self.id}, {self.shortname})"
+
     id = Column(Integer, primary_key=True)
     uuid = Column(String(36), unique=True, nullable=False)
     shortname = Column(String(64), unique=True, nullable=False)
@@ -121,6 +137,10 @@ class Group(db):  # type: ignore
 # Base type Model becomes "Any" due to an unfollowed import
 class Login(db):  # type: ignore
     __tablename__ = "login"
+
+    def __repr__(self) -> str:
+        name = self.__class__.__name__
+        return f"{name}({self.id})"
 
     id = Column(Integer, primary_key=True)
     date = Column(DateTime(timezone=True), nullable=False)

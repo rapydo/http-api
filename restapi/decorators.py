@@ -275,8 +275,10 @@ def preload(
     return decorator
 
 
-# Prevent caching of 5xx errors responses
 def cache_response_filter(response: Response) -> bool:
+    """
+    Prevent caching of 5xx errors responses
+    """
     if not isinstance(response, tuple):
         return True
 
@@ -286,11 +288,12 @@ def cache_response_filter(response: Response) -> bool:
     return response[1] < 500
 
 
-# This is used to manipulate the function name to append a string depending
-# by the Bearer token. This way all cache entries for authenticated endpoints
-# will always user-dependent.
 def make_cache_function_name(name: str) -> str:
-
+    """
+    This is used to manipulate the function name to append a string depending
+    by the Bearer token. This way all cache entries for authenticated endpoints
+    will always user-dependent.
+    """
     # Non authenticated endpoints do not validate the token.
     # Function name is not expanded by any token that could be provided (are ignored)
     if not request.environ.get(TOKEN_VALIDATED_KEY):
@@ -302,8 +305,10 @@ def make_cache_function_name(name: str) -> str:
     return new_name
 
 
-# Used to cache endpoint with @decorators.cache(timeout=60)
 def cache(*args: Any, **kwargs: Any) -> Any:
+    """
+    Used to cache endpoint with @decorators.cache(timeout=60)
+    """
     if "response_filter" not in kwargs:
         kwargs["response_filter"] = cache_response_filter
     if "make_name" not in kwargs:
