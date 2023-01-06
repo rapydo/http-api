@@ -82,7 +82,7 @@ def run_migrations_online() -> None:
         port=variables.get("port"),
         database=variables.get("db"),
     )
-    connectable = create_engine(url, encoding="utf8")
+    connectable = create_engine(url, encoding="utf8", future=True)
 
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
