@@ -35,7 +35,6 @@ jobs:
 
           for lib in \
             flask_apispec \
-            flask_caching \
             flask_cors \
             neo4j \
             neobolt \
@@ -44,7 +43,6 @@ jobs:
             redbeat \
             plumbum \
             psutil \
-            passlib \
             ; do
             echo "[mypy-${lib}.*]" >> mypy.ini
             echo "ignore_missing_imports = True" >> mypy.ini
