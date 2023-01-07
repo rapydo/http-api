@@ -3,7 +3,6 @@ import re
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 from enum import Enum
-from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
 from typing import (
@@ -356,7 +355,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
         try:
-            return cast(bool, pwd_context.verify(plain_password, hashed_password))
+            return pwd_context.verify(plain_password, hashed_password)
         except ValueError as e:  # pragma: no cover
             log.error(e)
 
@@ -366,8 +365,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     def get_password_hash(password: Optional[str]) -> str:
         if not password:
             raise Unauthorized("Invalid password")
-        # CryptContext is no typed.. but this is a string!
-        return cast(str, pwd_context.hash(password))
+        return pwd_context.hash(password)
 
     @staticmethod
     def get_remote_ip(raise_warnings: bool = True) -> str:
