@@ -30,4 +30,4 @@ psutil==5.9.4
 plumbum==1.8.1
 html2text==2020.1.16
 orjson==3.8.5
-sentry-sdk[flask]==1.12.1
+sentry-sdk[flask]==1.13.0
