@@ -404,7 +404,7 @@ class ResponseMaker:
                     labels = validator.labels
                     if len(tuple(labels)) != len(tuple(choices)):
                         labels = choices
-                    f["options"] = dict(zip(choices, labels))
+                    f["options"] = dict(zip(choices, labels, strict=True))
 
                 else:  # pragma: no cover
 

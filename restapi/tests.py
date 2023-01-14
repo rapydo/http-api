@@ -149,7 +149,7 @@ class BaseTests:
             )
         except Exception as e:  # pragma: no cover
             log.error("Failed to load response:\n{}", e)
-            raise ValueError(f"Malformed response: {http_out}")
+            raise ValueError(f"Malformed response: {http_out}") from e
 
     @staticmethod
     def generate_totp(email: Optional[str]) -> str:

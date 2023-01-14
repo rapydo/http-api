@@ -110,4 +110,4 @@ def load_yaml_file(filepath: Path) -> ConfigurationType:
             # import codecs
             # error, _ = codecs.getdecoder("unicode_escape")(str(error))
 
-            raise AttributeError(f"Failed to read file {filepath}: {e}")
+            raise AttributeError(f"Failed to read file {filepath}: {e}") from e

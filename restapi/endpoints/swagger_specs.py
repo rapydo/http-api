@@ -88,7 +88,7 @@ class NewSwaggerSpecifications(EndpointResource):
                                 ref = p["schema"]["items"]["$ref"]
                                 add_model(privatedefs, ref, is_private)
 
-                        for code, response in definition.get("responses", {}).items():
+                        for _, response in definition.get("responses", {}).items():
                             if "schema" in response:
 
                                 if "$ref" in response["schema"]:

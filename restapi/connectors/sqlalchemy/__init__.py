@@ -118,14 +118,14 @@ def catch_db_exceptions(func: F) -> F:
             message = str(e).split("\n")
 
             if error := parse_postgres_duplication_error(message):
-                raise DatabaseDuplicatedEntry(error)
+                raise DatabaseDuplicatedEntry(error) from e
 
             if error := parse_missing_error(message):
-                raise DatabaseMissingRequiredProperty(error)
+                raise DatabaseMissingRequiredProperty(error) from e
 
             # Should never happen except in case of a new alchemy version
             log.error("Unrecognized error message: {}", e)  # pragma: no cover
-            raise ServiceUnavailable("Duplicated entry")  # pragma: no cover
+            raise ServiceUnavailable("Duplicated entry") from e  # pragma: no cover
 
         except InternalError as e:  # pragma: no cover
 
@@ -138,7 +138,7 @@ def catch_db_exceptions(func: F) -> F:
                 value = m.group(1)
                 column = m.group(2)
                 error = f"Invalid {column}: {value}"
-                raise BadRequest(error)
+                raise BadRequest(error) from e
 
             log.error("Unrecognized error message: {}", e)
             raise
@@ -228,7 +228,7 @@ class SQLAlchemy(Connector):
 
         Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore
         # Used in case of autoflush
-        Connection._execute_context = catch_db_exceptions(Connection._execute_context)  # type: ignore
+        Connection._execute_context = catch_db_exceptions(Connection._execute_context)  # type: ignore  # noqa
 
         sql = text("SELECT 1")
         db.session.execute(sql)
@@ -355,7 +355,7 @@ class Authentication(BaseAuthentication):
 
         except (StatementError, InvalidRequestError) as e:
             log.error(e)
-            raise ServiceUnavailable("Backend database is unavailable")
+            raise ServiceUnavailable("Backend database is unavailable") from e
         except (
             DatabaseError,
             OperationalError,

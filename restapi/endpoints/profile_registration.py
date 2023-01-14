@@ -101,7 +101,9 @@ if Connector.check_availability("smtp"):
 
             except Exception as e:  # pragma: no cover
                 self.auth.delete_user(user)
-                raise ServiceUnavailable(f"Errors during account registration: {e}")
+                raise ServiceUnavailable(
+                    f"Errors during account registration: {e}"
+                ) from e
 
             return self.response(
                 "We are sending an email to your email address where "

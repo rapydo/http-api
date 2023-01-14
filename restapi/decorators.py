@@ -96,11 +96,12 @@ def endpoint(
         if hasattr(func, "uri"):  # pragma: no cover
             print_and_exit(
                 "Unsupported multiple endpoint mapping found: {}, {}",
-                getattr(func, "uri"),
+                func.uri,
                 normalized_path,
             )
 
-        setattr(func, "uri", normalized_path)
+        # "EndpointFunction" has no attribute "uri"
+        func.uri = normalized_path  # type: ignore[attr-defined]
         inject_apispec_docs(func, specs, None)
 
         @wraps(func)

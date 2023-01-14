@@ -79,11 +79,11 @@ def catch_db_exceptions(func: F) -> F:
                 prop = m.group(2)
                 val = m.group(3)
                 error = f"A {node.title()} already exists with {prop}: {val}"
-                raise DatabaseDuplicatedEntry(error)
+                raise DatabaseDuplicatedEntry(error) from e
 
             # Can't be tested, should never happen except in case of new neo4j version
             log.error("Unrecognized error message: {}", e)  # pragma: no cover
-            raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
+            raise DatabaseDuplicatedEntry("Duplicated entry") from e  # pragma: no cover
         except RequiredProperty as e:
 
             # message = property 'xyz' on objects of class XYZ
@@ -95,7 +95,7 @@ def catch_db_exceptions(func: F) -> F:
                 model = m.group(2)
                 message = f"Missing property {missing_property} required by {model}"
 
-            raise DatabaseMissingRequiredProperty(message)
+            raise DatabaseMissingRequiredProperty(message) from e
         except DeflateError as e:
             log.warning(e)
             return None
@@ -239,7 +239,7 @@ class NeoModel(Connector):
 
     @staticmethod
     # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
-    def update_properties(instance: StructuredNode, properties: Dict[str, Any]) -> None:  # type: ignore
+    def update_properties(instance: StructuredNode, properties: Dict[str, Any]) -> None:  # type: ignore  # noqa
 
         for field, value in properties.items():
             instance.__dict__[field] = value
@@ -254,7 +254,7 @@ class NeoModel(Connector):
         except CypherSyntaxError as e:
             log.warning(query)
             log.error(f"Failed to execute Cypher Query\n{e}")
-            raise CypherSyntaxError("Failed to execute Cypher Query")
+            raise CypherSyntaxError("Failed to execute Cypher Query") from e
         return results
 
     @staticmethod
@@ -412,8 +412,8 @@ class Authentication(BaseAuthentication):
             log.debug("Adding role {}", role)
             try:
                 role_obj = self.db.Role.nodes.get(name=role)
-            except self.db.Role.DoesNotExist:  # pragma: no cover
-                raise Exception(f"Graph role {role} does not exist")
+            except self.db.Role.DoesNotExist as e:  # pragma: no cover
+                raise Exception(f"Graph role {role} does not exist") from e
             user.roles.connect(role_obj)
 
     def create_group(self, groupdata: Dict[str, Any]) -> Group:

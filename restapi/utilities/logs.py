@@ -128,7 +128,7 @@ fmt += "<fg #FFF>{message}</fg #FFF>"
 def set_logger(level: str) -> None:
 
     if hasattr(set_logger, "log_id"):
-        log_id = getattr(set_logger, "log_id")
+        log_id = set_logger.log_id
         log.remove(log_id)
 
     log_id = log.add(
@@ -146,7 +146,7 @@ def set_logger(level: str) -> None:
         filter=print_message_on_stderr,
     )
 
-    setattr(set_logger, "log_id", log_id)
+    set_logger.log_id = log_id
 
 
 set_logger(log_level)
@@ -246,10 +246,10 @@ def parse_event_target(target: Any) -> Tuple[str, str]:
     target_type = type(target).__name__
 
     if hasattr(target, "uuid"):
-        return target_type, getattr(target, "uuid")
+        return target_type, target.uuid
 
     if hasattr(target, "id"):
-        return target_type, getattr(target, "id")
+        return target_type, target.id
 
     return target_type, ""
 

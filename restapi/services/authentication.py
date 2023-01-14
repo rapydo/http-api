@@ -303,11 +303,11 @@ class BaseAuthentication(metaclass=ABCMeta):
             # SqlAlchemy can raise the following error:
             # A string literal cannot contain NUL (0x00) characters.
             log.error(e)
-            raise BadRequest("Invalid input received")
+            raise BadRequest("Invalid input received") from e
         except Exception as e:  # pragma: no cover
             log.error("Unable to connect to auth backend\n[{}] {}", type(e), e)
 
-            raise ServiceUnavailable("Unable to connect to auth backend")
+            raise ServiceUnavailable("Unable to connect to auth backend") from e
 
         if user is None:
             self.register_failed_login(username, user=None)
@@ -642,7 +642,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         except RestApiException:  # pragma: no cover
             raise
         except Exception as e:  # pragma: no cover
-            raise BadRequest(f"Unable to pre-customize user properties: {e}")
+            raise BadRequest(f"Unable to pre-customize user properties: {e}") from e
 
         if "email" in userdata:
             userdata["email"] = userdata["email"].lower()
@@ -660,7 +660,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         except RestApiException:  # pragma: no cover
             raise
         except Exception as e:  # pragma: no cover
-            raise BadRequest(f"Unable to post-customize user properties: {e}")
+            raise BadRequest(f"Unable to post-customize user properties: {e}") from e
 
         return userdata
 
@@ -734,8 +734,8 @@ class BaseAuthentication(metaclass=ABCMeta):
         try:
             return self.fernet.decrypt(user.mfa_hash.encode()).decode()
         # to test this exception change the fernet key used to encrypt mfa_hash
-        except InvalidFernetToken:
-            raise ServerError("Invalid server signature")
+        except InvalidFernetToken as e:
+            raise ServerError("Invalid server signature") from e
 
     def verify_totp(self, user: User, totp_code: Optional[str]) -> bool:
 

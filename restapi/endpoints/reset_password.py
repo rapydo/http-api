@@ -117,17 +117,17 @@ if Connector.check_availability("smtp"):
                 )
 
             # If token is expired
-            except jwt.exceptions.ExpiredSignatureError:
-                raise BadRequest("Invalid reset token: this request is expired")
+            except jwt.exceptions.ExpiredSignatureError as e:
+                raise BadRequest("Invalid reset token: this request is expired") from e
 
             # if token is not active yet
             except jwt.exceptions.ImmatureSignatureError as e:
                 log.info(e)
-                raise BadRequest("Invalid reset token")
+                raise BadRequest("Invalid reset token") from e
             # if token does not exist (or other generic errors)
             except Exception as e:
                 log.info(e)
-                raise BadRequest("Invalid reset token")
+                raise BadRequest("Invalid reset token") from e
 
             if user is None:  # pragma: no cover
                 raise BadRequest("Invalid activation token")

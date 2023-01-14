@@ -65,8 +65,8 @@ class Profile(EndpointResource):
 
         try:
             self.auth.make_login(user.email, password, totp_code)
-        except AuthMissingTOTP:
-            raise Unauthorized("Verification code is missing")
+        except AuthMissingTOTP as e:
+            raise Unauthorized("Verification code is missing") from e
 
         self.auth.change_password(user, password, new_password, password_confirm)
 

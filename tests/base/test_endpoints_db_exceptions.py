@@ -51,7 +51,7 @@ class TestApp(BaseTests):
         r = client.post(f"{API_URI}/tests/database/{random_name}")
         assert r.status_code == 409
         # This is the message of a DatabaseDuplicatedEntry
-        self.get_content(r) == "A Group already exists with 'shortname': '400'"
+        assert self.get_content(r) == "A Group already exists with 'shortname': '400'"
         # The default group will not change again because the
         # database_transaction decorator will undo the change
         default_group = auth.get_group(name=DEFAULT_GROUP_NAME)

@@ -26,7 +26,7 @@ if TESTING:
                 size_int = int(size)
             except Exception as e:
                 log.error("Invalid int value {} -> {}", size, e)
-                raise BadRequest("Invalid numeric value {size}")
+                raise BadRequest("Invalid numeric value {size}") from e
 
             if size_int <= 0:
                 raise RestApiException("Invalid size", status_code=416)

@@ -140,7 +140,7 @@ class Connector(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def is_connected(instance: T) -> bool:  # pragma: no cover
+    def is_connected(self) -> bool:  # pragma: no cover
         return True
 
     def destroy(self) -> None:  # pragma: no cover
@@ -428,7 +428,7 @@ class Connector(metaclass=abc.ABCMeta):
             obj = obj.connect(**kwargs)
         except exceptions as e:
             log.error("{} raised {}: {}", obj.name, e.__class__.__name__, e)
-            raise ServiceUnavailable(f"Service {self.name} is not available")
+            raise ServiceUnavailable(f"Service {self.name} is not available") from e
 
         obj.connection_time = datetime.now()
 

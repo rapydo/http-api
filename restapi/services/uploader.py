@@ -96,7 +96,9 @@ class Uploader:
             log.debug("Absolute file path should be '{}'", abs_file)
         except Exception as e:  # pragma: no cover
             log.error(e)
-            raise ServiceUnavailable("Permission denied: failed to write the file")
+            raise ServiceUnavailable(
+                "Permission denied: failed to write the file"
+            ) from e
 
         # Check exists - but it is basicaly a test that cannot fail...
         # The has just been uploaded!
@@ -240,8 +242,10 @@ class Uploader:
                         break
                     f.seek(start)
                     f.write(chunk)
-        except PermissionError:
-            raise ServiceUnavailable("Permission denied: failed to write the file")
+        except PermissionError as e:
+            raise ServiceUnavailable(
+                "Permission denied: failed to write the file"
+            ) from e
 
         if completed:
             file_path.chmod(DEFAULT_PERMISSIONS)
