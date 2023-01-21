@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta, tzinfo
-from typing import List, Literal, Optional
+from datetime import datetime, timedelta
+from typing import List, Literal
 
 import pytz
 
@@ -10,16 +10,6 @@ EPOCH: datetime = datetime.fromtimestamp(0, pytz.utc)
 AllowedTimedeltaPeriods = Literal[
     "days", "seconds", "microseconds", "milliseconds", "minutes", "hours", "weeks"
 ]
-
-
-def get_now(tz: Optional[tzinfo]) -> datetime:
-
-    if tz is None:
-        # Create a offset-naive datetime
-        return datetime.now()
-
-    # Create a offset-aware datetime
-    return datetime.now(pytz.utc)
 
 
 def date_lower_than(a: datetime, b: datetime) -> bool:

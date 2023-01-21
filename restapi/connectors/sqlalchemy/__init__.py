@@ -51,7 +51,6 @@ from restapi.services.authentication import (
     User,
 )
 from restapi.utilities.logs import Events, log
-from restapi.utilities.time import get_now
 from restapi.utilities.uuid import getUUID
 
 # used as a base to define Models
@@ -483,7 +482,7 @@ class Authentication(BaseAuthentication):
         if token_entry.user_id is None or token_entry.user_id != user.id:
             return False
 
-        now = get_now(token_entry.expiration.tzinfo)
+        now = datetime.now(pytz.utc)
 
         if now > token_entry.expiration:
             self.invalidate_token(token=token_entry.token)

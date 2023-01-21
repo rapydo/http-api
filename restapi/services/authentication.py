@@ -53,7 +53,7 @@ from restapi.types import Props
 from restapi.utilities import print_and_exit
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import Events, log, save_event_log
-from restapi.utilities.time import EPOCH, get_now
+from restapi.utilities.time import EPOCH
 from restapi.utilities.uuid import getUUID
 
 # Trick to avoid circular dependencies
@@ -718,7 +718,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         last_failed = failed_logins[-1]
         exp = last_failed.date + self.FAILED_LOGINS_EXPIRATION
 
-        if get_now(exp.tzinfo) > exp:
+        if datetime.now(pytz.utc) > exp:
             self.flush_failed_logins(username)
             return 0
 
@@ -884,7 +884,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
         elif self.MAX_PASSWORD_VALIDITY:
             valid_until = last_pwd_change + self.MAX_PASSWORD_VALIDITY
-            now = get_now(last_pwd_change.tzinfo)
+            now = datetime.now(pytz.utc)
             expired = last_pwd_change == EPOCH or valid_until < now
 
             if expired:
@@ -939,7 +939,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             if TESTING and user.email == cls.default_user:
                 log.info("Default user can't be blocked for inactivity during tests")
             else:
-                now = get_now(user.last_login.tzinfo)
+                now = datetime.now(pytz.utc)
                 if user.last_login + cls.DISABLE_UNUSED_CREDENTIALS_AFTER < now:
                     cls.log_event(
                         Events.refused_login,
@@ -954,7 +954,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             # Reuse the now instance, if previously inizialized
             # tzinfo should be the same for both last_login and expiration fields
             if not now:
-                now = get_now(user.expiration.tzinfo)
+                now = datetime.now(pytz.utc)
 
             if user.expiration < now:
                 cls.log_event(
