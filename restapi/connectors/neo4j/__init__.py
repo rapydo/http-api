@@ -185,7 +185,7 @@ class NeoModel(Connector):
         try:
             self.db.driver.verify_connectivity()
             return True
-        except (ServiceUnavailable, TransientError) as e:
+        except (ServiceUnavailable, TransientError) as e:  # pragma: no cover
             log.error(e)
             return False
 

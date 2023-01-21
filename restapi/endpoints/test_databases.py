@@ -40,10 +40,6 @@ if TESTING:
                 self.auth.save_group(group)  # pragma: no cover
                 return self.response("0")  # pragma: no cover
 
-            # This was just to limit schemathesis to create troubles :-)
-            if not re.match(r"^[A-Za-z]+$", data):
-                raise BadRequest(f"Invalid input name {data}")
-
             # Only DatabaseDuplicatedEntry will be raised by this endpoint
             # Any other exceptions will be suppressed. This will ensure that
             # DatabaseDuplicatedEntry is raised and no others.

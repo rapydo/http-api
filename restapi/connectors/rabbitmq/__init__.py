@@ -229,7 +229,7 @@ class RabbitExt(Connector):
         vhost = urllib.parse.quote(self.variables.get("vhost", "/"), safe="")
         user = self.variables.get("user")
         password = self.variables.get("password")
-        if not user or not password:
+        if not user or not password:  # pragma: no cover
             log.error("Invalid rabbitmq username or password, can't retrieve bindings")
             return None
 

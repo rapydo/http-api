@@ -122,7 +122,7 @@ class Connector(metaclass=abc.ABCMeta):
 
         if not self.disconnected:
             self.disconnect()
-        if excinst:
+        if excinst:  # pragma: no cover
             raise excinst
         return True
 

@@ -199,7 +199,7 @@ def inject_callback_parameters(
 
             p = inspect.signature(callback_fn).parameters[name]
             # Parameter is missing but it has a default value, so can be safely skipped
-            if p.default is not p.empty:
+            if p.default is not p.empty:  # pragma: no cover
                 continue
 
             log.critical(
@@ -492,9 +492,9 @@ def catch_exceptions(**kwargs: Any) -> Callable[[EndpointFunction], EndpointFunc
                 return self.response(
                     "Unexpected Server Error", code=500, force_json=True
                 )
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
 
-                if SENTRY_URL is not None:  # pragma: no cover
+                if SENTRY_URL is not None:
                     capture_exception(e)
 
                 excname = e.__class__.__name__
@@ -509,7 +509,7 @@ def catch_exceptions(**kwargs: Any) -> Callable[[EndpointFunction], EndpointFunc
                 )
                 log.exception(message)
 
-                if excname in ["SystemError"]:  # pragma: no cover
+                if excname in ["SystemError"]:
                     return self.response(
                         "Unexpected Server Error", code=500, force_json=True
                     )

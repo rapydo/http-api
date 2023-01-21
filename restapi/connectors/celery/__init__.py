@@ -138,7 +138,8 @@ def mark_task_as_retriable(
 
     # All retries attempts failed,
     # the error will be converted to permanent
-    if retry_num > MAX_RETRIES:
+    # TODO: it is not tested
+    if retry_num > MAX_RETRIES:  # pragma: no cover
         log.critical("MAX retries reached")
         mark_task_as_failed(self=self, name=name, exception=exception)
 

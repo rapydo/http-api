@@ -256,6 +256,7 @@ class TestApp(BaseTests):
     def test_conf_utilities(self, faker: Faker) -> None:
 
         assert get_host_type("backend-server") == "backend-server"
+        assert get_host_type("docs-generation") == "docs-generation"
         assert get_host_type("celery") == "celery"
         assert get_host_type("celery-beat") == "celery-beat"
         assert get_host_type("flower") == "flower"

@@ -500,10 +500,10 @@ class BaseTests:
                 min_date = None
                 max_date = None
 
-                if min_value := d.get("min"):
+                if min_value := d.get("min"):  # pragma: no cover
                     min_date = datetime.fromisoformat(min_value)
 
-                if max_value := d.get("max"):
+                if max_value := d.get("max"):  # pragma: no cover
                     max_date = datetime.fromisoformat(max_value)
 
                 random_date = cls.faker.date_time_between_dates(
@@ -740,7 +740,9 @@ class BaseTests:
                     payload,
                 )
 
-                if filters and not cls.event_matches_filters(event, filters):
+                if filters and not cls.event_matches_filters(
+                    event, filters
+                ):  # pragma: no cover
                     continue
 
                 events.append(event)

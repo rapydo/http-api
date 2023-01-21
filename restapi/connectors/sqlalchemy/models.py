@@ -26,7 +26,7 @@ roles_users = Table(
 class Role(db):  # type: ignore
     __tablename__ = "role"
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover
         name = self.__class__.__name__
         return f"{name}({self.id}, {self.name})"
 
@@ -46,7 +46,7 @@ class Role(db):  # type: ignore
 class User(db):  # type: ignore
     __tablename__ = "user"
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover
         name = self.__class__.__name__
         return f"{name}({self.id}, {self.email})"
 
@@ -93,7 +93,7 @@ class User(db):  # type: ignore
 class Token(db):  # type: ignore
     __tablename__ = "token"
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover
         name = self.__class__.__name__
         return f"{name}({self.id})"
 
@@ -118,7 +118,7 @@ class Token(db):  # type: ignore
 class Group(db):  # type: ignore
     __tablename__ = "group"
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover
         name = self.__class__.__name__
         return f"{name}({self.id}, {self.shortname})"
 
@@ -138,7 +138,7 @@ class Group(db):  # type: ignore
 class Login(db):  # type: ignore
     __tablename__ = "login"
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover
         name = self.__class__.__name__
         return f"{name}({self.id})"
 

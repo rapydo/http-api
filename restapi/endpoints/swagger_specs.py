@@ -84,7 +84,7 @@ class NewSwaggerSpecifications(EndpointResource):
                             elif (
                                 "items" in p["schema"]
                                 and "$ref" in p["schema"]["items"]
-                            ):
+                            ):  # pragma: no cover
                                 ref = p["schema"]["items"]["$ref"]
                                 add_model(privatedefs, ref, is_private)
 

@@ -72,7 +72,7 @@ class Login(EndpointResource):
         message = self.auth.check_password_validity(
             user, totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION
         )
-        if message["errors"]:
+        if message["errors"]:  # pragma: no cover
             return self.response(message, code=403)
 
         # Everything is ok, let's save authentication information

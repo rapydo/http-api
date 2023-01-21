@@ -92,8 +92,6 @@ if TESTING and Connector.check_availability("neo4j"):
                     n.save()
                     data["modified2"] = n.modified
                     return self.response(data)
-                else:
-                    log.info("No Test")
             except Exception as e:
                 raise BadRequest(str(e)) from e
             return self.response({"val": 1})

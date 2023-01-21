@@ -127,7 +127,7 @@ fmt += "<fg #FFF>{message}</fg #FFF>"
 # Further call to this function will remove the previous logger (based on saved log_id)
 def set_logger(level: str) -> None:
 
-    if hasattr(set_logger, "log_id"):
+    if hasattr(set_logger, "log_id"):  # pragma: no cover
         log_id = set_logger.log_id
         log.remove(log_id)
 

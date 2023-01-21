@@ -1,8 +1,7 @@
 from restapi import decorators
 from restapi.config import TESTING
-from restapi.exceptions import BadRequest, RestApiException
+from restapi.exceptions import RestApiException
 from restapi.rest.definition import EndpointResource, Response
-from restapi.utilities.logs import log
 
 if TESTING:
 
@@ -21,12 +20,7 @@ if TESTING:
         )
         def get(self, size: str) -> Response:
 
-            size_int = 0
-            try:
-                size_int = int(size)
-            except Exception as e:
-                log.error("Invalid int value {} -> {}", size, e)
-                raise BadRequest("Invalid numeric value {size}") from e
+            size_int = int(size)
 
             if size_int <= 0:
                 raise RestApiException("Invalid size", status_code=416)
