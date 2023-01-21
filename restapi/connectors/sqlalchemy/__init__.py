@@ -90,18 +90,6 @@ def parse_missing_error(excpt: List[str]) -> Optional[str]:
 
         return f"Missing property {prop} required by {table.title()}"
 
-    if m0 := re.search(r".*Column '(.*)' cannot be null.*", excpt[0]):
-
-        prop = m0.group(1)
-
-        # table name can be "tablename" or "`tablename`"
-        # => match all non-space and non-backticks characters optioanlly wrapped among `
-        m = re.search(r".*INSERT INTO `?([^\s`]+)`? \(.*", excpt[1])
-
-        if m:
-            table = m.group(1)
-            return f"Missing property {prop} required by {table.title()}"
-
     return None  # pragma: no cover
 
 
