@@ -1,7 +1,8 @@
 import os
 import tempfile
 import time
-from datetime import timedelta
+from datetime import date, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -32,7 +33,7 @@ from restapi.exceptions import (
 )
 from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource
-from restapi.rest.response import ResponseMaker
+from restapi.rest.response import ResponseMaker, jsonifier
 from restapi.services.uploader import Uploader
 from restapi.tests import BaseTests
 from restapi.utilities.configuration import load_yaml_file, mix
@@ -192,6 +193,19 @@ class TestApp(BaseTests):
         assert response[1] == 204  # type: ignore
         response = EndpointResource.response(None, code=200, head_method=True)
         assert response[1] == 200  # type: ignore
+
+    def test_jsonifier(self) -> None:
+        assert jsonifier("x") == '"x"'
+        assert jsonifier("1") == '"1"'
+        assert jsonifier(1) == "1"
+        assert jsonifier(1.2) == "1.2"
+        assert jsonifier(Decimal("1.2")) == "1.2"
+        assert jsonifier(["x"]) == '["x"]'
+        assert jsonifier({"x"}) == '["x"]'
+        assert jsonifier(("x",)) == '["x"]'
+        assert jsonifier(Path("test")) == '"test"'
+        assert jsonifier(date(2023, 1, 21)) == '"2023-01-21"'
+        assert jsonifier(datetime(2023, 1, 21, 11, 34, 21)) == '"2023-01-21T11:34:21"'
 
     # #######################################
     # ####      Meta
