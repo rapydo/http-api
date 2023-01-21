@@ -1,10 +1,9 @@
 from typing import Any, Dict, List, Optional
 
-from glom import glom
-
 from restapi import decorators
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import User
+from restapi.utilities.configuration import extract
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
@@ -41,7 +40,7 @@ class NewSwaggerSpecifications(EndpointResource):
                         u = uri.replace("{", "<").replace("}", ">")
                         for method, definition in endpoint.items():
 
-                            auth_required = glom(
+                            auth_required = extract(
                                 mem.authenticated_endpoints,
                                 f"{u}.{method}",
                                 default=False,
@@ -67,7 +66,7 @@ class NewSwaggerSpecifications(EndpointResource):
                     u = uri.replace("{", "<").replace("}", ">")
                     for method, definition in endpoint.items():
 
-                        is_private = glom(
+                        is_private = extract(
                             mem.private_endpoints,
                             f"{u}.{method}",
                             default=False,
@@ -105,7 +104,7 @@ class NewSwaggerSpecifications(EndpointResource):
                             log.debug("Skipping {} {}", method, uri)
                             continue
 
-                        auth_required = glom(
+                        auth_required = extract(
                             mem.authenticated_endpoints,
                             f"{u}.{method}",
                             default=False,

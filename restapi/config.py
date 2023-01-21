@@ -4,9 +4,8 @@ Configuration variables set for the server instance
 from functools import lru_cache
 from pathlib import Path
 
-from glom import glom
-
 from restapi.env import Env
+from restapi.utilities.configuration import extract
 from restapi.utilities.globals import mem
 
 # ENDPOINTS bases
@@ -84,7 +83,7 @@ GZIP_LEVEL = max(1, min(9, Env.get_int("GZIP_COMPRESSION_LEVEL")))
 
 @lru_cache
 def get_project_configuration(key: str, default: str) -> str:
-    return glom(mem.configuration, key, default=default)
+    return extract(mem.configuration, key, default=default)
 
 
 @lru_cache

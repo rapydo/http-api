@@ -24,7 +24,6 @@ import segno
 from cryptography.fernet import Fernet
 from cryptography.fernet import InvalidToken as InvalidFernetToken
 from flask import request
-from glom import glom
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 from passlib.context import CryptContext
 
@@ -51,6 +50,7 @@ from restapi.exceptions import (
 )
 from restapi.types import Props
 from restapi.utilities import print_and_exit
+from restapi.utilities.configuration import extract
 from restapi.utilities.globals import mem
 from restapi.utilities.logs import Events, log, save_event_log
 from restapi.utilities.time import EPOCH, get_now
@@ -269,7 +269,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     def load_roles() -> None:
 
         empty_dict: Dict[str, str] = {}
-        BaseAuthentication.roles_data = glom(
+        BaseAuthentication.roles_data = extract(
             mem.configuration, "variables.roles", default=empty_dict
         ).copy()
         if not BaseAuthentication.roles_data:  # pragma: no cover
@@ -279,7 +279,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             "default", ""
         )
 
-        BaseAuthentication.role_descriptions = glom(
+        BaseAuthentication.role_descriptions = extract(
             mem.configuration, "variables.roles_descriptions", default=empty_dict
         ).copy()
 
