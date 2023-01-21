@@ -63,7 +63,7 @@ class Uploader:
     def upload(self, subfolder: Path, force: bool = False) -> Response:
 
         if "file" not in request.files:
-            raise BadRequest("No files specified")
+            raise BadRequest("No files specified")  # pragma: no cover
 
         myfile = request.files["file"]
 

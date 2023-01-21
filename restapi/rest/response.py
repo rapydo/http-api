@@ -33,13 +33,13 @@ def jsonifier(content: Any) -> str:
     def default(obj: Any) -> Any:
         if isinstance(obj, set):
             return list(obj)
-        if isinstance(obj, (datetime, date)):
+        if isinstance(obj, (datetime, date)):  # pragma: no cover
             return obj.isoformat()
         if isinstance(obj, Decimal):
             return float(obj)
         if isinstance(obj, Path):
             return str(obj)
-        raise TypeError
+        raise TypeError  # pragma: no cover
 
     return orjson.dumps(
         content, default=default, option=orjson.OPT_NON_STR_KEYS

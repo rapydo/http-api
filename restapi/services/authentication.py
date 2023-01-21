@@ -171,7 +171,7 @@ def get_login_ban_time(val: int) -> int:
         # max 10 seconds, otherwise tests will hang
         return min(val, LOGIN_BAN_TIME_MAX_TESTING_VALUE)
 
-    return val
+    return val  # pragma: no cover
 
 
 # ##############################################################################
