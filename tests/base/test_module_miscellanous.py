@@ -617,6 +617,12 @@ class TestApp(BaseTests):
         ):
             Uploader.validate_upload_folder(Path("/uploads/AA\x00BB"))
 
+        with pytest.raises(Forbidden, match=r"Invalid file path"):
+            Uploader.validate_upload_folder(Path("/etc/"))
+
+        with pytest.raises(Forbidden, match=r"Invalid file path"):
+            Uploader.validate_upload_folder(Path("../../tmp/"))
+
     # #######################################
     # ####      Time
     #########################################
