@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, MutableMapping, Optional, Tuple, TypeVar, cast
+from typing import Any, Dict, Optional, Tuple, cast
 
 import yaml
 
@@ -11,7 +11,6 @@ PROJECT_CONF_FILENAME = Path("project_configuration.yaml")
 
 
 ConfigurationType = Dict[str, Any]
-T = TypeVar("T")
 
 
 def read_configuration(
@@ -112,23 +111,3 @@ def load_yaml_file(filepath: Path) -> ConfigurationType:
             # error, _ = codecs.getdecoder("unicode_escape")(str(error))
 
             raise AttributeError(f"Failed to read file {filepath}: {e}") from e
-
-
-def extract(
-    target: MutableMapping[str, Any],
-    spec: str,
-    default: T,
-    **kwargs: Any,
-) -> T:
-
-    sub_target: Any = target
-    try:
-        for key in spec.split("."):
-            if key not in sub_target:
-                return default
-            sub_target = sub_target.get(key)
-
-        return cast(T, sub_target)
-    # can happen when passing a non iterable target (or subtarget)
-    except TypeError:
-        return default

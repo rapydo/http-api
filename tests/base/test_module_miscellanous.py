@@ -35,7 +35,7 @@ from restapi.rest.definition import EndpointResource
 from restapi.rest.response import ResponseMaker
 from restapi.services.uploader import Uploader
 from restapi.tests import BaseTests
-from restapi.utilities.configuration import extract, load_yaml_file, mix
+from restapi.utilities.configuration import load_yaml_file, mix
 from restapi.utilities.logs import handle_log_output, obfuscate_dict
 from restapi.utilities.meta import Meta
 from restapi.utilities.processes import (
@@ -1130,26 +1130,3 @@ class TestApp(BaseTests):
         start_timeout(15)
         with pytest.raises(ServiceUnavailable):
             wait_socket("invalid", 123, service_name="test", retries=2)
-
-
-def test_extract() -> None:
-
-    assert extract({}, "x", default="test") == "test"
-    assert extract({}, "x", default=1) == 1
-    assert extract({"my": "test"}, "my", default="wrong") == "test"
-    assert extract({"my": "test"}, "your", default="wrong") == "wrong"
-    assert extract({"my": {"test": "1"}}, "my", default={}) == {"test": "1"}
-    assert extract({"my": {"test": "1"}}, "your", default={}) == {}
-    assert extract({"my": {"test": "1"}}, "my.test", default="2") == "1"
-    assert extract({"my": {"test": "1"}}, "your.test", default="2") == "2"
-    assert extract({"my": {"test": "1"}}, "my.wrong", default="2") == "2"
-    assert extract({"my": {"test": "1"}}, "wrong", default="2") == "2"
-    assert extract({"my": {"test": "1"}}, "", default="2") == "2"
-    assert extract({"my": {"test": "1"}}, "my.test.anotherlevel", default="2") == "2"
-    assert extract({"my": {"test": 1}}, "my.test.anotherlevel", default=2) == 2
-
-    # verify no function side effects
-    data = {"my": {"test": "1"}}
-
-    assert extract(data, "my.test", default="2") == "1"
-    assert data == {"my": {"test": "1"}}

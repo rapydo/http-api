@@ -24,6 +24,7 @@ pyotp==2.8.0
 segno==1.5.2
 PyYAML==6.0
 loguru==0.6.0
+glom==22.1.0
 requests==2.28.2
 psutil==5.9.4
 plumbum==1.8.1

@@ -1,11 +1,12 @@
 from typing import Any, Dict
 
+from glom import glom
+
 from restapi import decorators
 from restapi.endpoints.schemas import TokenAdminSchema, TotalSchema
 from restapi.exceptions import BadRequest, NotFound
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Role, Token, User
-from restapi.utilities.configuration import extract
 from restapi.utilities.logs import log
 
 
@@ -75,7 +76,7 @@ class AdminTokens(EndpointResource):
         if sort_by:
 
             def sorter(t: Token) -> str:
-                return extract(t, sort_by, default="")  # type: ignore
+                return glom(t, sort_by, default="")  # type: ignore
 
             tokens = sorted(
                 tokens,
