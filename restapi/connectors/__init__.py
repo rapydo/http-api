@@ -477,7 +477,7 @@ class Connector(metaclass=abc.ABCMeta):
             # this should be the default value for this connector
             expiration = Env.to_int(self.variables.get("expiration_time"))
 
-        # This is a connection at loading timedo not save it
+        # This is a connection at loading time, do not save it
         if not mem.boot_completed:
             log.debug("First connection for {}", self.name)
             # can raise ServiceUnavailable exception

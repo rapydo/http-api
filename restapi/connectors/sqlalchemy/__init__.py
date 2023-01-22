@@ -180,7 +180,6 @@ class SQLAlchemy(Connector):
         )  # type: ignore
 
     def connect(self, **kwargs: str) -> "SQLAlchemy":
-
         variables = self.variables.copy()
         variables.update(kwargs)
 
@@ -260,7 +259,6 @@ class SQLAlchemy(Connector):
 
     @staticmethod
     def update_properties(instance: Any, properties: Dict[str, Any]) -> None:
-
         for field, value in properties.items():
             set_attribute(instance, field, value)  # type: ignore
 
@@ -275,7 +273,6 @@ class Authentication(BaseAuthentication):
 
     # Also used by POST user
     def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
-
         userdata.setdefault("authmethod", "credentials")
         userdata.setdefault("uuid", getUUID())
 
@@ -290,11 +287,10 @@ class Authentication(BaseAuthentication):
         self.custom_user_properties_post(user, userdata, extra_userdata, self.db)
 
         self.db.session.add(user)
-
+        # why commit is not needed here!?
         return user
 
     def link_roles(self, user: User, roles: List[str]) -> None:
-
         if not roles:
             roles = [BaseAuthentication.default_role]
 
@@ -306,9 +302,9 @@ class Authentication(BaseAuthentication):
             ).scalar()
 
             user.roles.append(sqlrole)
+        # why commit is not needed here!?
 
     def create_group(self, groupdata: Dict[str, Any]) -> Group:
-
         groupdata.setdefault("uuid", getUUID())
 
         group = self.db.Group(**groupdata)
@@ -319,7 +315,6 @@ class Authentication(BaseAuthentication):
         return group
 
     def add_user_to_group(self, user: User, group: Group) -> None:
-
         if user and group:
             user.belongs_to = group
 
@@ -332,14 +327,18 @@ class Authentication(BaseAuthentication):
         try:
 
             if username:
-                return self.db.session.execute(
+                users = self.db.session.execute(
                     select(self.db.User).where(self.db.User.email == username)
                 ).scalar()
+                self.db.session.commit()
+                return users
 
             if user_id:
-                return self.db.session.execute(
+                users = self.db.session.execute(
                     select(self.db.User).where(self.db.User.uuid == user_id)
                 ).scalar()
+                self.db.session.commit()
+                return users
 
         except (StatementError, InvalidRequestError) as e:
             log.error(e)
@@ -354,7 +353,9 @@ class Authentication(BaseAuthentication):
         return None
 
     def get_users(self) -> List[User]:
-        return list(self.db.session.execute(select(self.db.User)).scalars())
+        users = list(self.db.session.execute(select(self.db.User)).scalars())
+        self.db.session.commit()
+        return users
 
     def save_user(self, user: User) -> bool:
         if not user:
@@ -377,25 +378,35 @@ class Authentication(BaseAuthentication):
         self, group_id: Optional[str] = None, name: Optional[str] = None
     ) -> Optional[Group]:
         if group_id:
-            return self.db.session.execute(
+            group = self.db.session.execute(
                 select(self.db.Group).where(self.db.Group.uuid == group_id)
             ).scalar()
+            self.db.session.commit()
+            return group
 
         if name:
-            return self.db.session.execute(
+            group = self.db.session.execute(
                 select(self.db.Group).where(self.db.Group.shortname == name)
             ).scalar()
+            self.db.session.commit()
+            return group
 
         return None
 
     def get_groups(self) -> List[Group]:
-        return list(self.db.session.execute(select(self.db.Group)).scalars())
+        groups = list(self.db.session.execute(select(self.db.Group)).scalars())
+        self.db.session.commit()
+        return groups
 
     def get_user_group(self, user: User) -> Group:
-        return user.belongs_to
+        group = user.belongs_to
+        self.db.session.commit()
+        return group
 
     def get_group_members(self, group: Group) -> List[User]:
-        return list(group.members)
+        members = list(group.members)
+        self.db.session.commit()
+        return members
 
     def save_group(self, group: Group) -> bool:
         if not group:
@@ -417,14 +428,18 @@ class Authentication(BaseAuthentication):
     def get_roles(self) -> List[RoleObj]:
         if not inspect(self.db.engine).has_table("role"):  # pragma: no cover
             return []
-        return list(self.db.session.execute(select(self.db.Role)).scalars())
+        roles = list(self.db.session.execute(select(self.db.Role)).scalars())
+        self.db.session.commit()
+        return roles
 
     def get_roles_from_user(self, user: Optional[User]) -> List[str]:
         # No user for non authenticated endpoints -> return no role
         if user is None:
             return []
 
-        return [role.name for role in user.roles]
+        roles = [role.name for role in user.roles]
+        self.db.session.commit()
+        return roles
 
     def create_role(self, name: str, description: str) -> None:
         role = self.db.Role(name=name, description=description)
@@ -476,6 +491,7 @@ class Authentication(BaseAuthentication):
         token_entry = self.db.session.execute(
             select(self.db.Token).where(self.db.Token.jti == jti)
         ).scalar()
+        self.db.session.commit()
 
         if token_entry is None:
             return False
@@ -555,12 +571,14 @@ class Authentication(BaseAuthentication):
                     t["user"] = token.emitted_for
                 tokens_list.append(t)
 
+        self.db.session.commit()
         return tokens_list
 
     def invalidate_token(self, token: str) -> bool:
         token_entry = self.db.session.execute(
             select(self.db.Token).where(self.db.Token.token == token)
         ).scalar()
+        self.db.session.commit()
         if token_entry:
             try:
                 # Call to untyped function "delete" in typed context
@@ -577,7 +595,6 @@ class Authentication(BaseAuthentication):
         return False
 
     def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
-
         date = datetime.now(pytz.utc)
         ip_address = self.get_remote_ip()
 
@@ -613,7 +630,9 @@ class Authentication(BaseAuthentication):
             logins = logins.where(self.db.Login.username == username)
             if only_unflushed:
                 logins = logins.where(self.db.Login.flushed == False)  # noqa
-        return list(self.db.session.execute(logins).scalars())
+        logins_list = list(self.db.session.execute(logins).scalars())
+        self.db.session.commit()
+        return logins_list
 
     def flush_failed_logins(self, username: str) -> None:
         for login in self.db.session.execute(
