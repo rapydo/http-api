@@ -3,4 +3,4 @@ pytest-flask==1.2.0
 pytest-cov==4.0.0
 pytest-timeout==2.1.0
 pytest-sugar==0.9.6
-Faker==16.6.0
+Faker==16.6.1
