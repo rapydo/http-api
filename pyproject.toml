@@ -33,6 +33,7 @@ dependencies = [
   "marshmallow==3.15.0",
   "webargs==8.1.0",
   "apispec==5.2.0",
+  "SQLAlchemy==1.4.46",
   "neomodel==4.0.8",
   "psycopg2-binary",
   "PyMySQL",
