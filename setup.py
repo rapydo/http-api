@@ -47,6 +47,7 @@ setup(
         "webargs==8.0.1",
         "apispec==5.1.1",
         # DB and services drivers
+        "SQLAlchemy==1.4.46",
         "neomodel==4.0.8",
         "psycopg2-binary",
         "pymodm",
