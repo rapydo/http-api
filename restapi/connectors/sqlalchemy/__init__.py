@@ -201,7 +201,6 @@ class SQLAlchemy(Connector):
         poolsize = Env.to_int(variables.get("poolsize"), 30)
         self.engine = create_engine(
             uri,
-            encoding="utf8",
             pool_size=poolsize,
             max_overflow=poolsize + 10,
             future=True,
