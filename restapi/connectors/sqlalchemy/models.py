@@ -1,4 +1,7 @@
 """ Models for the relational database """
+from datetime import datetime
+from typing import Optional
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -9,7 +12,7 @@ from sqlalchemy import (
     Table,
     Text,
 )
-from sqlalchemy.orm import DeclarativeBase, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
@@ -32,11 +35,11 @@ class Role(Base):
         name = self.__class__.__name__
         return f"{name}({self.id}, {self.name})"
 
-    id = mapped_column(Integer, primary_key=True)
-    name = mapped_column(String(80), unique=True, nullable=False)
-    description = mapped_column(String(255), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    users = relationship(
+    users: Mapped["User"] = relationship(
         "User",
         secondary=roles_users,
         back_populates="roles",
@@ -51,39 +54,41 @@ class User(Base):
         name = self.__class__.__name__
         return f"{name}({self.id}, {self.email})"
 
-    id = mapped_column(Integer, primary_key=True)
-    uuid = mapped_column(String(36), unique=True, nullable=False)
-    email = mapped_column(String(100), unique=True, nullable=False)
-    name = mapped_column(String(255, collation=None), nullable=False)
-    surname = mapped_column(String(255, collation=None), nullable=False)
-    authmethod = mapped_column(String(20), nullable=False)
-    password = mapped_column(String(255), nullable=False)
-    mfa_hash = mapped_column(String(255))
-    first_login = mapped_column(DateTime(timezone=True))
-    last_login = mapped_column(DateTime(timezone=True))
-    last_password_change = mapped_column(DateTime(timezone=True))
-    is_active = mapped_column(Boolean, default=True)
-    privacy_accepted = mapped_column(Boolean, default=True)
-    expiration = mapped_column(DateTime(timezone=True))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    uuid: Mapped[str] = mapped_column(String(36), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(255, collation=None), nullable=False)
+    surname: Mapped[str] = mapped_column(String(255, collation=None), nullable=False)
+    authmethod: Mapped[str] = mapped_column(String(20), nullable=False)
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
+    mfa_hash: Mapped[Optional[str]] = mapped_column(String(255))
+    first_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    last_password_change: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True)
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    privacy_accepted: Mapped[bool] = mapped_column(Boolean, default=True)
+    expiration: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
-    roles = relationship(
+    roles: Mapped["Role"] = relationship(
         "Role",
         secondary=roles_users,
         back_populates="users",
     )
-    group_id = mapped_column(Integer, ForeignKey("group.id"))
-    belongs_to = relationship(
+    group_id: Mapped[int] = mapped_column(Integer, ForeignKey("group.id"))
+    belongs_to: Mapped["Group"] = relationship(
         "Group",
         back_populates="members",
         cascade_backrefs=False,
         foreign_keys=[group_id],
     )
-    tokens = relationship(
+    tokens: Mapped["Token"] = relationship(
         "Token",
         back_populates="emitted_for",
         cascade_backrefs=False,
     )
-    logins = relationship(
+    logins: Mapped["Login"] = relationship(
         "Login",
         back_populates="user",
         cascade_backrefs=False,
@@ -97,17 +102,17 @@ class Token(Base):
         name = self.__class__.__name__
         return f"{name}({self.id})"
 
-    id = mapped_column(Integer, primary_key=True)
-    jti = mapped_column(String(36), unique=True, nullable=False)
-    token = mapped_column(Text, nullable=False)
-    token_type = mapped_column(String(1), nullable=False)
-    creation = mapped_column(DateTime(timezone=True), nullable=False)
-    expiration = mapped_column(DateTime(timezone=True))
-    last_access = mapped_column(DateTime(timezone=True))
-    IP = mapped_column(String(46))
-    location = mapped_column(String(256))
-    user_id = mapped_column(Integer, ForeignKey("user.id"))
-    emitted_for = relationship(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    jti: Mapped[str] = mapped_column(String(36), unique=True, nullable=False)
+    token: Mapped[str] = mapped_column(Text, nullable=False)
+    token_type: Mapped[str] = mapped_column(String(1), nullable=False)
+    creation: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expiration: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    last_access: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    IP: Mapped[Optional[str]] = mapped_column(String(46))
+    location: Mapped[Optional[str]] = mapped_column(String(256))
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"))
+    emitted_for: Mapped["User"] = relationship(
         "User",
         back_populates="tokens",
         cascade_backrefs=False,
@@ -121,12 +126,12 @@ class Group(Base):
         name = self.__class__.__name__
         return f"{name}({self.id}, {self.shortname})"
 
-    id = mapped_column(Integer, primary_key=True)
-    uuid = mapped_column(String(36), unique=True, nullable=False)
-    shortname = mapped_column(String(64), unique=True, nullable=False)
-    fullname = mapped_column(String(256), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    uuid: Mapped[str] = mapped_column(String(36), unique=True, nullable=False)
+    shortname: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    fullname: Mapped[str] = mapped_column(String(256), nullable=False)
 
-    members = relationship(
+    members: Mapped["User"] = relationship(
         "User",
         back_populates="belongs_to",
         cascade_backrefs=False,
@@ -140,17 +145,16 @@ class Login(Base):
         name = self.__class__.__name__
         return f"{name}({self.id})"
 
-    id = mapped_column(Integer, primary_key=True)
-    date = mapped_column(DateTime(timezone=True), nullable=False)
-    # same length of User.email
-    username = mapped_column(String(100))
-    IP = mapped_column(String(46))
-    location = mapped_column(String(256))
-    user_id = mapped_column(Integer, ForeignKey("user.id"), nullable=True)
-    user = relationship(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    username: Mapped[Optional[str]] = mapped_column(String(100))
+    IP: Mapped[Optional[str]] = mapped_column(String(46))
+    location: Mapped[Optional[str]] = mapped_column(String(256))
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=True)
+    user: Mapped["User"] = relationship(
         "User",
         back_populates="logins",
         cascade_backrefs=False,
     )
-    failed = mapped_column(Boolean, default=False)
-    flushed = mapped_column(Boolean, default=False)
+    failed: Mapped[bool] = mapped_column(Boolean, default=False)
+    flushed: Mapped[bool] = mapped_column(Boolean, default=False)
