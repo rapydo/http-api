@@ -4,7 +4,6 @@ lxml==4.9.2
 html5lib==1.1
 celery-types==0.14.0
 pika-stubs==0.1.3
-sqlalchemy-stubs==0.4
 types-certifi==2021.10.8.3
 types-click==7.1.8
 types-orjson==3.6.2
