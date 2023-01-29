@@ -11,7 +11,6 @@ from restapi.utilities.faker import get_faker
 
 
 def initialize_testing_environment(auth: BaseAuthentication) -> None:
-
     assert TESTING
 
     faker = get_faker()
@@ -28,8 +27,8 @@ def initialize_testing_environment(auth: BaseAuthentication) -> None:
         },
         # It will be expanded with the default role
         roles=[],
+        group=default_group,
     )
-    auth.add_user_to_group(user, default_group)
     # This is required to execute the commit on sqlalchemy...
     auth.save_user(user)
 

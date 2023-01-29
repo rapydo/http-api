@@ -381,8 +381,9 @@ class Authentication(BaseAuthentication):
         return False
 
     # Also used by POST user
-    def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
-
+    def create_user(
+        self, userdata: Dict[str, Any], roles: List[str], group: Group
+    ) -> User:
         userdata.setdefault("authmethod", "credentials")
 
         if "password" in userdata:
@@ -393,6 +394,7 @@ class Authentication(BaseAuthentication):
         user = self.db.User(**userdata)
         user.save()
 
+        self.add_user_to_group(user, group)
         self.link_roles(user, roles)
 
         self.custom_user_properties_post(user, userdata, extra_userdata, self.db)

@@ -395,7 +395,7 @@ class TestApp(BaseTests):
         assert auth.verify_token_validity(jti, user)
 
         # Verify token against a wrong user
-
+        group = auth.get_group(name=DEFAULT_GROUP_NAME)
         another_user = auth.create_user(
             {
                 "email": faker.ascii_email(),
@@ -406,6 +406,7 @@ class TestApp(BaseTests):
             },
             # It will be expanded with the default role
             roles=[],
+            group=group,
         )
         auth.save_user(another_user)
 
@@ -651,7 +652,8 @@ class TestApp(BaseTests):
         assert auth.create_role(name=faker.pystr(), description=faker.pystr()) is None
         assert auth.save_role(role=role) is None
 
-        assert auth.create_user(userdata={}, roles=[faker.pystr()]) is None
+        group = auth.get_group(name=DEFAULT_GROUP_NAME)
+        assert auth.create_user(userdata={}, roles=[faker.pystr()], group=group) is None
 
         assert auth.link_roles(user=user, roles=[faker.pystr()]) is None
         assert auth.create_group(groupdata={}) is None

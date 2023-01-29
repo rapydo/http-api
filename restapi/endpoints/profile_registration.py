@@ -65,10 +65,8 @@ if Connector.check_availability("smtp"):
             kwargs["email"] = email
             kwargs["password"] = password
             kwargs["is_active"] = False
-            user = self.auth.create_user(kwargs, [self.auth.default_role])
-
-            default_group = self.auth.get_group(name=DEFAULT_GROUP_NAME)
-            self.auth.add_user_to_group(user, default_group)
+            group = self.auth.get_group(name=DEFAULT_GROUP_NAME)
+            user = self.auth.create_user(kwargs, [self.auth.default_role], group)
             self.auth.save_user(user)
 
             self.log_event(self.events.create, user, kwargs)
