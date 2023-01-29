@@ -47,16 +47,16 @@ def run_migrations_offline() -> None:
 
     """
     variables = Connector.services.get("sqlalchemy", {})
-    url = URL.create(  # type: ignore
+    url = URL.create(
         drivername=variables.get("dbtype", "postgresql"),
         username=variables.get("user"),
         password=variables.get("password"),
         host=variables.get("host"),
-        port=variables.get("port"),
+        port=int(variables.get("port") or "5432"),
         database=variables.get("db"),
     )
     context.configure(
-        url=url,
+        url=str(url),
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -74,12 +74,12 @@ def run_migrations_online() -> None:
 
     """
     variables = Connector.services.get("sqlalchemy", {})
-    url = URL.create(  # type: ignore
+    url = URL.create(
         drivername=variables.get("dbtype", "postgresql"),
         username=variables.get("user"),
         password=variables.get("password"),
         host=variables.get("host"),
-        port=variables.get("port"),
+        port=int(variables.get("port") or "5432"),
         database=variables.get("db"),
     )
     connectable = create_engine(url, encoding="utf8", future=True)
