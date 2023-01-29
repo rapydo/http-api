@@ -25,7 +25,6 @@ roles_users = Table(
 )
 
 
-# Base type Model becomes "Any" due to an unfollowed import
 class Role(Base):
     __tablename__ = "role"
 
@@ -42,11 +41,10 @@ class Role(Base):
         secondary=roles_users,
         back_populates="roles",
         cascade_backrefs=False,
-    )  # type: ignore[var-annotated]
+    )
 
 
-# Base type Model becomes "Any" due to an unfollowed import
-class User(Base):  # type: ignore
+class User(Base):
     __tablename__ = "user"
 
     def __repr__(self) -> str:  # pragma: no cover
@@ -72,28 +70,27 @@ class User(Base):  # type: ignore
         "Role",
         secondary=roles_users,
         back_populates="users",
-    )  # type: ignore[var-annotated]
+    )
     group_id = mapped_column(Integer, ForeignKey("group.id"))
     belongs_to = relationship(
         "Group",
         back_populates="members",
         cascade_backrefs=False,
         foreign_keys=[group_id],
-    )  # type: ignore[var-annotated]
+    )
     tokens = relationship(
         "Token",
         back_populates="emitted_for",
         cascade_backrefs=False,
-    )  # type: ignore[var-annotated]
+    )
     logins = relationship(
         "Login",
         back_populates="user",
         cascade_backrefs=False,
-    )  # type: ignore[var-annotated]
+    )
 
 
-# Base type Model becomes "Any" due to an unfollowed import
-class Token(Base):  # type: ignore
+class Token(Base):
     __tablename__ = "token"
 
     def __repr__(self) -> str:  # pragma: no cover
@@ -114,11 +111,10 @@ class Token(Base):  # type: ignore
         "User",
         back_populates="tokens",
         cascade_backrefs=False,
-    )  # type: ignore[var-annotated]
+    )
 
 
-# Base type Model becomes "Any" due to an unfollowed import
-class Group(Base):  # type: ignore
+class Group(Base):
     __tablename__ = "group"
 
     def __repr__(self) -> str:  # pragma: no cover
@@ -134,11 +130,10 @@ class Group(Base):  # type: ignore
         "User",
         back_populates="belongs_to",
         cascade_backrefs=False,
-    )  # type: ignore[var-annotated]
+    )
 
 
-# Base type Model becomes "Any" due to an unfollowed import
-class Login(Base):  # type: ignore
+class Login(Base):
     __tablename__ = "login"
 
     def __repr__(self) -> str:  # pragma: no cover
@@ -156,6 +151,6 @@ class Login(Base):  # type: ignore
         "User",
         back_populates="logins",
         cascade_backrefs=False,
-    )  # type: ignore[var-annotated]
+    )
     failed = mapped_column(Boolean, default=False)
     flushed = mapped_column(Boolean, default=False)

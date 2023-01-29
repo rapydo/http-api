@@ -183,17 +183,17 @@ class SQLAlchemy(Connector):
         variables = self.variables.copy()
         variables.update(kwargs)
 
-        query = None
+        query = {}
         if self.is_mysql():  # pragma: no cover
             if not Connector.is_external(variables.get("host", "")):
                 query = {"charset": "utf8mb4"}
 
-        uri = URL.create(  # type: ignore
+        uri = URL.create(
             drivername=variables.get("dbtype", "postgresql"),
             username=variables.get("user"),
             password=variables.get("password"),
             host=variables.get("host"),
-            port=variables.get("port"),
+            port=Env.to_int(variables.get("port"), 5432),
             database=variables.get("db"),
             query=query,
         )
@@ -425,7 +425,10 @@ class Authentication(BaseAuthentication):
         return True
 
     def get_roles(self) -> List[RoleObj]:
-        if not inspect(self.db.engine).has_table("role"):  # pragma: no cover
+        inspect_engine = inspect(self.db.engine)
+        if not inspect_engine or not inspect_engine.has_table(
+            "role"
+        ):  # pragma: no cover
             return []
         roles = list(self.db.session.execute(select(self.db.Role)).scalars())
         self.db.session.commit()
