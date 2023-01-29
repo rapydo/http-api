@@ -21,14 +21,7 @@ from sqlalchemy.exc import (
     ProgrammingError,
     StatementError,
 )
-
-# Module "sqlalchemy.orm" has no attribute "declarative_base"
-from sqlalchemy.orm import (  # type: ignore
-    Session,
-    declarative_base,
-    scoped_session,
-    sessionmaker,
-)
+from sqlalchemy.orm import Session, declarative_base, scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 from sqlalchemy.orm.session import close_all_sessions
 
@@ -206,15 +199,11 @@ class SQLAlchemy(Connector):
             future=True,
         )
         db.session = scoped_session(sessionmaker(bind=self.engine))
-        db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore
-        db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore
-        # db.update_properties = self.update_properties
-        # db.disconnect = self.disconnect
-        # db.is_connected = self.is_connected
-
-        Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore
+        db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore[assignment]
+        db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore[assignment]
+        Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore[assignment]
         # Used in case of autoflush
-        Connection._execute_context = catch_db_exceptions(Connection._execute_context)  # type: ignore  # noqa
+        Connection._execute_context = catch_db_exceptions(Connection._execute_context)  # type: ignore[assignment]  # noqa
 
         sql = text("SELECT 1")
         db.session.execute(sql)
@@ -259,7 +248,7 @@ class SQLAlchemy(Connector):
     @staticmethod
     def update_properties(instance: Any, properties: Dict[str, Any]) -> None:
         for field, value in properties.items():
-            set_attribute(instance, field, value)  # type: ignore
+            set_attribute(instance, field, value)
 
 
 class Authentication(BaseAuthentication):
@@ -368,8 +357,7 @@ class Authentication(BaseAuthentication):
         if not user:
             return False
 
-        # Call to untyped function "delete" in typed context
-        self.db.session.delete(user)  # type: ignore
+        self.db.session.delete(user)
         self.db.session.commit()
         return True
 
@@ -419,8 +407,7 @@ class Authentication(BaseAuthentication):
         if not group:
             return False
 
-        # Call to untyped function "delete" in typed context
-        self.db.session.delete(group)  # type: ignore
+        self.db.session.delete(group)
         self.db.session.commit()
         return True
 
@@ -583,8 +570,7 @@ class Authentication(BaseAuthentication):
         self.db.session.commit()
         if token_entry:
             try:
-                # Call to untyped function "delete" in typed context
-                self.db.session.delete(token_entry)  # type: ignore
+                self.db.session.delete(token_entry)
                 self.db.session.commit()
                 self.log_event(Events.delete, target=token_entry)
                 return True
