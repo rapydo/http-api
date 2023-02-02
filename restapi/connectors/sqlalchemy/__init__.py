@@ -247,7 +247,6 @@ class SQLAlchemy(Connector):
             #   database models and everything related at a central place before
             #   the application starts serving requests.
             if "sqlalchemy" not in self.app.extensions:
-                log.critical("loading app!")
                 db.init_app(self.app)
 
             # This is needed to test the connection
