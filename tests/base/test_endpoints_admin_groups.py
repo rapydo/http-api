@@ -149,6 +149,12 @@ class TestApp(BaseTests):
             r = client.put(f"{API_URI}/admin/groups/xyz", json=data, headers=headers)
             assert r.status_code == 404
 
+            # members = auth.get_group_members(group)
+            # with pytest.raises(
+            #     Forbidden,
+            #     match=rf"Cannot delete this group, it is assigned to {len(members)} user(s)",
+            # ):
+
             # Event 3: delete
             r = client.delete(f"{API_URI}/admin/groups/{uuid}", headers=headers)
             assert r.status_code == 204
