@@ -108,13 +108,13 @@ class AdminUsers(EndpointResource):
         # If created by admins users must accept privacy at first login
         kwargs["privacy_accepted"] = False
 
-        user = self.auth.create_user(kwargs, roles)
-        self.auth.save_user(user)
-
         group = self.auth.get_group(group_id=group_id)
         if not group:
             # Can't be reached because group_id is prefiltered by marshmallow
             raise NotFound("This group cannot be found")  # pragma: no cover
+
+        user = self.auth.create_user(kwargs, roles, group)
+        self.auth.save_user(user)
 
         self.auth.add_user_to_group(user, group)
 

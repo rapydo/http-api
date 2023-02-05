@@ -261,13 +261,16 @@ class Authentication(BaseAuthentication):
         return super().init_auth_db(options)
 
     # Also used by POST user
-    def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
+    def create_user(
+        self, userdata: Dict[str, Any], roles: List[str], group: Group
+    ) -> User:
         userdata.setdefault("authmethod", "credentials")
         userdata.setdefault("uuid", getUUID())
 
         if "password" in userdata:
             userdata["password"] = self.get_password_hash(userdata["password"])
 
+        userdata["group_id"] = group.id
         userdata, extra_userdata = self.custom_user_properties_pre(userdata)
 
         user = self.db.User(**userdata)

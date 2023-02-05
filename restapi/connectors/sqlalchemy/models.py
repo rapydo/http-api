@@ -74,12 +74,12 @@ class User(Base):
         cascade_backrefs=False,
         foreign_keys=[group_id],
     )
-    tokens: Mapped["Token"] = relationship(
+    tokens: Mapped[List["Token"]] = relationship(
         "Token",
         back_populates="emitted_for",
         cascade_backrefs=False,
     )
-    logins: Mapped["Login"] = relationship(
+    logins: Mapped[List["Login"]] = relationship(
         "Login",
         back_populates="user",
         cascade_backrefs=False,
@@ -122,7 +122,7 @@ class Group(Base):
     shortname: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     fullname: Mapped[str] = mapped_column(String(256), nullable=False)
 
-    members: Mapped["User"] = relationship(
+    members: Mapped[List["User"]] = relationship(
         "User",
         back_populates="belongs_to",
         cascade_backrefs=False,

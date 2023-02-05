@@ -1098,8 +1098,8 @@ class BaseAuthentication(metaclass=ABCMeta):
                     "last_password_change": last_password_change,
                 },
                 roles=roles,
+                group=default_group,
             )
-            self.add_user_to_group(default_user, default_group)
             # This is required to execute the commit on sqlalchemy...
             self.save_user(default_user)
             log.info("Injected default user")
@@ -1263,7 +1263,9 @@ class BaseAuthentication(metaclass=ABCMeta):
     # # Create Users #
     # ################
     @abstractmethod
-    def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
+    def create_user(
+        self, userdata: Dict[str, Any], roles: List[str], group: Group
+    ) -> User:
         """
         A method to create a new user
         """
@@ -1317,7 +1319,9 @@ class BaseAuthentication(metaclass=ABCMeta):
 class NoAuthentication(BaseAuthentication):  # pragma: no cover
 
     # Also used by POST user
-    def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
+    def create_user(
+        self, userdata: Dict[str, Any], roles: List[str], group: Group
+    ) -> User:
         raise NotImplementedError("Create User not implemented with No Authentication")
 
     def link_roles(self, user: User, roles: List[str]) -> None:
