@@ -21,7 +21,7 @@ from sqlalchemy.exc import (
     ProgrammingError,
     StatementError,
 )
-from sqlalchemy.orm import Session, declarative_base, scoped_session, sessionmaker
+from sqlalchemy.orm import Session, scoped_session, sessionmaker
 from sqlalchemy.orm.attributes import set_attribute
 from sqlalchemy.orm.session import close_all_sessions
 
@@ -45,9 +45,6 @@ from restapi.services.authentication import (
 )
 from restapi.utilities.logs import Events, log
 from restapi.utilities.uuid import getUUID
-
-# used as a base to define Models
-db = declarative_base()
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -198,6 +195,10 @@ class SQLAlchemy(Connector):
             max_overflow=poolsize + 10,
             future=True,
         )
+
+        # avoid circular imports
+        from restapi.connectors.sqlalchemy.models import Base as db
+
         db.session = scoped_session(sessionmaker(bind=self.engine))
         db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore[assignment]
         db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore[assignment]
@@ -282,14 +283,15 @@ class Authentication(BaseAuthentication):
         if not roles:
             roles = [BaseAuthentication.default_role]
 
-        # link roles into users
-        user.roles = []
+        roles_instances = []
         for role in roles:
             sqlrole = self.db.session.execute(
                 select(self.db.Role).where(self.db.Role.name == role)
             ).scalar()
 
-            user.roles.append(sqlrole)
+            roles_instances.append(sqlrole)
+
+        user.roles = roles_instances
         # why commit is not needed here!?
 
     def create_group(self, groupdata: Dict[str, Any]) -> Group:
