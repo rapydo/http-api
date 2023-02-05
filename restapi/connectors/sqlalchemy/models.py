@@ -78,11 +78,13 @@ class User(Base):
         "Token",
         back_populates="emitted_for",
         cascade_backrefs=False,
+        cascade="delete",
     )
     logins: Mapped[List["Login"]] = relationship(
         "Login",
         back_populates="user",
         cascade_backrefs=False,
+        cascade="delete",
     )
 
 
