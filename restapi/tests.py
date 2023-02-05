@@ -334,6 +334,7 @@ class BaseTests:
         client: FlaskClient,
         data: Optional[Dict[str, Any]] = None,
         roles: Optional[List[Union[str, Role]]] = None,
+        group: Optional[str] = None,
     ) -> Tuple[str, Dict[str, Any]]:
 
         assert Env.get_bool("MAIN_LOGIN_ENABLE")
@@ -346,6 +347,9 @@ class BaseTests:
             user_data["email_notification"] = False
         user_data["is_active"] = True
         user_data["expiration"] = None
+
+        if group:
+            user_data["group"] = group
 
         if roles:
 

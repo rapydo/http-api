@@ -203,7 +203,7 @@ class SQLAlchemy(Connector):
         db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore[assignment]
         db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore[assignment]
         Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore[assignment]
-        # Used in case of autoflush
+        # Used in case of autoflush - shouldn't be needed with sqlalchemy 2?
         Connection._execute_context = catch_db_exceptions(Connection._execute_context)  # type: ignore[assignment]  # noqa
 
         sql = text("SELECT 1")
