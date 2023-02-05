@@ -140,6 +140,7 @@ def catch_db_exceptions(func: F) -> F:
 class SQLAlchemy(Connector):
     # Used to suppress some errors raised during DB initialization
     DB_INITIALIZING = False
+    _session: Optional[Session] = None
 
     def __init__(self) -> None:
         # Type of variable becomes "Any" due to an unfollowed import
@@ -199,15 +200,15 @@ class SQLAlchemy(Connector):
         # avoid circular imports
         from restapi.connectors.sqlalchemy.models import Base as db
 
-        db.session = scoped_session(sessionmaker(bind=self.engine))
-        db.session.commit = catch_db_exceptions(db.session.commit)  # type: ignore[assignment]
-        db.session.flush = catch_db_exceptions(db.session.flush)  # type: ignore[assignment]
-        Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore[assignment]
+        self._session = scoped_session(sessionmaker(bind=self.engine))  # type: ignore
+        self._session.commit = catch_db_exceptions(self._session.commit)  # type: ignore
+        self._session.flush = catch_db_exceptions(self._session.flush)  # type: ignore
+        Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore
         # Used in case of autoflush - shouldn't be needed with sqlalchemy 2?
-        Connection._execute_context = catch_db_exceptions(Connection._execute_context)  # type: ignore[assignment]  # noqa
+        Connection._execute_context = catch_db_exceptions(Connection._execute_context)  # type: ignore  # noqa
 
         sql = text("SELECT 1")
-        db.session.execute(sql)
+        self.session.execute(sql)
 
         self.load_models()
         self.db = db
@@ -215,11 +216,13 @@ class SQLAlchemy(Connector):
 
     @property
     def session(self) -> Session:
-        return cast(Session, self.db.session)
+        if self._session is None:  # pragma: no cover
+            raise ServiceUnavailable("Session not initialized")
+        return self._session
 
     def disconnect(self) -> None:
-        if self.db:
-            self.db.session.close()
+        if self._session:
+            self._session.close()
         self.disconnected = True
 
     def is_connected(self) -> bool:
@@ -229,7 +232,7 @@ class SQLAlchemy(Connector):
     def initialize(self) -> None:
         instance = self.get_instance()
         sql = text("SELECT 1")
-        instance.db.session.execute(sql)
+        instance.session.execute(sql)
 
         SQLAlchemy.DB_INITIALIZING = True
         instance.db.metadata.create_all(self.engine)
@@ -238,9 +241,9 @@ class SQLAlchemy(Connector):
     def destroy(self) -> None:
         instance = self.get_instance()
         sql = text("SELECT 1")
-        instance.db.session.execute(sql)
+        instance.session.execute(sql)
 
-        instance.db.session.remove()
+        # instance.session.remove()
         close_all_sessions()
         # massive destruction
         log.critical("Destroy current SQL data")
