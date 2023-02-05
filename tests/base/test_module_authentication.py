@@ -9,7 +9,7 @@ from faker import Faker
 
 from restapi.connectors import Connector
 from restapi.env import Env
-from restapi.exceptions import BadRequest, Conflict, Unauthorized
+from restapi.exceptions import BadRequest, Conflict, Forbidden, Unauthorized
 from restapi.services.authentication import (
     DEFAULT_GROUP_NAME,
     BaseAuthentication,
@@ -470,7 +470,15 @@ class TestApp(BaseTests):
         assert not auth.delete_user(None)
         assert not auth.delete_group(None)
 
-        assert auth.delete_user(user)
+        members = auth.get_group_members(group)
+        with pytest.raises(
+            Forbidden,
+            match=rf"Cannot delete this group, it is assigned to {len(members)} user(s)",
+        ):
+            assert auth.delete_group(group)
+
+        for u in members:
+            assert auth.delete_user(u)
         assert auth.delete_group(group)
 
         # Verify that user/group are now deleted

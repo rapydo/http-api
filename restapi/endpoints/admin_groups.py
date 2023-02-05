@@ -1,9 +1,8 @@
 from typing import Any, Dict, List
 
 from restapi import decorators
-from restapi.connectors import Connector
 from restapi.endpoints.schemas import GroupWithMembers, admin_group_input
-from restapi.exceptions import NotFound
+from restapi.exceptions import Forbidden, NotFound
 from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Group, Role, User
 
@@ -111,6 +110,10 @@ class AdminGroups(EndpointResource):
         responses={204: "Group successfully deleted", 404: "Group not found"},
     )
     def delete(self, group_id: str, group: Group, user: User) -> Response:
+        if members := self.auth.get_group_members(group):
+            raise Forbidden(
+                f"Cannot delete this group, it is assigned to {len(members)} user(s)"
+            )
 
         self.auth.delete_group(group)
 
