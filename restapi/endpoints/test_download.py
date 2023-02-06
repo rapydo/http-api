@@ -7,7 +7,6 @@ from restapi.services.download import Downloader
 if TESTING:
 
     class TestDownload(EndpointResource):
-
         labels = ["tests"]
 
         @decorators.use_kwargs({"stream": fields.Bool()}, location="query")

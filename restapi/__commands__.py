@@ -26,7 +26,6 @@ def cli() -> None:  # pragma: no cover
 
 
 def initializing() -> bool:
-
     return find_process(current_package, keywords=["init"], prefix="/usr/local/bin/")
 
 
@@ -133,7 +132,6 @@ def wait() -> None:
 def get_service_address(
     variables: Dict[str, str], host_var: str, port_var: str, service: str
 ) -> Tuple[str, int]:
-
     host = variables.get(host_var)
     if host is None:
         print_and_exit("Cannot find any variable matching {} for {}", host_var, service)
@@ -153,13 +151,11 @@ def mywait() -> None:
     This check is merely based on a socket connection
     """
     for name, variables in Connector.services.items():
-
         if name == "smtp" or name == "ftp":
             log.info("Service {} is enabled but not tested at startup time", name)
             continue
 
         if name == "celery":
-
             broker = variables.get("broker_service", "N/A")
 
             if broker == "RABBIT":
@@ -270,7 +266,6 @@ def tests(
 
     test_folder = Path("tests")
     if file is not None:
-
         filepath = Path(file)
         if test_folder not in filepath.parents:
             filepath = test_folder.joinpath(filepath)
@@ -279,7 +274,6 @@ def tests(
             print_and_exit("File not found: {}", file)
         parameters.append(str(filepath.relative_to(test_folder)))
     elif folder is not None:
-
         folderpath = Path(folder)
         if test_folder not in folderpath.parents:
             folderpath = test_folder.joinpath(folderpath)
@@ -293,7 +287,6 @@ def tests(
     if destroy and not PRODUCTION:
         os.environ["TEST_DESTROY_MODE"] = "1"
     try:
-
         log.info("Running tests... this may take some time")
         log.debug("Executing: {}", parameters)
         from plumbum import local

@@ -93,7 +93,6 @@ class Meta:
     def import_models(
         name: str, package: str, mandatory: bool = False
     ) -> Dict[str, Type[Any]]:
-
         if package == BACKEND_PACKAGE:
             module_name = f"{package}.connectors.{name}.models"
         else:
@@ -148,7 +147,6 @@ class Meta:
             # get all functions in py file
             functions = inspect.getmembers(submodule)
             for func in functions:
-
                 obj_type = type(func[1])
 
                 if obj_type.__module__ != "celery.local":
@@ -162,7 +160,6 @@ class Meta:
 
     @staticmethod
     def get_class(module_relpath: str, class_name: str) -> Optional[Any]:
-
         abspath = f"{CUSTOM_PACKAGE}.{module_relpath}"
 
         module = Meta.get_module_from_string(abspath)

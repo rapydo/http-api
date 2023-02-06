@@ -57,7 +57,6 @@ class FTPExt(Connector):
         return (socket.gaierror,)
 
     def connect(self, **kwargs: str) -> "FTPExt":
-
         variables = self.variables.copy()
 
         variables.update(kwargs)
@@ -144,7 +143,6 @@ def get_instance(
     retry_wait: int = 0,
     **kwargs: str,
 ) -> "FTPExt":
-
     return instance.get_instance(
         verification=verification,
         expiration=expiration,

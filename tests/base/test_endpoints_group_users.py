@@ -8,7 +8,6 @@ from restapi.utilities.logs import log
 
 class TestApp(BaseTests):
     def test_group_users(self, client: FlaskClient, faker: Faker) -> None:
-
         if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping group/users tests")
             return

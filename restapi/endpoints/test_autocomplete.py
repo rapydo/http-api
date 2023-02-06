@@ -6,7 +6,6 @@ from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource, Response
 
 if TESTING:
-
     names = ["oliver", "jack", "harry", "charlie", "thomas"]
     surnames = ["smith", "jones", "taylor", "brown", "williams"]
     nicknames = ["kid", "good", "bad", "ugly", "ripper"]
@@ -60,7 +59,6 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def get(self, query: str) -> Response:
-
             elements: List[Dict[str, str]] = []
 
             for k1 in names:
@@ -81,7 +79,6 @@ if TESTING:
             responses={204: "Tests executed", 400: "Bad Input"},
         )
         def post(self, elements: List[str]) -> Response:
-
             return self.empty_response()
 
         @decorators.use_kwargs(SingleInput)
@@ -92,5 +89,4 @@ if TESTING:
             responses={204: "Tests executed", 400: "Bad Input"},
         )
         def put(self, element: str) -> Response:
-
             return self.empty_response()

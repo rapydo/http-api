@@ -3,7 +3,6 @@ from restapi.tests import API_URI, BaseTests, FlaskClient
 
 class TestApp(BaseTests):
     def test_outputs(self, client: FlaskClient) -> None:
-
         r = client.post(f"{API_URI}/tests/outputs/string")
         assert r.status_code == 200
         response = self.get_content(r)

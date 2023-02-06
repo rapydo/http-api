@@ -16,5 +16,4 @@ if TESTING:
         def get(
             self, param: str, user: User, unknown: str = "default_value"
         ) -> Response:
-
             return self.response([user.email, param, unknown])

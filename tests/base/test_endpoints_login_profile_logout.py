@@ -213,7 +213,6 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
     def test_03_change_profile(self, client: FlaskClient, faker: Faker) -> None:
-
         if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping change profile tests")
             return
@@ -419,7 +418,6 @@ class TestApp(BaseTests):
             assert r.status_code == 204
 
     def test_06_token_ip_validity(self, client: FlaskClient, faker: Faker) -> None:
-
         if Env.get_bool("MAIN_LOGIN_ENABLE") and Env.get_bool("AUTH_ENABLE"):
             if Env.get_int("AUTH_TOKEN_IP_GRACE_PERIOD") < 10:
                 headers, _ = self.do_login(client, None, None)
@@ -458,7 +456,6 @@ class TestApp(BaseTests):
     if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
 
         def test_07_totp_failures(self, client: FlaskClient, faker: Faker) -> None:
-
             uuid, data = self.create_user(client)
 
             username = data["email"]

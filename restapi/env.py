@@ -25,7 +25,6 @@ class Env:
     @staticmethod
     @lru_cache
     def to_bool(var: Union[None, str, bool], default: bool = False) -> bool:
-
         if var is None or var == "":
             return default
 
@@ -54,7 +53,6 @@ class Env:
     @staticmethod
     @lru_cache
     def to_int(var: Union[None, str, int], default: int = 0) -> int:
-
         if var is None or var == "":
             return default
 
@@ -70,13 +68,11 @@ class Env:
 
     @staticmethod
     def load_variables_group(prefix: str) -> Dict[str, str]:
-
         prefix += "_"
 
         variables: Dict[str, str] = {}
 
         for var, value in os.environ.items():
-
             var = var.lower()
 
             if not var.startswith(prefix):

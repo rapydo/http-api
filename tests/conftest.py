@@ -14,5 +14,4 @@ def app() -> Flask:
 # Beware, this replaces the standard faker fixture provided by Faker it-self
 @pytest.fixture
 def faker() -> Faker:
-
     return BaseTests.faker

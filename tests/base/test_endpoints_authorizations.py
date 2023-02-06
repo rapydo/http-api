@@ -25,14 +25,12 @@ class TestApp1(BaseTests):
     # GET /api/admin/users
     # POST /api/admin/users
     def get_paths(self, client: FlaskClient) -> List[str]:
-
         loader = EndpointsLoader()
         loader.load_endpoints_folder(ABS_RESTAPI_PATH)
 
         paths: List[str] = []
         for endpoint_class in loader.endpoints:
             for method, path in endpoint_class.methods.items():
-
                 if path.startswith("/api/tests/"):
                     continue
 
@@ -51,7 +49,6 @@ class TestApp1(BaseTests):
         expected_authorized: bool,
         paths: List[str],
     ) -> List[str]:
-
         assert method in (
             "GET",
             "POST",
@@ -89,7 +86,6 @@ class TestApp1(BaseTests):
         return paths
 
     def test_admin(self, client: FlaskClient) -> None:
-
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping admin authorizations tests")
             return
@@ -206,7 +202,6 @@ class TestApp1(BaseTests):
         self.delete_user(client, uuid)
 
     def test_staff(self, client: FlaskClient) -> None:
-
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping staff authorizations tests")
             return
@@ -332,7 +327,6 @@ class TestApp1(BaseTests):
         self.delete_user(client, uuid)
 
     def test_coordinator(self, client: FlaskClient) -> None:
-
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping coordinator authorizations tests")
             return
@@ -449,7 +443,6 @@ class TestApp1(BaseTests):
         self.delete_user(client, uuid)
 
     def test_user(self, client: FlaskClient) -> None:
-
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping user authorizations tests")
             return
@@ -575,7 +568,6 @@ class TestApp1(BaseTests):
         paths = self.check_endpoint(client, "GET", "/api/specs", headers, True, paths)
 
         if not Env.get_bool("AUTH_ENABLE"):
-
             assert paths == []
 
             log.warning("Skipping other public authorizations tests")

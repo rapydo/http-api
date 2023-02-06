@@ -7,7 +7,6 @@ from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
 if TESTING and Connector.check_availability("neo4j"):
-
     from neomodel import (
         DateProperty,
         FloatProperty,
@@ -61,7 +60,6 @@ if TESTING and Connector.check_availability("neo4j"):
         choices2 = fields.Neo4jChoice(CHOICES_dict)
 
     class TestNeo4j(EndpointResource):
-
         depends_on = ["NEO4J_ENABLE_CONNECTOR"]
         labels = ["tests"]
 

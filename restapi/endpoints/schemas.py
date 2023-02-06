@@ -220,7 +220,6 @@ def group_users_output() -> Schema:
 # Can't use request.method because it is not passed at loading time, i.e. the Specs will
 # be created with empty request
 def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
-
     is_admin = HTTPTokenAuth.is_session_user_admin(request, auth)
 
     attributes: MarshmallowSchema = {}
@@ -327,7 +326,6 @@ def admin_user_put_input(request: FlaskRequest) -> Type[Schema]:
 
 # Should to transformed again in a Schema
 def admin_group_input(request: FlaskRequest) -> Type[Schema]:
-
     attributes: MarshmallowSchema = {}
 
     attributes["shortname"] = fields.Str(
@@ -393,7 +391,6 @@ def profile_output() -> Schema:
 
 
 def user_registration_input(request: FlaskRequest) -> Type[Schema]:
-
     attributes: MarshmallowSchema = {}
 
     attributes["name"] = fields.Str(required=True)

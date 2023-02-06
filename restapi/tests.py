@@ -70,7 +70,6 @@ def execute_from_code_dir() -> Generator[None, None, None]:
 
 
 class BaseTests:
-
     faker: Faker = get_faker()
     # This will store credentials to be used to test unused credentials ban
     # Tuple = (email, password, uuid)
@@ -128,7 +127,6 @@ class BaseTests:
     def get_content(
         http_out: Response,
     ) -> Union[str, float, int, bool, List[Any], Dict[str, Any]]:
-
         try:
             response = orjson.loads(http_out.get_data().decode())
             if isinstance(
@@ -200,7 +198,6 @@ class BaseTests:
         content = orjson.loads(r.data.decode("utf-8"))
 
         if r.status_code == 403:
-
             # This 403 is expected, return an invalid value or you can enter a loop!
             if status_code == 403:
                 return None, content
@@ -219,7 +216,6 @@ class BaseTests:
                 data = {}
 
                 if "FIRST LOGIN" in actions or "PASSWORD EXPIRED" in actions:
-
                     events = cls.get_last_events(1)
                     assert events[0].event == Events.password_expired.value
                     # assert events[0].user == USER
@@ -336,7 +332,6 @@ class BaseTests:
         roles: Optional[List[Union[str, Role]]] = None,
         group: Optional[str] = None,
     ) -> Tuple[str, Dict[str, Any]]:
-
         assert Env.get_bool("MAIN_LOGIN_ENABLE")
 
         admin_headers, _ = cls.do_login(client, None, None)
@@ -352,7 +347,6 @@ class BaseTests:
             user_data["group"] = group
 
         if roles:
-
             for idx, role in enumerate(roles):
                 if isinstance(role, Role):
                     roles[idx] = role.value
@@ -371,7 +365,6 @@ class BaseTests:
 
     @classmethod
     def delete_user(cls, client: FlaskClient, uuid: str) -> None:
-
         assert Env.get_bool("MAIN_LOGIN_ENABLE")
 
         admin_headers, _ = cls.do_login(client, None, None)
@@ -383,7 +376,6 @@ class BaseTests:
     def create_group(
         cls, client: FlaskClient, data: Optional[Dict[str, Any]] = None
     ) -> Tuple[str, Dict[str, Any]]:
-
         assert Env.get_bool("MAIN_LOGIN_ENABLE")
 
         admin_headers, _ = cls.do_login(client, None, None)
@@ -470,7 +462,6 @@ class BaseTests:
         """
         data: Dict[str, Any] = {}
         for d in schema:
-
             assert "key" in d
             assert "type" in d
 
@@ -500,7 +491,6 @@ class BaseTests:
                 max_value = d.get("max", 9999)
                 data[key] = cls.faker.pyint(min_value=min_value, max_value=max_value)
             elif field_type == "date":
-
                 min_date = None
                 max_date = None
 
@@ -515,7 +505,6 @@ class BaseTests:
                 )
                 data[key] = random_date.date()
             elif field_type == "datetime":
-
                 min_date = None
                 max_date = None
 
@@ -650,7 +639,6 @@ class BaseTests:
         wrong_secret: bool = False,
         wrong_algorithm: bool = False,
     ) -> str:
-
         if wrong_secret:
             secret = cls.faker.password()
         else:
@@ -682,7 +670,6 @@ class BaseTests:
 
     @staticmethod
     def event_matches_filters(event: Event, filters: Dict[str, str]) -> bool:
-
         for filt, value in filters.items():  # pragma: no cover
             if filt == "date" and event.date != value:
                 return False
@@ -703,7 +690,6 @@ class BaseTests:
     def get_last_events(
         cls, num: int = 1, filters: Optional[Dict[str, str]] = None
     ) -> List[Event]:
-
         fpath = LOGS_FOLDER.joinpath("security-events.log")
         if not fpath.exists():  # pragma: no cover
             return []
@@ -716,7 +702,6 @@ class BaseTests:
             events: List[Event] = []
             # read last num lines
             for line in lines:
-
                 # Found enough events, let's stop
                 if len(events) == num:
                     break
@@ -756,7 +741,6 @@ class BaseTests:
 
     @staticmethod
     def send_task(app: Flask, task_name: str, *args: Any, **kwargs: Any) -> Any:
-
         c = celery.get_instance()
         c.app = app
 

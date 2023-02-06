@@ -55,7 +55,6 @@ class ExtendedJSONEncoder(JSONProvider):
 
 
 def handle_http_errors(error: HTTPException) -> Response:
-
     return FlaskResponse(
         jsonifier({"message": error.description}),
         status=error.code,
@@ -65,9 +64,7 @@ def handle_http_errors(error: HTTPException) -> Response:
 
 
 def handle_marshmallow_errors(error: HTTPException) -> Response:
-
     try:
-
         if request.args:
             if request.args.get(GET_SCHEMA_KEY, False):  # pragma: no cover
                 schema = cast(Schema, error.data.get("schema"))  # type: ignore
@@ -142,7 +139,6 @@ def get_data_from_request() -> str:
 
 
 def handle_response(response: FlaskResponse) -> FlaskResponse:
-
     response.headers["_RV"] = str(version)
 
     PROJECT_VERSION = get_project_configuration("project.version", default="0")
@@ -198,7 +194,6 @@ def handle_response(response: FlaskResponse) -> FlaskResponse:
 
 
 class ResponseMaker:
-
     # Have a look here: (from flask import request)
     # request.user_agent.browser
     @staticmethod
@@ -246,7 +241,6 @@ class ResponseMaker:
     def get_html(
         content: ResponseContent, code: int, headers: Dict[str, str]
     ) -> Tuple[str, Dict[str, str]]:
-
         if isinstance(content, list):  # pragma: no cover
             content = content.pop()
 
@@ -321,10 +315,8 @@ class ResponseMaker:
 
     @staticmethod
     def convert_model_to_schema(schema: Schema) -> List[Dict[str, Any]]:
-
         schema_fields = []
         for field, field_def in schema.declared_fields.items():
-
             f: Dict[str, Any] = {}
 
             f["key"] = field_def.data_key or field
@@ -377,7 +369,6 @@ class ResponseMaker:
 
             for validator in validators:
                 if isinstance(validator, validate.Length):
-
                     if validator.min is not None:
                         f["min"] = validator.min
                     if validator.max is not None:
@@ -387,7 +378,6 @@ class ResponseMaker:
                         f["max"] = validator.equal
 
                 elif isinstance(validator, validate.Range):
-
                     if validator.min is not None:
                         f["min"] = validator.min
                         if not validator.min_inclusive:
@@ -399,7 +389,6 @@ class ResponseMaker:
                             f["max"] -= 1
 
                 elif isinstance(validator, validate.OneOf):
-
                     choices = validator.choices
                     labels = validator.labels
                     if len(tuple(labels)) != len(tuple(choices)):
@@ -407,7 +396,6 @@ class ResponseMaker:
                     f["options"] = dict(zip(choices, labels))
 
                 else:  # pragma: no cover
-
                     log.warning(
                         "Unsupported validation schema: {}.{}",
                         type(validator).__module__,
@@ -424,7 +412,6 @@ class ResponseMaker:
 
     @staticmethod
     def respond_with_schema(schema: Schema) -> Response:
-
         try:
             fields = ResponseMaker.convert_model_to_schema(schema)
             return (jsonify(fields), 200, {})
@@ -437,7 +424,6 @@ class ResponseMaker:
     def get_schema_type(
         field: str, schema: marshmallow_fields.Field, default: Optional[Any] = None
     ) -> str:
-
         if schema.metadata.get("password", False):
             return "password"
         # types from https://github.com/danohu/py2ng

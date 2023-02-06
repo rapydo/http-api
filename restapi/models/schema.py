@@ -14,7 +14,6 @@ GET_SCHEMA_KEY = "get_schema"
 
 class Schema(MarshmallowSchema):
     def __init__(self, strip_required: bool = False, *args: Any, **kwargs: Any) -> None:
-
         super().__init__(**kwargs)
         if strip_required:
             for k in self.declared_fields:
@@ -40,7 +39,6 @@ class Schema(MarshmallowSchema):
         data: Dict[str, Any],
         **kwargs: Any,
     ) -> Dict[str, Any]:
-
         if GET_SCHEMA_KEY in data:
             raise ValidationError("Schema requested")
 
@@ -54,7 +52,6 @@ class Schema(MarshmallowSchema):
             # Why isinstance is not working here!?
             # isinstance(data, ImmutableMultiDict)
         except TypeError:  # pragma: no cover
-
             mutable_data = data.to_dict()  # type: ignore
             mutable_data.pop("access_token")
             return cast(Dict[str, Any], mutable_data)
@@ -92,7 +89,6 @@ class Neo4jSchema(Schema):
         self.build_schema(model)
 
     def build_schema(self, model: Type[Any]) -> None:
-
         # Get the full list of parent classes from model to object
         classes = inspect.getmro(model)
 

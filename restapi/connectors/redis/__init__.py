@@ -14,7 +14,6 @@ from restapi.env import Env
 
 
 class RedisExt(Connector):
-
     DB = 0
     CELERY_BACKEND_DB = 1
     CACHE_DB = 2
@@ -29,7 +28,6 @@ class RedisExt(Connector):
         return None
 
     def connect(self, **kwargs: str) -> "RedisExt":
-
         variables = self.variables.copy()
         variables.update(kwargs)
 
@@ -67,7 +65,6 @@ def get_instance(
     retry_wait: int = 0,
     **kwargs: str,
 ) -> "RedisExt":
-
     return instance.get_instance(
         verification=verification,
         expiration=expiration,

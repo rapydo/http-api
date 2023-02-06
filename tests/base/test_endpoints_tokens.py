@@ -7,7 +7,6 @@ from restapi.utilities.logs import Events, log
 
 class TestApp(BaseTests):
     def test_tokens(self, client: FlaskClient, faker: Faker) -> None:
-
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping tokens tests")
             return
@@ -31,7 +30,6 @@ class TestApp(BaseTests):
         # change password invalidated tokens created before
         # => create tokens again
         if len(content) < 3:  # pragma: no cover
-
             for _ in range(3):
                 header, token = self.do_login(client, None, None)
                 last_tokens_header = header

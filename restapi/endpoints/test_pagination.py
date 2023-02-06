@@ -7,7 +7,6 @@ from restapi.rest.definition import EndpointResource, Response
 if TESTING:
 
     class TestPagination(EndpointResource):
-
         # 150 integers from 1 to 150
         values = list(range(1, 151))
 

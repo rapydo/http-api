@@ -11,7 +11,6 @@ from restapi.services.authentication import Role, User
 
 
 class SendMail(EndpointResource):
-
     depends_on = ["AUTH_ENABLE"]
     labels = ["management"]
     private = True
@@ -34,7 +33,6 @@ class SendMail(EndpointResource):
         bcc: Optional[List[str]] = None,
         dry_run: bool = False,
     ) -> Response:
-
         replaces: Dict[str, Any] = {}
 
         header_html = _get_html_template("email_header.html", replaces)

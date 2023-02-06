@@ -68,7 +68,6 @@ def parse_postgres_duplication_error(excpt: List[str]) -> Optional[str]:
 
 
 def parse_missing_error(excpt: List[str]) -> Optional[str]:
-
     if m := re.search(
         r"null value in column \"(.*)\" of relation \"(.*)\" "
         "violates not-null constraint",
@@ -85,7 +84,6 @@ def parse_missing_error(excpt: List[str]) -> Optional[str]:
 def catch_db_exceptions(func: F) -> F:
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-
         try:
             return func(*args, **kwargs)
         except RestApiException:
@@ -105,7 +103,6 @@ def catch_db_exceptions(func: F) -> F:
             raise ServiceUnavailable("Duplicated entry") from e  # pragma: no cover
 
         except InternalError as e:  # pragma: no cover
-
             m = re.search(
                 r"Incorrect string value: '(.*)' for column `.*`.`.*`.`(.*)` at row .*",
                 str(e),
@@ -321,7 +318,6 @@ class Authentication(BaseAuthentication):
         self, username: Optional[str] = None, user_id: Optional[str] = None
     ) -> Optional[User]:
         try:
-
             if username:
                 users = self.db.session.execute(
                     select(self.db.User).where(self.db.User.email == username)
@@ -453,7 +449,6 @@ class Authentication(BaseAuthentication):
     def save_token(
         self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
     ) -> None:
-
         ip_address = self.get_remote_ip()
 
         if token_type is None:
@@ -534,7 +529,6 @@ class Authentication(BaseAuthentication):
         token_jti: Optional[str] = None,
         get_all: bool = False,
     ) -> List[Token]:
-
         tokens_list: List[Token] = []
         tokens = None
 
@@ -550,7 +544,6 @@ class Authentication(BaseAuthentication):
 
         if tokens:
             for token in tokens:
-
                 if token is None:  # pragma: no cover
                     continue
 
@@ -654,7 +647,6 @@ def get_instance(
     retry_wait: int = 0,
     **kwargs: str,
 ) -> "SQLAlchemy":
-
     return instance.get_instance(
         verification=verification,
         expiration=expiration,

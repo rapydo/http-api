@@ -4,7 +4,6 @@ from restapi.services.authentication import User
 
 
 class Status(EndpointResource):
-
     labels = ["status"]
 
     @decorators.endpoint(
@@ -14,12 +13,10 @@ class Status(EndpointResource):
         responses={200: "Server is alive"},
     )
     def get(self) -> Response:
-
         return self.response("Server is alive", allow_html=True)
 
 
 class AuthStatus(EndpointResource):
-
     depends_on = ["AUTH_ENABLE"]
     labels = ["authentication"]
 
@@ -31,5 +28,4 @@ class AuthStatus(EndpointResource):
         responses={200: "Auth token is valid"},
     )
     def get(self, user: User) -> Response:
-
         return self.response(True)

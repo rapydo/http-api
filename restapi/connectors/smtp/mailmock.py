@@ -56,7 +56,6 @@ class SMTP:
 
     @staticmethod
     def sendmail(from_address: str, dest_addresses: str, msg: str) -> None:
-
         if from_address == "invalid1":
             raise SMTPException("SMTP Error")
 

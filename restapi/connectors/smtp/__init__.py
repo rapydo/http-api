@@ -83,7 +83,6 @@ class Mail(Connector):
         return None
 
     def is_connected(self) -> bool:
-
         if not self.smtp or self.disconnected:
             return False
 
@@ -104,7 +103,6 @@ class Mail(Connector):
         bcc: Union[None, str, List[str]] = None,
         plain_body: Optional[str] = None,
     ) -> None:
-
         thr = Thread(
             target=cls.send_async_thread,
             args=[body, subject, to_address, from_address, cc, bcc, plain_body],
@@ -132,7 +130,6 @@ class Mail(Connector):
         plain_body: Optional[str] = None,
         retry: int = 1,
     ) -> bool:
-
         with get_instance() as client:
             sent = client.send(
                 body, subject, to_address, from_address, cc, bcc, plain_body
@@ -163,7 +160,6 @@ class Mail(Connector):
         bcc: Union[None, str, List[str]] = None,
         plain_body: Optional[str] = None,
     ) -> bool:
-
         if not to_address:
             to_address = self.instance_variables.get("admin")
         if not to_address:
@@ -179,7 +175,6 @@ class Mail(Connector):
             return False
 
         try:
-
             if plain_body is not None:
                 msg = MIMEMultipart("alternative")
             else:
@@ -255,7 +250,6 @@ def get_instance(
     retry_wait: int = 0,
     **kwargs: str,
 ) -> "Mail":
-
     return instance.get_instance(
         verification=verification,
         expiration=expiration,
