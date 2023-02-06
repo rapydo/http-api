@@ -25,7 +25,6 @@ class LoginUnlock(EndpointResource):
         },
     )
     def post(self, token: str) -> Response:
-
         token = token.replace("%2B", ".")
         token = token.replace("+", ".")
 

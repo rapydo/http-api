@@ -95,7 +95,6 @@ def mark_task_as_failed(self: Any, name: str, exception: Exception) -> NoReturn:
 
 
 def mark_task_as_failed_ignore(self: Any, name: str, exception: Exception) -> NoReturn:
-
     if TESTING:
         self.request.id = "fixed-id"
         self.request.task = name
@@ -230,19 +229,16 @@ class CeleryExt(Connector):
             )
             @wraps(func)
             def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-
                 try:
                     # app is officially Optional[Flask]... but can never be None at runtime
                     with CeleryExt.app.app_context():  # type: ignore
                         return func(self, *args, **kwargs)
                 except Ignore as ex:
-
                     mark_task_as_failed_ignore(
                         self=self, name=name or func.__name__, exception=ex
                     )
 
                 except autoretry_for as ex:
-
                     mark_task_as_retriable(
                         self=self,
                         name=name or func.__name__,
@@ -250,7 +246,6 @@ class CeleryExt(Connector):
                         MAX_RETRIES=MAX_RETRIES,
                     )
                 except Exception as ex:
-
                     mark_task_as_failed(
                         self=self, name=name or func.__name__, exception=ex
                     )
@@ -290,7 +285,6 @@ class CeleryExt(Connector):
         return f"{protocol}://{creds}{host}:{port}/{db}"
 
     def connect(self, **kwargs: str) -> "CeleryExt":
-
         variables = self.variables.copy()
         variables.update(kwargs)
         broker = variables.get("broker_service")
@@ -451,11 +445,9 @@ class CeleryExt(Connector):
         self.celery_app.conf.worker_cancel_long_running_tasks_on_connection_loss = True
 
         if Env.get_bool("CELERYBEAT_ENABLED"):
-
             CeleryExt.CELERYBEAT_SCHEDULER = backend
 
             if backend == "REDIS":
-
                 service_vars = Env.load_variables_group(prefix="redis")
                 url = self.get_redis_url(
                     service_vars, protocol="redis", db=RedisExt.CELERY_BEAT_DB
@@ -490,13 +482,11 @@ class CeleryExt(Connector):
         self.disconnected = True
 
     def is_connected(self) -> bool:
-
         log.warning("celery.is_connected method is not implemented")
         return not self.disconnected
 
     @classmethod
     def get_periodic_task(cls, name: str) -> Any:
-
         if cls.CELERYBEAT_SCHEDULER == "REDIS":
             from redbeat.schedulers import RedBeatSchedulerEntry
 
@@ -574,7 +564,6 @@ class CeleryExt(Connector):
         args: Optional[List[Any]] = None,
         kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
-
         if args is None:
             args = []
         if kwargs is None:
@@ -613,7 +602,6 @@ def get_instance(
     retry_wait: int = 0,
     **kwargs: str,
 ) -> "CeleryExt":
-
     return instance.get_instance(
         verification=verification,
         expiration=expiration,

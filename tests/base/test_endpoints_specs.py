@@ -4,7 +4,6 @@ from restapi.tests import API_URI, BaseTests, FlaskClient
 
 class TestApp(BaseTests):
     def test_GET_specs(self, client: FlaskClient) -> None:
-
         r = client.get(f"{API_URI}/specs")
         assert r.status_code == 200
         content = self.get_content(r)

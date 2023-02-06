@@ -48,7 +48,6 @@ class List(fields.List):
         data: Optional[Mapping[str, Any]],
         **kwargs: Any,
     ) -> Any:
-
         # this is the case when requests (or pytest) send some json-dumped lists
         # for example for a multi-value select
         if isinstance(value, str):
@@ -87,7 +86,6 @@ class Nested(fields.Nested):
         unknown: Optional[str] = None,
         **kwargs: Any,
     ):
-
         super().__init__(
             nested,
             default=default,
@@ -106,7 +104,6 @@ class Nested(fields.Nested):
         partial: Optional[Union[bool, Tuple[str]]] = None,
         **kwargs: Any,
     ) -> Any:
-
         # this is the case when requests (or pytest) send some json-dumped object
         if isinstance(value, str):
             try:
@@ -141,7 +138,6 @@ class DelimitedList(fields.DelimitedList, List):
         data: Optional[Mapping[str, Any]],
         **kwargs: Any,
     ) -> Any:
-
         if not value:
             return value
 
@@ -239,7 +235,6 @@ class TOTP(String):
         data: Optional[Mapping[str, Any]],
         **kwargs: Any,
     ) -> Any:
-
         value = super()._deserialize(value, attr, data, **kwargs)
 
         if not re.match(r"^[0-9]{6}$", value):

@@ -14,7 +14,6 @@ if Env.get_int("AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER") > 0:
         def test_test_unused_credentials(
             self, client: FlaskClient, faker: Faker
         ) -> None:
-
             assert BaseTests.unused_credentials is not None
             assert len(BaseTests.unused_credentials) == 3
 

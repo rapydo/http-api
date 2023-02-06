@@ -20,7 +20,6 @@ from restapi.services.authentication import BaseAuthentication
     reason="This test needs authentication and TEST_DESTROY_MODE to be enabled",
 )
 def test_destroy() -> None:
-
     auth = Connector.get_authentication_instance()
 
     user = auth.get_user(username=BaseAuthentication.default_user)

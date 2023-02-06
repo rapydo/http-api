@@ -70,7 +70,6 @@ class AuthMissingTOTP(Exception):
 
 
 def import_secret(abs_filename: Path) -> bytes:
-
     if HOST_TYPE != BACKEND_HOSTNAME:  # pragma: no cover
         return Fernet.generate_key()
 
@@ -146,7 +145,6 @@ class InvalidToken(Exception):
 # ##############################################################################
 # Utility functions used to adapt security settings to Testable values
 def get_timedelta(val: int, min_testing_val: int = 0) -> Optional[timedelta]:
-
     if val == 0:
         return None
 
@@ -157,7 +155,6 @@ def get_timedelta(val: int, min_testing_val: int = 0) -> Optional[timedelta]:
 
 
 def get_max_login_attempts(val: int) -> int:
-
     if TESTING and val:
         # min 10 failures, otherwise normal tests will start to fail
         return max(val, MAX_LOGIN_ATTEMPTS_MIN_TESTING_VALUE)
@@ -166,7 +163,6 @@ def get_max_login_attempts(val: int) -> int:
 
 
 def get_login_ban_time(val: int) -> int:
-
     if TESTING and val:
         # max 10 seconds, otherwise tests will hang
         return min(val, LOGIN_BAN_TIME_MAX_TESTING_VALUE)
@@ -256,7 +252,6 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     @staticmethod
     def load_default_user() -> None:
-
         BaseAuthentication.default_user = Env.get("AUTH_DEFAULT_USERNAME", "")
         BaseAuthentication.default_password = Env.get("AUTH_DEFAULT_PASSWORD", "")
         if (
@@ -267,7 +262,6 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     @staticmethod
     def load_roles() -> None:
-
         empty_dict: Dict[str, str] = {}
         BaseAuthentication.roles_data = glom(
             mem.configuration, "variables.roles", default=empty_dict
@@ -294,7 +288,6 @@ class BaseAuthentication(metaclass=ABCMeta):
     def make_login(
         self, username: str, password: str, totp_code: Optional[str]
     ) -> Tuple[str, Payload, User]:
-
         self.verify_blocked_username(username)
 
         try:
@@ -370,7 +363,6 @@ class BaseAuthentication(metaclass=ABCMeta):
     @staticmethod
     def get_remote_ip(raise_warnings: bool = True) -> str:
         try:
-
             # Syntax: X-Forwarded-For: <client>, <proxy1>, <proxy2>
             #   <client> The client IP address
             #   <proxy1>, <proxy2> If a request goes through multiple proxies, the
@@ -442,7 +434,6 @@ class BaseAuthentication(metaclass=ABCMeta):
     def unpack_token(
         cls, token: str, raiseErrors: bool = False
     ) -> Optional[DecodedPayload]:
-
         try:
             return cast(
                 DecodedPayload,
@@ -484,7 +475,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         raiseErrors: bool = False,
         token_type: Optional[str] = None,
     ) -> Tuple[bool, Optional[str], Optional[str], Optional[User]]:
-
         if token is None:
             if raiseErrors:
                 raise InvalidToken("Missing token")
@@ -598,7 +588,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         required_roles: str = ALL_ROLES,
         warnings: bool = True,
     ) -> bool:
-
         if not roles:
             return True
 
@@ -669,7 +658,6 @@ class BaseAuthentication(metaclass=ABCMeta):
     # ###########################
 
     def register_failed_login(self, username: str, user: Optional[User]) -> None:
-
         self.save_login(username, user, failed=True)
 
         if self.MAX_LOGIN_ATTEMPTS == 0:
@@ -710,7 +698,6 @@ class BaseAuthentication(metaclass=ABCMeta):
             )
 
     def count_failed_login(self, username: str) -> int:
-
         failed_logins = self.get_logins(username, only_unflushed=True)
         if not failed_logins:
             return 0
@@ -725,7 +712,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         return len(failed_logins)
 
     def get_totp_secret(self, user: User) -> str:
-
         if not user.mfa_hash:
             random_hash = pyotp.random_base32()
             user.mfa_hash = self.fernet.encrypt(random_hash.encode()).decode()
@@ -738,7 +724,6 @@ class BaseAuthentication(metaclass=ABCMeta):
             raise ServerError("Invalid server signature") from e
 
     def verify_totp(self, user: User, totp_code: Optional[str]) -> bool:
-
         if totp_code is None:
             raise Unauthorized("Verification code is missing")
 
@@ -749,7 +734,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
         if not totp.verify(totp_code, valid_window=self.TOTP_VALIDITY_WINDOW):
-
             self.log_event(
                 Events.failed_login,
                 payload={"totp": totp_code},
@@ -762,7 +746,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         return True
 
     def get_qrcode(self, user: User) -> str:
-
         secret = self.get_totp_secret(user)
         totp = pyotp.TOTP(secret)
 
@@ -777,7 +760,6 @@ class BaseAuthentication(metaclass=ABCMeta):
     def verify_password_strength(
         self, pwd: str, old_pwd: Optional[str], email: str, name: str, surname: str
     ) -> Tuple[bool, str]:
-
         if old_pwd:
             if pwd == old_pwd:
                 return False, "The new password cannot match the previous password"
@@ -825,7 +807,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         new_password: Optional[str],
         password_confirm: Optional[str],
     ) -> bool:
-
         if new_password is None:
             raise BadRequest("Missing new password")
 
@@ -863,7 +844,6 @@ class BaseAuthentication(metaclass=ABCMeta):
     def check_password_validity(
         self, user: User, totp_authentication: bool
     ) -> Dict[str, List[str]]:
-
         # ##################################################
         # Check if something is missing in the authentication and ask additional actions
         # raises exceptions in case of errors
@@ -879,7 +859,6 @@ class BaseAuthentication(metaclass=ABCMeta):
             self.log_event(Events.password_expired, user=user)
 
             if totp_authentication:
-
                 message["qr_code"] = [self.get_qrcode(user)]
 
         elif self.MAX_PASSWORD_VALIDITY:
@@ -895,7 +874,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         return message
 
     def verify_blocked_username(self, username: str) -> None:
-
         # We do not count failed logins
         if self.MAX_LOGIN_ATTEMPTS <= 0:
             return
@@ -920,9 +898,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     @classmethod
     def verify_user_status(cls, user: User) -> None:
-
         if not user.is_active:
-
             cls.log_event(
                 Events.refused_login,
                 payload={"username": user.email, "motivation": "account not active"},
@@ -935,7 +911,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         now: Optional[datetime] = None
 
         if cls.DISABLE_UNUSED_CREDENTIALS_AFTER and user.last_login:
-
             if TESTING and user.email == cls.default_user:
                 log.info("Default user can't be blocked for inactivity during tests")
             else:
@@ -972,7 +947,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         payload: Optional[Dict[str, Any]] = None,
         user: Optional[Any] = None,
     ) -> None:
-
         try:
             url_path = request.path
         except RuntimeError:
@@ -988,7 +962,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         )
 
     def init_auth_db(self, options: Dict[str, bool]) -> None:
-
         self.init_roles()
 
         default_group = self.init_groups(force=options.get("force_group", False))
@@ -1009,7 +982,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         for role_name in self.roles:
             description = self.roles_data.get(role_name, ROLE_DISABLED)
             if r := current_roles.get(role_name):
-
                 if r.description == description:
                     log.info("Role {} already exists", role_name)
                 else:
@@ -1027,7 +999,6 @@ class BaseAuthentication(metaclass=ABCMeta):
                 log.warning("Unknown role found: {}", r)
 
     def init_groups(self, force: bool) -> Group:
-
         create = False
         update = False
 
@@ -1067,7 +1038,6 @@ class BaseAuthentication(metaclass=ABCMeta):
         return default_group
 
     def init_users(self, default_group: Group, roles: List[str], force: bool) -> User:
-
         create = False
         update = False
 
@@ -1088,7 +1058,6 @@ class BaseAuthentication(metaclass=ABCMeta):
             last_password_change = datetime.now(pytz.utc)
 
         if create:
-
             default_user = self.create_user(
                 {
                     "email": self.default_user,
@@ -1317,7 +1286,6 @@ class BaseAuthentication(metaclass=ABCMeta):
 
 
 class NoAuthentication(BaseAuthentication):  # pragma: no cover
-
     # Also used by POST user
     def create_user(
         self, userdata: Dict[str, Any], roles: List[str], group: Group
@@ -1336,7 +1304,6 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
     def get_user(
         self, username: Optional[str] = None, user_id: Optional[str] = None
     ) -> Optional[User]:
-
         return None
 
     def get_users(self) -> List[User]:
@@ -1394,7 +1361,6 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
         token_jti: Optional[str] = None,
         get_all: bool = False,
     ) -> List[Token]:
-
         return []
 
     def invalidate_token(self, token: str) -> bool:

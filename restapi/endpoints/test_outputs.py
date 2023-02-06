@@ -14,7 +14,6 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def post(self, out_type: str) -> Response:
-
             if out_type == "list":
                 return self.response(["a", "b", "c", "c"])
 

@@ -3,10 +3,8 @@ from restapi.config import TESTING
 from restapi.rest.definition import EndpointResource, Response
 
 if TESTING:
-
     # This endpoint is activated only if neo4j is enabled
     class TestDependsOn(EndpointResource):
-
         labels = ["tests"]
         depends_on = ["NEO4J_ENABLE"]
 
@@ -19,12 +17,10 @@ if TESTING:
             },
         )
         def get(self) -> Response:
-
             return self.response("1")
 
     # This endpoint is activated only if neo4j is NOT enabled
     class TestDependsOnNOT(EndpointResource):
-
         labels = ["tests"]
         depends_on = ["not NEO4J_ENABLE"]
 
@@ -37,5 +33,4 @@ if TESTING:
             },
         )
         def get(self) -> Response:
-
             return self.response("1")

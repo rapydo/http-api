@@ -49,7 +49,6 @@ class RabbitExt(Connector):
         )  # type: ignore
 
     def connect(self, **kwargs: str) -> "RabbitExt":
-
         variables = self.variables.copy()
         # Beware, if you specify a user different by the default,
         # then the send method will fail to to PRECONDITION_FAILED because
@@ -74,7 +73,6 @@ class RabbitExt(Connector):
         vhost = variables.get("vhost", "/")
 
         if ssl_enabled:
-
             # This started failing with python 3.10:
             # context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             # -> Cannot create a client socket with a PROTOCOL_TLS_SERVER context
@@ -110,7 +108,6 @@ class RabbitExt(Connector):
             )
 
         else:
-
             self.connection = pika.BlockingConnection(
                 pika.ConnectionParameters(
                     host=host,
@@ -174,14 +171,12 @@ class RabbitExt(Connector):
             return False
 
     def create_exchange(self, exchange: str) -> None:
-
         channel = self.get_channel()
         channel.exchange_declare(
             exchange=exchange, exchange_type="direct", durable=True, auto_delete=False
         )
 
     def delete_exchange(self, exchange: str) -> None:
-
         channel = self.get_channel()
         channel.exchange_delete(exchange, if_unused=False)
 
@@ -195,14 +190,12 @@ class RabbitExt(Connector):
             return False
 
     def create_queue(self, queue: str) -> None:
-
         channel = self.get_channel()
         channel.queue_declare(
             queue=queue, durable=True, exclusive=False, auto_delete=False
         )
 
     def delete_queue(self, queue: str) -> None:
-
         channel = self.get_channel()
         channel.queue_delete(
             queue,
@@ -274,12 +267,10 @@ class RabbitExt(Connector):
         return bindings
 
     def queue_bind(self, queue: str, exchange: str, routing_key: str) -> None:
-
         channel = self.get_channel()
         channel.queue_bind(queue=queue, exchange=exchange, routing_key=routing_key)
 
     def queue_unbind(self, queue: str, exchange: str, routing_key: str) -> None:
-
         channel = self.get_channel()
         channel.queue_unbind(queue=queue, exchange=exchange, routing_key=routing_key)
 
@@ -336,7 +327,6 @@ class RabbitExt(Connector):
         )
 
         try:
-
             channel = self.get_channel()
             channel.basic_publish(
                 exchange=exchange,
@@ -396,7 +386,6 @@ def get_instance(
     retry_wait: int = 0,
     **kwargs: str,
 ) -> "RabbitExt":
-
     return instance.get_instance(
         verification=verification,
         expiration=expiration,

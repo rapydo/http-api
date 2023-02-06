@@ -16,7 +16,6 @@ DEFAULT_PERMISSIONS = 0o440
 
 
 class Uploader:
-
     allowed_exts: List[str] = []
 
     def set_allowed_exts(self, exts: List[str]) -> None:
@@ -31,7 +30,6 @@ class Uploader:
 
     @staticmethod
     def validate_upload_folder(path: Path) -> None:
-
         if "\x00" in str(path):
             raise BadRequest("Invalid null byte in subfolder parameter")
 
@@ -61,7 +59,6 @@ class Uploader:
 
     # this method is used by mistral
     def upload(self, subfolder: Path, force: bool = False) -> Response:
-
         if "file" not in request.files:
             raise BadRequest("No files specified")  # pragma: no cover
 
@@ -125,7 +122,6 @@ class Uploader:
     def init_chunk_upload(
         self, upload_dir: Path, filename: str, force: bool = True
     ) -> Response:
-
         if not self.allowed_file(filename):
             raise BadRequest("File extension not allowed")
 
@@ -163,7 +159,6 @@ class Uploader:
     def parse_content_range(
         range_header: Optional[str],
     ) -> Tuple[Optional[int], Optional[int], Optional[int]]:
-
         if range_header is None:
             return None, None, None
 
@@ -209,7 +204,6 @@ class Uploader:
     def chunk_upload(
         self, upload_dir: Path, filename: str, chunk_size: Optional[int] = None
     ) -> Tuple[bool, Response]:
-
         Uploader.validate_upload_folder(upload_dir)
 
         filename = secure_filename(filename)

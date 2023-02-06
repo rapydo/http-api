@@ -6,7 +6,6 @@ from restapi.rest.definition import EndpointResource, Response
 if TESTING:
 
     class TestGzipEncoding(EndpointResource):
-
         labels = ["tests"]
 
         @decorators.endpoint(
@@ -19,7 +18,6 @@ if TESTING:
             },
         )
         def get(self, size: str) -> Response:
-
             size_int = int(size)
 
             if size_int <= 0:

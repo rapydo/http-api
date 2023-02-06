@@ -69,9 +69,7 @@ class ServerModes(int, Enum):
 def teardown_handler(
     signal: int, frame: Optional[FrameType]
 ) -> None:  # pragma: no cover
-
     with lock:
-
         Connector.disconnect_all()
 
     # This is needed to let connectors to complete the disconnection and prevent
@@ -106,7 +104,6 @@ def create_app(
 
     # CORS
     if not PRODUCTION:
-
         if TESTING:
             cors_origin = "*"
         else:  # pragma: no cover
@@ -153,7 +150,6 @@ def create_app(
         mem.customizer = Customizer()
 
     else:
-
         mem.configuration = endpoints_loader.load_configuration()
         mem.initializer = Meta.get_class("initialization", "Initializer")
         if not mem.initializer:  # pragma: no cover
@@ -177,7 +173,6 @@ def create_app(
 
     # Restful plugin with endpoint mapping (skipped in INIT|DESTROY|WORKER modes)
     if mode == ServerModes.NORMAL:
-
         logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
         # warnings levels:
@@ -325,7 +320,6 @@ def create_app(
         ignore_verbs = {"HEAD", "OPTIONS"}
 
         for rule in flask_app.url_map.iter_rules():
-
             view_function = flask_app.view_functions[rule.endpoint]
             if not hasattr(view_function, "view_class"):
                 continue
@@ -364,7 +358,6 @@ def create_app(
     flask_app.after_request(handle_response)
 
     if SENTRY_URL is not None:  # pragma: no cover
-
         if PRODUCTION:
             sentry_sdk_init(
                 dsn=SENTRY_URL,

@@ -17,7 +17,6 @@ class Logout(EndpointResource):
         responses={204: "Token correctly removed"},
     )
     def get(self, user: User) -> Response:
-
         _, token = decorators.auth.get_authorization_token()
         if token:
             self.auth.invalidate_token(token)

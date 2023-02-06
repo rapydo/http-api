@@ -12,7 +12,6 @@ from restapi.services.authentication import Role, User
 
 
 class AdminStats(EndpointResource):
-
     labels = ["helpers"]
     depends_on = ["AUTH_ENABLE"]
     private = True
@@ -25,7 +24,6 @@ class AdminStats(EndpointResource):
         responses={"200": "Stats retrieved"},
     )
     def get(self, user: User) -> Response:
-
         # This is the average system load calculated over a given period of time
         # of 1, 5 and 15 minutes.
         # In our case, we will show the load average over a period of 15 minutes.

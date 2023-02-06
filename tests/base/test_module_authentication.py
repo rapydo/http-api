@@ -49,7 +49,6 @@ def verify_token_is_not_valid(
 )
 class TestApp(BaseTests):
     def test_password_management(self, faker: Faker) -> None:
-
         # Ensure name and surname longer than 3
         name = self.get_first_name(faker)
         surname = self.get_last_name(faker)
@@ -229,7 +228,6 @@ class TestApp(BaseTests):
         reason="This test needs 2FA to be available",
     )
     def test_totp_management() -> None:
-
         auth = Connector.get_authentication_instance()
 
         with pytest.raises(Unauthorized, match=r"Verification code is missing"):
@@ -277,7 +275,6 @@ class TestApp(BaseTests):
 
     @staticmethod
     def test_login_management(faker: Faker) -> None:
-
         auth = Connector.get_authentication_instance()
 
         if BaseAuthentication.default_user:
@@ -306,7 +303,6 @@ class TestApp(BaseTests):
         assert len(logins) == 0
 
     def test_tokens_management(self, client: FlaskClient, faker: Faker) -> None:
-
         auth = Connector.get_authentication_instance()
 
         # Just to verify that the function works
@@ -414,7 +410,6 @@ class TestApp(BaseTests):
 
     @staticmethod
     def test_users_groups_roles(faker: Faker) -> None:
-
         auth = Connector.get_authentication_instance()
 
         user = auth.get_user(username=BaseAuthentication.default_user)
@@ -604,7 +599,6 @@ class TestApp(BaseTests):
 
     @staticmethod
     def test_authentication_abstract_methods(faker: Faker) -> None:
-
         # Super trick!
         # https://clamytoe.github.io/articles/2020/Mar/12/testing-abcs-with-abstract-methods-with-pytest
         abstractmethods = BaseAuthentication.__abstractmethods__

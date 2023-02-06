@@ -61,7 +61,6 @@ class Customizer(BaseCustomizer):
 
     @staticmethod
     def get_custom_input_fields(request: FlaskRequest, scope: int) -> Props:
-
         # required = request and request.method == "POST"
         """
         if scope == BaseCustomizer.ADMIN:

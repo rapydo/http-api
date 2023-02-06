@@ -72,7 +72,6 @@ def endpoint(
     **kwargs: Any,
 ) -> Callable[[EndpointFunction], EndpointFunction]:
     def decorator(func: EndpointFunction) -> EndpointFunction:
-
         specs: Dict[str, Any] = {}
 
         specs["summary"] = summary
@@ -106,7 +105,6 @@ def endpoint(
 
         @wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> EndpointFunction:
-
             return cast(EndpointFunction, func(self, *args, **kwargs))
 
         return cast(EndpointFunction, wrapper)
@@ -115,7 +113,6 @@ def endpoint(
 
 
 def match_types(static_type: Any, runtime_value: Any) -> bool:
-
     # parameters annotated as Any are always accepted, regardless the runtime type
     if static_type == Any:
         return True
@@ -159,7 +156,6 @@ def inject_callback_parameters(
     kwargs: Dict[str, Any],
     view_args: Optional[Dict[str, Any]],
 ) -> Optional[Dict[str, Any]]:
-
     callback_name = callback_fn.__name__
     parameters = get_type_hints(callback_fn)
 
@@ -196,7 +192,6 @@ def inject_callback_parameters(
             input_param = kwargs[name]
 
         else:
-
             p = inspect.signature(callback_fn).parameters[name]
             # Parameter is missing but it has a default value, so can be safely skipped
             if p.default is not p.empty:  # pragma: no cover
@@ -255,7 +250,6 @@ def preload(
     def decorator(func: EndpointFunction) -> EndpointFunction:
         @wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-
             injected_parameters = inject_callback_parameters(
                 callback, kwargs, request.view_args
             )
@@ -320,7 +314,6 @@ def cache(*args: Any, **kwargs: Any) -> Any:
 def database_transaction(func: EndpointFunction) -> EndpointFunction:
     @wraps(func)
     def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-
         neo4j_enabled = Connector.check_availability("neo4j")
         sqlalchemy_enabled = Connector.check_availability("sqlalchemy")
         if neo4j_enabled:
@@ -334,7 +327,6 @@ def database_transaction(func: EndpointFunction) -> EndpointFunction:
             alchemy_db = sqlalchemy.get_instance()
 
         try:
-
             if neo4j_enabled:
                 neo4j_db.begin()
 
@@ -354,7 +346,6 @@ def database_transaction(func: EndpointFunction) -> EndpointFunction:
         except Exception as e:
             log.debug("Rolling backend database transaction")
             try:
-
                 if neo4j_enabled:
                     neo4j_db.rollback()
 
@@ -408,7 +399,6 @@ def get_pagination(func: EndpointFunction) -> EndpointFunction:
     # https://github.com/jmcarp/flask-apispec/issues/189
     @use_kwargs(Pagination, location="query")
     def get_wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-
         return func(self, *args, **kwargs)
 
     @wraps(func)
@@ -416,7 +406,6 @@ def get_pagination(func: EndpointFunction) -> EndpointFunction:
     # https://github.com/jmcarp/flask-apispec/issues/189
     @use_kwargs(Pagination)
     def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-
         return func(self, *args, **kwargs)
 
     if func.__name__ == "get":
@@ -437,7 +426,6 @@ def init_chunk_upload(func: EndpointFunction) -> EndpointFunction:
     # https://github.com/jmcarp/flask-apispec/issues/189
     @use_kwargs(ChunkUpload)
     def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-
         return func(self, *args, **kwargs)
 
     return cast(EndpointFunction, wrapper)
@@ -459,7 +447,6 @@ def catch_exceptions(**kwargs: Any) -> Callable[[EndpointFunction], EndpointFunc
                 out = func(self, *args, **kwargs)
             # Catch the exception requested by the user
             except RestApiException as e:
-
                 if e.is_warning:
                     log.warning(e)
                 else:
@@ -493,7 +480,6 @@ def catch_exceptions(**kwargs: Any) -> Callable[[EndpointFunction], EndpointFunc
                     "Unexpected Server Error", code=500, force_json=True
                 )
             except Exception as e:  # pragma: no cover
-
                 if SENTRY_URL is not None:
                     capture_exception(e)
 

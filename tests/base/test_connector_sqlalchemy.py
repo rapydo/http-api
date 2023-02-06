@@ -17,7 +17,6 @@ CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
     CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
 )
 def test_no_sqlalchemy() -> None:
-
     with pytest.raises(ServiceUnavailable):
         connector.get_instance()
 
@@ -29,7 +28,6 @@ def test_no_sqlalchemy() -> None:
     not CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
 )
 def test_sqlalchemy(app: Flask) -> None:
-
     log.info("Executing {} tests", CONNECTOR)
 
     if not connector.SQLAlchemy.is_mysql():

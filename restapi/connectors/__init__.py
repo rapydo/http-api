@@ -59,7 +59,6 @@ class Connector(metaclass=abc.ABCMeta):
     _instances: Dict[str, T] = {}  # type: ignore
 
     def __init__(self) -> None:
-
         # This is the lower-cased class name (neomodel, celeryext)
         # self.name = self.__class__.__name__.lower()
         # This is the folder name corresponding to the connector name (neo4j, celery, )
@@ -85,7 +84,6 @@ class Connector(metaclass=abc.ABCMeta):
 
     @staticmethod
     def init() -> None:
-
         if Connector.authentication_service == NO_AUTH:
             log.info("No Authentication service configured")
         else:
@@ -119,7 +117,6 @@ class Connector(metaclass=abc.ABCMeta):
         excinst: Optional[Exception],
         exctb: Optional[TracebackType],
     ) -> bool:
-
         if not self.disconnected:
             self.disconnect()
         if excinst:  # pragma: no cover
@@ -155,7 +152,6 @@ class Connector(metaclass=abc.ABCMeta):
 
     @classmethod
     def load_connectors(cls, path: Path, module: str, services: Services) -> Services:
-
         main_folder = path.joinpath(CONNECTORS_FOLDER)
         if not main_folder.is_dir():
             log.debug("Connectors folder not found: {}", main_folder)
@@ -233,7 +229,6 @@ class Connector(metaclass=abc.ABCMeta):
 
     @staticmethod
     def get_class(connector_module: Optional[ModuleType]) -> Optional[Type[Any]]:
-
         if not connector_module:  # pragma: no cover
             return None
 
@@ -246,7 +241,6 @@ class Connector(metaclass=abc.ABCMeta):
 
     @staticmethod
     def get_authentication_instance() -> BaseAuthentication:
-
         if Connector.authentication_service == NO_AUTH:
             return NoAuthentication()
 
@@ -265,7 +259,6 @@ class Connector(metaclass=abc.ABCMeta):
 
     @staticmethod
     def init_app(app: Flask, worker_mode: bool = False) -> None:
-
         Connector.app = app
 
         if Connector.authentication_service == NO_AUTH:
@@ -283,7 +276,6 @@ class Connector(metaclass=abc.ABCMeta):
 
     @staticmethod
     def project_init(options: Dict[str, bool]) -> None:
-
         if Connector.authentication_service != NO_AUTH:
             authentication_instance = Connector.get_authentication_instance()
 
@@ -321,7 +313,6 @@ class Connector(metaclass=abc.ABCMeta):
     @staticmethod
     def project_clean() -> None:
         if Connector.authentication_service != NO_AUTH:
-
             connector_module = Connector.get_module(
                 Connector.authentication_service, BACKEND_PACKAGE
             )
@@ -357,12 +348,10 @@ class Connector(metaclass=abc.ABCMeta):
         extended_models: Dict[str, Type[Any]],
         custom_models: Dict[str, Type[Any]],
     ) -> None:
-
         # Join models as described by issue #16
         cls._models = base_models
         for m in [extended_models, custom_models]:
             for key, model in m.items():
-
                 # Verify if overriding => replace
                 if key in base_models.keys():
                     if issubclass(model, base_models[key]):  # pragma: no cover
@@ -416,7 +405,6 @@ class Connector(metaclass=abc.ABCMeta):
     def initialize_connection(
         self: T, expiration: int, verification: int, **kwargs: str
     ) -> T:
-
         # Create a new instance of itself
         obj = self.__class__()
 
@@ -459,7 +447,6 @@ class Connector(metaclass=abc.ABCMeta):
         retry_wait: int = 0,
         **kwargs: str,
     ) -> T:
-
         if retries < 1:
             raise ServiceUnavailable(f"Invalid retry value: {retries}")
 
@@ -489,10 +476,8 @@ class Connector(metaclass=abc.ABCMeta):
 
         # if an expiration time is set, verify the instance age
         if cached_obj and cached_obj.connection_expiration_time:
-
             # the instance is invalidated if older than the expiration time
             if datetime.now() >= cached_obj.connection_expiration_time:
-
                 log.info("{} connection is expired", self.name)
                 cached_obj.disconnect()
                 cached_obj = None

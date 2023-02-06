@@ -20,7 +20,6 @@ CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
     CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
 )
 def test_no_ftp() -> None:
-
     with pytest.raises(ServiceUnavailable):
         connector.get_instance()
 
@@ -32,7 +31,6 @@ def test_no_ftp() -> None:
     not CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
 )
 def test_ftp(app: Flask, faker: Faker) -> None:
-
     log.info("Executing {} tests", CONNECTOR)
 
     with pytest.raises(ServiceUnavailable):

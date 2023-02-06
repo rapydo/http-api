@@ -42,7 +42,6 @@ class EndpointElements:
 
 class EndpointsLoader:
     def __init__(self) -> None:
-
         # Used by server.py to load endpoints definitions
         self.endpoints: List[EndpointElements] = []
         # Used by server.py to remove unmapped methods
@@ -79,7 +78,6 @@ class EndpointsLoader:
         return configuration
 
     def load_endpoints(self) -> None:
-
         # core endpoints folder (rapydo/http-api)
         self.load_endpoints_folder(ABS_RESTAPI_PATH)
 
@@ -122,7 +120,6 @@ class EndpointsLoader:
         return False, None
 
     def extract_endpoints(self, base_dir: Path) -> List[Type[EndpointResource]]:
-
         endpoints_classes: List[Type[EndpointResource]] = []
         # get last item of the path
         # normpath is required to strip final / if any
@@ -131,7 +128,6 @@ class EndpointsLoader:
         apis_dir = base_dir.joinpath("endpoints")
         apiclass_module = f"{base_module}.endpoints"
         for epfile in apis_dir.glob("*.py"):
-
             # get module name (es: endpoints.filename)
 
             module_name = f"{apiclass_module}.{epfile.stem}"
@@ -174,7 +170,6 @@ class EndpointsLoader:
         # Walk folders looking for endpoints
 
         for epclss in self.extract_endpoints(base_dir):
-
             if not epclss.methods:  # pragma: no cover
                 continue
 
@@ -189,7 +184,6 @@ class EndpointsLoader:
 
             # m = GET|PUT|POST|DELETE|PATCH|...
             for m in epclss.methods:
-
                 # method_fn = get|post|put|delete|patch|...
                 method_fn = m.lower()
 
@@ -218,7 +212,6 @@ class EndpointsLoader:
                         "user" not in parameters
                         or parameters["user"] != expected_annotation
                     ):  # pragma: no cover
-
                         if "user" in parameters:
                             log.critical(
                                 "Wrong user parameter in {}.{} (function {}), "

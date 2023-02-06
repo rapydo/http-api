@@ -8,14 +8,12 @@ from restapi.tests import API_URI, BaseTests, FlaskClient
 
 class TestApp(BaseTests):
     def test_inputs(self, client: FlaskClient) -> None:
-
         # This test verifies that buildData is always able to randomly create
         # valid inputs for endpoints with inputs defined by marshamallow schemas
         schema = self.get_dynamic_input_schema(client, "tests/inputs", {})
         # Expected number of fields
         assert len(schema) == 14
         for field in schema:
-
             # Always in the schema
             assert "key" in field
             assert "type" in field
@@ -226,7 +224,6 @@ class TestApp(BaseTests):
         reason="This test needs neo4j to be available",
     )
     def test_neo4j_inputs(self, client: FlaskClient) -> None:
-
         headers, _ = self.do_login(client, None, None)
         schema = self.get_dynamic_input_schema(client, "tests/neo4jinputs", headers)
         assert len(schema) == 1

@@ -7,7 +7,6 @@ from restapi.utilities.logs import log
 
 class TestApp(BaseTests):
     def test_admin_stats(self, client: FlaskClient) -> None:
-
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping admin/stats tests")
             return

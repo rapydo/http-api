@@ -33,7 +33,6 @@ class Downloader:
         subfolder: Path,
         mime: Optional[str] = None,
     ) -> Response:
-
         Uploader.validate_upload_folder(subfolder)
 
         filename = secure_filename(filename)
@@ -69,7 +68,6 @@ class Downloader:
         mime: Optional[str] = None,
         out_filename: Optional[str] = None,
     ) -> Response:
-
         Uploader.validate_upload_folder(subfolder)
 
         filename = secure_filename(filename)

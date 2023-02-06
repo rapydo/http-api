@@ -32,7 +32,6 @@ DOCS = "docs-generation"
 
 
 def get_host_type(HOSTNAME: str) -> str:
-
     if HOSTNAME == DOCS:
         return DOCS
 
@@ -89,7 +88,6 @@ def get_project_configuration(key: str, default: str) -> str:
 
 @lru_cache
 def get_backend_url() -> str:
-
     BACKEND_URL = Env.get("BACKEND_URL", "")
 
     if BACKEND_URL:
@@ -108,7 +106,6 @@ def get_backend_url() -> str:
 
 @lru_cache
 def get_frontend_url() -> str:
-
     FRONTEND_URL = Env.get("FRONTEND_URL", "")
 
     if FRONTEND_URL:
