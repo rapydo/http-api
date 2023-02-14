@@ -18,7 +18,6 @@ from restapi.utilities.logs import log
 if Connector.check_availability("smtp"):
 
     class ProfileRegistration(EndpointResource):
-
         depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION", "AUTH_ENABLE"]
         labels = ["profile"]
 
@@ -72,7 +71,6 @@ if Connector.check_availability("smtp"):
             self.log_event(self.events.create, user, kwargs)
 
             try:
-
                 auth = Connector.get_authentication_instance()
 
                 activation_token, payload = auth.create_temporary_token(

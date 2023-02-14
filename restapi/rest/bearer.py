@@ -69,7 +69,6 @@ class HTTPTokenAuth:
                 return None, None
 
         elif ALLOW_ACCESS_TOKEN_PARAMETER or allow_access_token_parameter:
-
             if not (token := request.args.get("access_token", "")):
                 return None, None
 
@@ -121,7 +120,6 @@ class HTTPTokenAuth:
                     and auth_type == HTTPAUTH_SCHEME
                     and request.method != "OPTIONS"
                 ):
-
                     # valid, token, jti, user
                     valid, token, _, user = caller.auth.verify_token(token)
 
@@ -223,7 +221,6 @@ class HTTPTokenAuth:
                 # Handling OPTIONS forwarded to our application:
                 # ignore headers and let go, avoid unwanted interactions with CORS
                 if request.method != "OPTIONS":
-
                     # valid, token, jti, user
                     valid, token, _, user = caller.auth.verify_token(token)
                     # Check authentication

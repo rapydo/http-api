@@ -8,7 +8,6 @@ from restapi.services.authentication import Group, Role, User
 
 
 def inject_group(endpoint: EndpointResource, group_id: str) -> Dict[str, Any]:
-
     group = endpoint.auth.get_group(group_id=group_id)
     if not group:
         raise NotFound("This group cannot be found")
@@ -17,7 +16,6 @@ def inject_group(endpoint: EndpointResource, group_id: str) -> Dict[str, Any]:
 
 
 class AdminGroups(EndpointResource):
-
     depends_on = ["AUTH_ENABLE"]
     labels = ["management"]
     private = True
@@ -33,12 +31,10 @@ class AdminGroups(EndpointResource):
         },
     )
     def get(self, user: User) -> Response:
-
         groups: List[Dict[str, Any]] = []
 
         is_admin = self.auth.is_admin(user)
         for g in self.auth.get_groups():
-
             members = list(g.members)
 
             coordinators = [
@@ -72,7 +68,6 @@ class AdminGroups(EndpointResource):
         },
     )
     def post(self, user: User, **kwargs: Any) -> Response:
-
         group = self.auth.create_group(kwargs)
 
         self.auth.save_group(group)
@@ -90,7 +85,6 @@ class AdminGroups(EndpointResource):
         responses={204: "Group successfully modified", 404: "Group not found"},
     )
     def put(self, group_id: str, group: Group, user: User, **kwargs: Any) -> Response:
-
         # mypy correctly raises errors because update_properties is not defined
         # in generic Connector instances, but in this case this is an instance
         # of an auth db and their implementation always contains this method

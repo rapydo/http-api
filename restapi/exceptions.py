@@ -13,7 +13,6 @@ class RestApiException(Exception):
         status_code: int = 404,
         is_warning: bool = False,
     ):
-
         super().__init__(exception)
         self.status_code = status_code or 404
         self.is_warning = is_warning

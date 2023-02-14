@@ -17,7 +17,6 @@ CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
     CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
 )
 def test_no_redis() -> None:
-
     with pytest.raises(ServiceUnavailable):
         connector.get_instance()
 
@@ -29,7 +28,6 @@ def test_no_redis() -> None:
     not CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
 )
 def test_redis(app: Flask) -> None:
-
     log.info("Executing {} tests", CONNECTOR)
 
     obj = connector.get_instance(host="invalidhostname", port="123")

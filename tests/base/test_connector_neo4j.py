@@ -25,7 +25,6 @@ CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
     CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
 )
 def test_no_neo4j() -> None:
-
     with pytest.raises(ServiceUnavailable):
         connector.get_instance()
 
@@ -56,7 +55,6 @@ class TestNeo4j(BaseTests):
 
     @staticmethod
     def test_connector(app: Flask, faker: Faker) -> None:
-
         obj = connector.get_instance()
         assert obj is not None
 
@@ -170,7 +168,6 @@ class TestNeo4j(BaseTests):
 
     @staticmethod
     def test_parser() -> None:
-
         with pytest.raises(ValueError):
             # missing :type
             node1 = NodeDump("TestNode1", fields=["f1"])

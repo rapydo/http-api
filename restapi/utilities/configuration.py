@@ -67,9 +67,7 @@ def read_configuration(
 
 
 def mix(base: ConfigurationType, custom: ConfigurationType) -> ConfigurationType:
-
     for key, elements in custom.items():
-
         if key not in base:
             base[key] = custom[key]
             continue
@@ -92,7 +90,6 @@ def mix(base: ConfigurationType, custom: ConfigurationType) -> ConfigurationType
 
 
 def load_yaml_file(filepath: Path) -> ConfigurationType:
-
     if not filepath.exists():
         raise AttributeError(f"YAML file does not exist: {filepath}")
 

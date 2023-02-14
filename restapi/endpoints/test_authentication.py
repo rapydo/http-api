@@ -17,7 +17,6 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def get(self) -> Response:
-
             return self.response("OK")
 
     class TestAuthentication(EndpointResource):
@@ -29,7 +28,6 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def get(self, user: User) -> Response:
-
             return self.response({"email": user.email})
 
     class TestOptionalAuthentication(EndpointResource):
@@ -44,7 +42,6 @@ if TESTING:
             },
         )
         def get(self, user: Optional[User]) -> Response:
-
             if user:
                 return self.response({"email": user.email})
             return self.empty_response()
@@ -58,7 +55,6 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def get(self, user: User) -> Response:
-
             return self.response({"email": user.email})
 
     class TestOptionalQueryParameterAuthentication(EndpointResource):
@@ -73,7 +69,6 @@ if TESTING:
             },
         )
         def get(self, user: Optional[User]) -> Response:
-
             if user:
                 return self.response({"email": user.email})
             return self.empty_response()
@@ -87,7 +82,6 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def get(self, user: User) -> Response:
-
             return self.response({"email": user.email})
 
     # Note: this endpoint requires a role that does not exist!
@@ -102,11 +96,9 @@ if TESTING:
         # no cover because this endpoint will be never called
         # because it requires an Unknown Role to be accessed
         def get(self, user: User) -> Response:  # pragma: no cover
-
             return self.response({"email": user.email})
 
     def verify_uuid_value(endpoint: EndpointResource, uuid: str) -> Dict[str, Any]:
-
         user = endpoint.auth.get_user(user_id=uuid)
         if not user or not endpoint.auth.is_admin(user):
             raise Unauthorized("You are not authorized")

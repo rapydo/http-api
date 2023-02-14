@@ -26,7 +26,6 @@ elif max_login_attempts == 0:
 
     class TestApp1(BaseTests):
         def test_01_login_ban_not_enabled(self, client: FlaskClient) -> None:
-
             uuid, data = self.create_user(client)
             # Login attempts are not registered, let's try to fail the login many times
             for _ in range(0, 10):
@@ -54,14 +53,12 @@ elif max_login_attempts == 0:
             self.delete_user(client, uuid)
 
 else:
-
     # This test executes a sleep(ban_duration)... this assert is to prevent to
     # block the tests due to a too-long ban duration
     assert ban_duration < 60
 
     class TestApp2(BaseTests):
         def verify_credentials_ban_notification(self) -> str:
-
             # Verify email sent to notify credentials block,
             # + extract and return the unlock url
             mail = self.read_mock_email()
@@ -85,7 +82,6 @@ else:
             return token
 
         def test_01_failed_login_ban(self, client: FlaskClient) -> None:
-
             if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
                 log.warning("Skipping admin/users tests")
                 return
@@ -159,7 +155,6 @@ else:
             self.delete_user(client, uuid)
 
         def test_02_unlock_token(self, client: FlaskClient) -> None:
-
             if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
                 log.warning("Skipping admin/users tests")
                 return
@@ -322,7 +317,6 @@ else:
             self, client: FlaskClient, faker: Faker
         ) -> None:
             if Env.get_bool("ALLOW_REGISTRATION"):
-
                 registration_data = {}
                 registration_data["email"] = faker.ascii_email()
                 registration_data["name"] = faker.first_name()
@@ -426,7 +420,6 @@ else:
         if Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"):
 
             def test_04_totp_and_login_ban(self, client: FlaskClient) -> None:
-
                 uuid, data = self.create_user(client)
 
                 # Verify that login still works (TOTP will be automatically added)
@@ -512,7 +505,6 @@ else:
         def test_05_no_notification_email_for_wrong_usernames(
             self, client: FlaskClient, faker: Faker
         ) -> None:
-
             if not Env.get_bool("MAIN_LOGIN_ENABLE"):  # pragma: no cover
                 log.warning("Skipping admin/users tests")
                 return

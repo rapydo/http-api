@@ -22,7 +22,6 @@ CONNECTOR_AVAILABLE = Connector.check_availability("redis")
 )
 class TestAppNoRedis(BaseTests):
     def test_caching_autocleaning(self, app: Flask) -> None:
-
         with pytest.raises(ServiceUnavailable):
             Cache.get_instance(app)
 

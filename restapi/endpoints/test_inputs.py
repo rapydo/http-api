@@ -103,12 +103,10 @@ if TESTING:
             responses={204: "Tests executed"},
         )
         def post(self, user: Optional[User], **kwargs: Any) -> Response:
-
             return self.empty_response()
 
 
 if TESTING and Connector.check_availability("neo4j"):
-
     CHOICES = (("A", "AAA"), ("B", "BBB"), ("C", "CCC"))
 
     class InputNeo4jSchema(Schema):
@@ -138,7 +136,6 @@ if TESTING and Connector.check_availability("neo4j"):
             responses={204: "Tests executed"},
         )
         def post(self, choice: str, user: User) -> Response:
-
             data = {
                 "choice": choice,
                 "relationship_many": user.tokens,

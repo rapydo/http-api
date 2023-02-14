@@ -15,7 +15,6 @@ from restapi.tests import API_URI, BaseTests, FlaskClient
 )
 class TestApp(BaseTests):
     def test_sendmail(self, client: FlaskClient, faker: Faker) -> None:
-
         headers, _ = self.do_login(client, None, None)
 
         r = client.get(f"{API_URI}/admin/mail", headers=headers)

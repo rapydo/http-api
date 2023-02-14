@@ -12,7 +12,6 @@ from restapi.utilities.logs import OBSCURE_VALUE, Events, log
 
 class TestApp(BaseTests):
     def test_admin_users(self, client: FlaskClient, faker: Faker) -> None:
-
         if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping admin/users tests")
             return
@@ -26,7 +25,6 @@ class TestApp(BaseTests):
             Role.ADMIN,
             Role.STAFF,
         ):
-
             if not staff_role_enabled:  # pragma: no cover
                 log.warning(
                     "Skipping tests of admin/users endpoints, role Staff not enabled"
@@ -385,7 +383,6 @@ class TestApp(BaseTests):
             assert r.status_code == 204
 
     def test_staff_restrictions(self, client: FlaskClient, faker: Faker) -> None:
-
         if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping admin/users tests")
             return

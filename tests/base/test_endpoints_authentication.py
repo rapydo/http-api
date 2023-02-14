@@ -7,7 +7,6 @@ from restapi.utilities.logs import log
 
 class TestApp(BaseTests):
     def test_no_auth(self, client: FlaskClient) -> None:
-
         r = client.get(f"{API_URI}/tests/noauth")
         assert r.status_code == 200
         assert self.get_content(r) == "OK"
@@ -28,7 +27,6 @@ class TestApp(BaseTests):
         assert self.get_content(r) == "OK"
 
     def test_auth(self, client: FlaskClient) -> None:
-
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping authentication tests")
             return
@@ -60,7 +58,6 @@ class TestApp(BaseTests):
             assert r.status_code == 401
 
     def test_optional_auth(self, client: FlaskClient) -> None:
-
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping authentication tests")
             return
@@ -104,7 +101,6 @@ class TestApp(BaseTests):
             assert r.status_code == 204
 
     def test_access_token_parameter(self, client: FlaskClient) -> None:
-
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping authentication tests")
             return
@@ -145,7 +141,6 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
     def test_optional_access_token_parameter(self, client: FlaskClient) -> None:
-
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping authentication tests")
             return
@@ -191,7 +186,6 @@ class TestApp(BaseTests):
         assert r.status_code == 401
 
     def test_authentication_with_multiple_roles(self, client: FlaskClient) -> None:
-
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping authentication tests")
             return
@@ -243,7 +237,6 @@ class TestApp(BaseTests):
             self.delete_user(client, uuid)
 
     def test_authentication_with_auth_callback(self, client: FlaskClient) -> None:
-
         if not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping authentication tests")
             return

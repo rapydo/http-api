@@ -22,7 +22,6 @@ DEFAULT_PERPAGE = 10
 # Base type MethodResource becomes "Any" due to an unfollowed import
 # Base type Resource becomes "Any" due to an unfollowed import
 class EndpointResource(MethodResource, MethodView):  # type: ignore
-
     depends_on: List[str] = []
     labels = ["undefined"]
     private = False
@@ -62,7 +61,6 @@ class EndpointResource(MethodResource, MethodView):  # type: ignore
         allow_html: bool = False,
         force_json: bool = False,
     ) -> Response:
-
         if headers is None:
             headers = {}
 
@@ -115,7 +113,6 @@ class EndpointResource(MethodResource, MethodView):  # type: ignore
         payload: Optional[Dict[str, Any]] = None,
         user: Optional[Any] = None,
     ) -> None:
-
         if not user:
             user = self.auth.get_user(user_id=self.authorized_user)
 

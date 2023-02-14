@@ -15,7 +15,6 @@ FlaskApp = Flask
 
 
 class BaseCustomizer(metaclass=abc.ABCMeta):
-
     # These are scopes used in get_custom_input_fields
     ADMIN = 1
     PROFILE = 2
@@ -61,7 +60,6 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
     def get_custom_input_fields(
         request: FlaskRequest, scope: int
     ) -> Props:  # pragma: no cover
-
         # required = request and request.method == "POST"
         """
         if scope == BaseCustomizer.ADMIN:

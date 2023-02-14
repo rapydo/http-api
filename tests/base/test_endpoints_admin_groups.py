@@ -19,7 +19,6 @@ def get_random_group_name(faker: Faker) -> str:
 
 class TestApp(BaseTests):
     def test_admin_groups(self, client: FlaskClient, faker: Faker) -> None:
-
         if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping admin/groups tests")
             return
@@ -30,7 +29,6 @@ class TestApp(BaseTests):
             Role.ADMIN,
             Role.STAFF,
         ):
-
             if not staff_role_enabled:  # pragma: no cover
                 log.warning(
                     "Skipping tests of admin/groups endpoints, role Staff not enabled"
@@ -88,7 +86,6 @@ class TestApp(BaseTests):
             fullname = None
             for g in groups:
                 if g.get("uuid") == uuid:
-
                     fullname = g.get("fullname")
                     break
             else:  # pragma: no cover
@@ -141,7 +138,6 @@ class TestApp(BaseTests):
             assert isinstance(groups, list)
             for g in groups:
                 if g.get("uuid") == uuid:
-
                     assert g.get("fullname") == newdata.get("fullname")
                     assert g.get("fullname") != data.get("fullname")
                     assert g.get("fullname") != fullname

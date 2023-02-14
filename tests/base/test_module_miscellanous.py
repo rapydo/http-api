@@ -50,12 +50,10 @@ from restapi.utilities.time import get_timedelta, seconds_to_human
 
 
 class TestApp(BaseTests):
-
     # #######################################
     # ####      Env
     #########################################
     def test_env(self, faker: Faker) -> None:
-
         assert not Env.to_bool(None)
         assert Env.to_bool(None, True)
         assert not Env.to_bool(False)
@@ -211,7 +209,6 @@ class TestApp(BaseTests):
     # ####      Meta
     #########################################
     def test_meta(self) -> None:
-
         # This is a valid package containing other packages... but no task will be found
         tasks = Meta.get_celery_tasks("restapi.utilities")
         assert isinstance(tasks, list)
@@ -259,7 +256,6 @@ class TestApp(BaseTests):
     # ####      Templates
     #########################################
     def test_templates(self) -> None:
-
         h, p = get_html_template("this-should-not-exist", {})
         assert h is None
         assert p is None
@@ -268,7 +264,6 @@ class TestApp(BaseTests):
     # ####      Config Utilities
     #########################################
     def test_conf_utilities(self, faker: Faker) -> None:
-
         assert get_host_type("backend-server") == "backend-server"
         assert get_host_type("docs-generation") == "docs-generation"
         assert get_host_type("celery") == "celery"
@@ -278,7 +273,6 @@ class TestApp(BaseTests):
         assert get_host_type(faker.pystr()) == "celery"
 
     def test_get_backend_url(self) -> None:
-
         # bypass the lru_cache decorator
         func = get_backend_url.__wrapped__
 
@@ -361,7 +355,6 @@ class TestApp(BaseTests):
             assert func() == f"http://{DOMAIN}/abc:8080"
 
     def test_get_frontend_url(self) -> None:
-
         # bypass the lru_cache decorator
         func = get_frontend_url.__wrapped__
 
@@ -438,7 +431,6 @@ class TestApp(BaseTests):
     # ####      Timeouts
     #########################################
     def test_timeouts(self) -> None:
-
         start_timeout(1)
         with pytest.raises(Timeout, match=r"Operation timeout: interrupted"):
             # This operation will be interrupted because slower than timeout
@@ -456,7 +448,6 @@ class TestApp(BaseTests):
     # ####      Logging
     #########################################
     def test_logging(self) -> None:
-
         log_output = handle_log_output(None)
         assert isinstance(log_output, dict)
         assert len(log_output) == 0
@@ -486,7 +477,6 @@ class TestApp(BaseTests):
     # ####      YAML data load and mix
     #########################################
     def test_yaml(self) -> None:
-
         data: Dict[str, Any] = {"a": 1}
         assert mix({}, data) == data
 
@@ -528,7 +518,6 @@ class TestApp(BaseTests):
     # ####      Uploader
     #########################################
     def test_uploader(self) -> None:
-
         meta = Uploader.get_file_metadata("invalid_file")  # type: ignore
         assert isinstance(meta, dict)
         assert len(meta) == 0
@@ -627,7 +616,6 @@ class TestApp(BaseTests):
     # ####      Time
     #########################################
     def test_time(self, faker: Faker) -> None:
-
         every = faker.pyint()
 
         t = get_timedelta(every, "seconds")
@@ -731,7 +719,6 @@ class TestApp(BaseTests):
     # ####      Exceptions
     #########################################
     def test_exceptions(self) -> None:
-
         with pytest.raises(RestApiException) as e:
             raise BadRequest("test")
         assert e.value.status_code == 400
@@ -1135,7 +1122,6 @@ class TestApp(BaseTests):
     # ####      Processes
     #########################################
     def test_processes(self) -> None:
-
         assert not find_process("this-should-not-exist")
         assert find_process("restapi")
         assert find_process("dumb-init")

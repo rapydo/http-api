@@ -17,7 +17,6 @@ def date_lower_than(a: datetime, b: datetime) -> bool:
 
 
 def get_timedelta(every: int, period: AllowedTimedeltaPeriods) -> timedelta:
-
     if period == "seconds":
         return timedelta(seconds=every)
 
@@ -49,7 +48,6 @@ def pluralize(value: int, unit: str) -> str:
 
 
 def seconds_to_human(seconds: int) -> str:
-
     elements: List[str] = []
     if seconds < 60:
         elements.append(pluralize(seconds, "second"))

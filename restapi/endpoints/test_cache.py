@@ -26,7 +26,6 @@ if TESTING and Connector.check_availability("redis"):
         )
         @decorators.cache(timeout=1)
         def get(self) -> Response:
-
             TestShortCache.counter += 1
             return self.response(TestShortCache.counter)
 
@@ -48,7 +47,6 @@ if TESTING and Connector.check_availability("redis"):
         )
         @decorators.cache(timeout=200)
         def get(self) -> Response:
-
             TestLongCache.counter += 1
             return self.response(TestLongCache.counter)
 
@@ -61,7 +59,6 @@ if TESTING and Connector.check_availability("redis"):
             },
         )
         def delete(self) -> Response:
-
             self.clear_endpoint_cache()
             return self.empty_response()
 
@@ -86,7 +83,6 @@ if TESTING and Connector.check_availability("redis"):
         )
         @decorators.cache(timeout=200)
         def get(self, user: User) -> Response:
-
             TestAuthCache.counter += 1
             return self.response((user.uuid, TestAuthCache.counter))
 
@@ -111,7 +107,6 @@ if TESTING and Connector.check_availability("redis"):
         )
         @decorators.cache(timeout=200)
         def get(self, user: Optional[User]) -> Response:
-
             TestOptionalAuthCache.counter += 1
             uuid = user.uuid if user else "N/A"
             return self.response((uuid, TestOptionalAuthCache.counter))
@@ -137,7 +132,6 @@ if TESTING and Connector.check_availability("redis"):
         )
         @decorators.cache(timeout=200)
         def get(self, user: User) -> Response:
-
             TestParamAuthCache.counter += 1
             return self.response((user.uuid, TestParamAuthCache.counter))
 
@@ -163,7 +157,6 @@ if TESTING and Connector.check_availability("redis"):
         )
         @decorators.cache(timeout=200)
         def get(self, user: Optional[User]) -> Response:
-
             TestOptionalParamAuthCache.counter += 1
             uuid = user.uuid if user else "N/A"
             return self.response((uuid, TestOptionalParamAuthCache.counter))
