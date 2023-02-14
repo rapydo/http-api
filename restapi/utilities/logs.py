@@ -83,8 +83,8 @@ if LOGS_PATH is not None:
             # Messages pass through a multiprocess-safe queue before reaching the sink
             # This is useful while logging to a file through multiple processes.
             # This also has the advantage of making logging calls non-blocking.
-            # Unfortunately it fails to serialize some exceptions with pickle
-            enqueue=False,
+            # Warning: it fails to serialize some exceptions with pickle?
+            enqueue=True,
             # Errors occurring while sink handles logs messages are automatically caught
             # an exception message is displayed on sys.stderr but the exception
             # is not propagated to the caller, preventing your app to crash.
@@ -108,6 +108,7 @@ if LOGS_PATH is not None:
             retention=f"{LOG_RETENTION} days",
             filter=lambda record: "event" in record["extra"],
             format=fmt,
+            enqueue=True,
             # Otherwise in case of missing extra fields the event will be simply ignored
             catch=False,
         )
