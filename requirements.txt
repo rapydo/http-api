@@ -4,7 +4,7 @@ Flask-Caching==2.0.2
 Flask-Cors==3.0.10
 SQLAlchemy==2.0.3
 alembic==1.9.3
-Werkzeug==2.2.2
+Werkzeug==2.2.3
 PyJWT==2.6.0
 pyOpenSSL==23.0.0
 passlib[bcrypt]==1.7.4
