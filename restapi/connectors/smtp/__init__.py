@@ -193,7 +193,7 @@ class Mail(Connector):
                 dest_addresses.append(cc.split(","))
             elif isinstance(cc, list):
                 msg["Cc"] = ",".join(cc)
-                dest_addresses.append(cc)
+                dest_addresses.extend(cc)
             else:
                 log.warning("Invalid CC value: {}", cc)
                 cc = None
@@ -205,7 +205,7 @@ class Mail(Connector):
                 dest_addresses.append(bcc.split(","))
             elif isinstance(bcc, list):
                 msg["Bcc"] = ",".join(bcc)
-                dest_addresses.append(bcc)
+                dest_addresses.extend(bcc)
             else:
                 log.warning("Invalid BCC value: {}", bcc)
                 bcc = None
