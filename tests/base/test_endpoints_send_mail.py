@@ -130,5 +130,7 @@ class TestApp(BaseTests):
         assert f"Subject: {data['subject']}" in email_headers
         ccs = mail.get("cc", [])
         assert ccs[0] == data["to"]
-        assert ccs[1] == data["cc"].split(",")
-        assert ccs[2] == data["bcc"].split(",")
+        assert ccs[1] == data["cc"].split(",")[0]
+        assert ccs[2] == data["cc"].split(",")[1]
+        assert ccs[3] == data["bcc"].split(",")[0]
+        assert ccs[4] == data["bcc"].split(",")[1]
