@@ -90,7 +90,7 @@ def test_smtp(app: Flask, faker: Faker) -> None:
     assert "Subject: subject" in headers
     assert mail.get("from") == "from_addr"
     # format is [to, [cc...], [bcc...]]
-    assert mail.get("cc") == ["to_addr", ["test1", "test2"], ["test3", "test4"]]
+    assert mail.get("cc") == ["to_addr", "test1", "test2", "test3", "test4"]
 
     # This is a special from_address, used to raise SMTPException
     assert not obj.send("body", "subject", "to_addr", "invalid1")
