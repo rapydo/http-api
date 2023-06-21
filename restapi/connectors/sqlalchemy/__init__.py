@@ -201,7 +201,7 @@ class SQLAlchemy(Connector):
         # avoid circular imports
         from restapi.connectors.sqlalchemy.models import Base as db
 
-        self._session = scoped_session(sessionmaker(bind=engine))  # type: ignore
+        self._session = scoped_session(sessionmaker(bind=engine))
         self._session.commit = catch_db_exceptions(self._session.commit)  # type: ignore
         self._session.flush = catch_db_exceptions(self._session.flush)  # type: ignore
         Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore
@@ -239,7 +239,6 @@ class SQLAlchemy(Connector):
 
         engine = mem.sqlalchemy_engines.get(self._url)
         if not engine:
-            log.error("No engine found")
             return None
         instance.db.metadata.create_all(engine)
         SQLAlchemy.DB_INITIALIZING = False
@@ -255,7 +254,6 @@ class SQLAlchemy(Connector):
         log.critical("Destroy current SQL data")
         engine = mem.sqlalchemy_engines.get(self._url)
         if not engine:
-            log.error("No engine found")
             return None
         instance.db.metadata.drop_all(engine)
 
@@ -430,8 +428,11 @@ class Authentication(BaseAuthentication):
 
     def get_roles(self) -> List[RoleObj]:
         engine = mem.sqlalchemy_engines.get(self.db._url)
+        if not engine and mem.sqlalchemy_engines:
+            engine = list(mem.sqlalchemy_engines.values())[0]
         if not engine:
             return []
+
         inspect_engine = inspect(engine)
         if not inspect_engine or not inspect_engine.has_table(
             "role"
