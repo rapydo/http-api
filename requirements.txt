@@ -25,9 +25,11 @@ segno==1.5.2
 PyYAML==6.0
 loguru==0.6.0
 glom==23.1.1
-requests==2.28.2
+requests==2.31.0
 psutil==5.9.4
 plumbum==1.8.1
 html2text==2020.1.16
 orjson==3.8.12
 sentry-sdk[flask]==1.22.2
+cryptography>=41.0.0 # not directly required, pinned by Snyk to avoid a vulnerability
+tornado>=6.3.2 # not directly required, pinned by Snyk to avoid a vulnerability
