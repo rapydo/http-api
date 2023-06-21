@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
 import pytz
 from psycopg2 import OperationalError as PsycopgOperationalError
 from sqlalchemy import create_engine, inspect, select, text
-from sqlalchemy.engine.base import Connection, Engine
+from sqlalchemy.engine.base import Connection
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import (
     DatabaseError,
@@ -43,6 +43,7 @@ from restapi.services.authentication import (
     Token,
     User,
 )
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import Events, log
 from restapi.utilities.uuid import getUUID
 
@@ -137,12 +138,13 @@ def catch_db_exceptions(func: F) -> F:
 class SQLAlchemy(Connector):
     # Used to suppress some errors raised during DB initialization
     DB_INITIALIZING = False
-    _session: Optional[Session] = None
+    _url: Optional[URL] = None
+    _session: Optional[scoped_session[Session]] = None
 
     def __init__(self) -> None:
         # Type of variable becomes "Any" due to an unfollowed import
         self.db: Any = None
-        self.engine: Optional[Engine] = None
+        # self.engine: Optional[Engine] = None
         super().__init__()
 
     def __getattr__(self, name: str) -> Any:
@@ -187,17 +189,19 @@ class SQLAlchemy(Connector):
         )
 
         poolsize = Env.to_int(variables.get("poolsize"), 30)
-        self.engine = create_engine(
-            uri,
-            pool_size=poolsize,
-            max_overflow=poolsize + 10,
-            future=True,
-        )
+        if uri not in mem.sqlalchemy_engines:
+            mem.sqlalchemy_engines[uri] = create_engine(
+                uri,
+                pool_size=poolsize,
+                max_overflow=poolsize + 10,
+                future=True,
+            )
+        engine = mem.sqlalchemy_engines[uri]
 
         # avoid circular imports
         from restapi.connectors.sqlalchemy.models import Base as db
 
-        self._session = scoped_session(sessionmaker(bind=self.engine))  # type: ignore
+        self._session = scoped_session(sessionmaker(bind=engine))  # type: ignore
         self._session.commit = catch_db_exceptions(self._session.commit)  # type: ignore
         self._session.flush = catch_db_exceptions(self._session.flush)  # type: ignore
         Connection.execute = catch_db_exceptions(Connection.execute)  # type: ignore
@@ -212,14 +216,14 @@ class SQLAlchemy(Connector):
         return self
 
     @property
-    def session(self) -> Session:
+    def session(self) -> scoped_session[Session]:
         if self._session is None:  # pragma: no cover
             raise ServiceUnavailable("Session not initialized")
         return self._session
 
     def disconnect(self) -> None:
         if self._session:
-            self._session.close()
+            self._session.remove()
         self.disconnected = True
 
     def is_connected(self) -> bool:
@@ -232,7 +236,12 @@ class SQLAlchemy(Connector):
         instance.session.execute(sql)
 
         SQLAlchemy.DB_INITIALIZING = True
-        instance.db.metadata.create_all(self.engine)
+
+        engine = mem.sqlalchemy_engines.get(self._url)
+        if not engine:
+            log.error("No engine found")
+            return None
+        instance.db.metadata.create_all(engine)
         SQLAlchemy.DB_INITIALIZING = False
 
     def destroy(self) -> None:
@@ -244,7 +253,11 @@ class SQLAlchemy(Connector):
         close_all_sessions()
         # massive destruction
         log.critical("Destroy current SQL data")
-        instance.db.metadata.drop_all(self.engine)
+        engine = mem.sqlalchemy_engines.get(self._url)
+        if not engine:
+            log.error("No engine found")
+            return None
+        instance.db.metadata.drop_all(engine)
 
     @staticmethod
     def update_properties(instance: Any, properties: Dict[str, Any]) -> None:
@@ -416,7 +429,10 @@ class Authentication(BaseAuthentication):
         return True
 
     def get_roles(self) -> List[RoleObj]:
-        inspect_engine = inspect(self.db.engine)
+        engine = mem.sqlalchemy_engines.get(self.db._url)
+        if not engine:
+            return []
+        inspect_engine = inspect(engine)
         if not inspect_engine or not inspect_engine.has_table(
             "role"
         ):  # pragma: no cover

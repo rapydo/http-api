@@ -6,9 +6,11 @@ https://pythonconquerstheuniverse.wordpress.com/
     2010/10/20/a-globals-class-pattern-for-python/
 
 """
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from flask_caching import Cache
+from sqlalchemy.engine.base import Engine
+from sqlalchemy.engine.url import URL
 
 
 class mem:
@@ -22,3 +24,5 @@ class mem:
     # default to True to save connectors by default
     # is set False during server boot
     boot_completed: bool = True
+
+    sqlalchemy_engines: Dict[Optional[URL], Engine] = {}
