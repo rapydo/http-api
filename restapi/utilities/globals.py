@@ -25,4 +25,5 @@ class mem:
     # is set False during server boot
     boot_completed: bool = True
 
+    # None URL is used as default URL
     sqlalchemy_engines: Dict[Optional[URL], Engine] = {}

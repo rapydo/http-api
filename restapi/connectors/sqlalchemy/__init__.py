@@ -138,7 +138,6 @@ def catch_db_exceptions(func: F) -> F:
 class SQLAlchemy(Connector):
     # Used to suppress some errors raised during DB initialization
     DB_INITIALIZING = False
-    _url: Optional[URL] = None
     _session: Optional[scoped_session[Session]] = None
 
     def __init__(self) -> None:
@@ -197,6 +196,9 @@ class SQLAlchemy(Connector):
                 future=True,
             )
         engine = mem.sqlalchemy_engines[uri]
+        if len(mem.sqlalchemy_engines) == 1:
+            # None URL is used as default URL
+            mem.sqlalchemy_engines[None] = mem.sqlalchemy_engines[uri]
 
         # avoid circular imports
         from restapi.connectors.sqlalchemy.models import Base as db
@@ -237,7 +239,8 @@ class SQLAlchemy(Connector):
 
         SQLAlchemy.DB_INITIALIZING = True
 
-        engine = mem.sqlalchemy_engines.get(self._url)
+        # Get default URL
+        engine = mem.sqlalchemy_engines.get(None)
         if not engine:
             return None
         instance.db.metadata.create_all(engine)
@@ -250,11 +253,13 @@ class SQLAlchemy(Connector):
 
         # instance.session.remove()
         close_all_sessions()
-        # massive destruction
-        log.critical("Destroy current SQL data")
-        engine = mem.sqlalchemy_engines.get(self._url)
+        # Get default URL
+        engine = mem.sqlalchemy_engines.get(None)
         if not engine:
             return None
+
+        # Massive destruction
+        log.critical("Destroy current SQL data")
         instance.db.metadata.drop_all(engine)
 
     @staticmethod
@@ -427,7 +432,8 @@ class Authentication(BaseAuthentication):
         return True
 
     def get_roles(self) -> List[RoleObj]:
-        engine = mem.sqlalchemy_engines.get(self.db._url)
+        # Get default URL
+        engine = mem.sqlalchemy_engines.get(None)
         if not engine and mem.sqlalchemy_engines:
             engine = list(mem.sqlalchemy_engines.values())[0]
         if not engine:
