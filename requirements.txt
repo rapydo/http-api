@@ -1,4 +1,4 @@
-Flask==2.2.3
+Flask==2.2.5
 flask-apispec==0.11.4
 Flask-Caching==2.0.2
 Flask-Cors==3.0.10
@@ -15,7 +15,7 @@ neomodel==4.0.8
 psycopg2-binary==2.9.6
 PyMySQL==1.0.3
 redis==4.5.4
-pika==1.3.2
+pika==1.3.1
 celery[redis]==5.2.7
 flower==1.2.0
 celery-redbeat==2.0.0
