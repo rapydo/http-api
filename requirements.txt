@@ -10,7 +10,7 @@ pyOpenSSL==23.0.0
 passlib[bcrypt]==1.7.4
 marshmallow==3.19.0
 webargs==8.2.0
-apispec==6.0.2
+apispec==6.3.0
 neomodel==4.0.8
 psycopg2-binary==2.9.6
 PyMySQL==1.0.3
