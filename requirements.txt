@@ -23,7 +23,7 @@ amqp==5.1.1
 pyotp==2.8.0
 segno==1.5.2
 PyYAML==6.0
-loguru==0.6.0
+loguru==0.7.2
 glom==23.3.0
 requests==2.31.0
 psutil==5.9.5
