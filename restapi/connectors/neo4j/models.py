@@ -35,6 +35,13 @@ GroupCustomClass: Type[IdentifiedNode] = (
 )
 
 
+class Group(GroupCustomClass):
+    shortname = StringProperty(required=True, unique_index=True)
+    fullname = StringProperty(required=True, unique_index=False)
+
+    members = RelationshipFrom("User", "BELONGS_TO", cardinality=ZeroOrMore)
+
+
 class User(UserCustomClass):
     email = EmailProperty(required=True, unique_index=True)
     name = StringProperty(required=True)
@@ -51,15 +58,8 @@ class User(UserCustomClass):
 
     tokens = RelationshipTo("Token", "HAS_TOKEN", cardinality=ZeroOrMore)
     roles = RelationshipTo("Role", "HAS_ROLE", cardinality=ZeroOrMore)
-    belongs_to = RelationshipTo("Group", "BELONGS_TO")
+    belongs_to = RelationshipTo(Group, "BELONGS_TO", cardinality=ZeroOrOne)
     logins = RelationshipTo("Login", "HAS_LOGIN", cardinality=ZeroOrMore)
-
-
-class Group(GroupCustomClass):
-    shortname = StringProperty(required=True, unique_index=True)
-    fullname = StringProperty(required=True, unique_index=False)
-
-    members = RelationshipFrom("User", "BELONGS_TO", cardinality=ZeroOrMore)
 
 
 class Token(StructuredNode):
@@ -71,7 +71,7 @@ class Token(StructuredNode):
     last_access = DateTimeProperty()
     IP = StringProperty()
     location = StringProperty()
-    emitted_for = RelationshipFrom("User", "HAS_TOKEN", cardinality=ZeroOrOne)
+    emitted_for = RelationshipFrom(User, "HAS_TOKEN", cardinality=ZeroOrOne)
 
 
 class Role(StructuredNode):
@@ -85,7 +85,7 @@ class Login(StructuredNode):
     username = StringProperty()
     IP = StringProperty()
     location = StringProperty()
-    user = RelationshipFrom("User", "HAS_LOGIN", cardinality=ZeroOrOne)
+    user = RelationshipFrom(User, "HAS_LOGIN", cardinality=ZeroOrOne)
     failed = BooleanProperty(default=False)
     flushed = BooleanProperty(default=False)
 
