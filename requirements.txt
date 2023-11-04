@@ -1,6 +1,6 @@
 Flask==2.2.5
 flask-apispec==0.11.4
-Flask-Caching==2.0.2
+Flask-Caching==2.1.0
 Flask-Cors==3.0.10
 SQLAlchemy==2.0.13
 alembic==1.11.3
