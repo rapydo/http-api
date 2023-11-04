@@ -39,7 +39,7 @@ class Group(GroupCustomClass):
     shortname = StringProperty(required=True, unique_index=True)
     fullname = StringProperty(required=True, unique_index=False)
 
-    members = RelationshipFrom("User", "BELONGS_TO", cardinality=ZeroOrMore)
+    members = RelationshipTo("User", "BELONGS_TO", cardinality=ZeroOrMore)
 
 
 class User(UserCustomClass):
@@ -58,7 +58,7 @@ class User(UserCustomClass):
 
     tokens = RelationshipTo("Token", "HAS_TOKEN", cardinality=ZeroOrMore)
     roles = RelationshipTo("Role", "HAS_ROLE", cardinality=ZeroOrMore)
-    belongs_to = RelationshipTo(Group, "BELONGS_TO", cardinality=ZeroOrOne)
+    belongs_to = RelationshipFrom(Group, "BELONGS_TO", cardinality=ZeroOrOne)
     logins = RelationshipTo("Login", "HAS_LOGIN", cardinality=ZeroOrMore)
 
 
