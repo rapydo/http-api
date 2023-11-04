@@ -77,7 +77,7 @@ class TestNeo4j(BaseTests):
         assert t.emitted_for.single() is None
         t.delete()
 
-        with pytest.raises(CypherSyntaxError, match=r"{code: None} {message: None}"):
+        with pytest.raises(CypherSyntaxError, match=r"message: Invalid input"):
             obj.cypher("MATCH (n) RETURN n with a syntax error")
         # Query information are removed from the CypherSyntaxError exception
 
