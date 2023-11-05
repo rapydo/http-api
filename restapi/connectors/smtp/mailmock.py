@@ -1,7 +1,7 @@
 import email
 from smtplib import SMTPException, SMTPServerDisconnected
 from types import TracebackType
-from typing import Optional, Tuple, Type, TypeVar
+from typing import Optional, TypeVar
 
 import orjson
 
@@ -24,7 +24,7 @@ class SMTP:
 
     def __exit__(
         self,
-        _type: Optional[Type[Exception]],
+        _type: Optional[type[Exception]],
         value: Optional[Exception],
         tb: Optional[TracebackType],
     ) -> bool:  # pragma: no cover
@@ -100,7 +100,7 @@ class SMTP:
 
         log.info("Mail body written in {}", body_fpath)
 
-    def noop(self) -> Tuple[int]:
+    def noop(self) -> tuple[int]:
         if self.disconnected:
             raise SMTPServerDisconnected  # pragma: no cover
 

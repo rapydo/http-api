@@ -1,6 +1,6 @@
 import time
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Optional
 
 import pyotp
 import pytest
@@ -518,7 +518,7 @@ class TestApp(BaseTests):
         group = auth.get_group(name="Default")
         assert group.fullname == "Changed"
 
-        roles: List[RoleObj] = auth.get_roles()
+        roles: list[RoleObj] = auth.get_roles()
         assert isinstance(roles, list)
         assert len(roles) > 0
 

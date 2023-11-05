@@ -6,19 +6,7 @@ import ssl
 import traceback
 from datetime import timedelta
 from functools import wraps
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    NoReturn,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, Callable, NoReturn, Optional, TypeVar, Union, cast
 
 import certifi
 from celery import Celery, states
@@ -183,7 +171,7 @@ class CeleryExt(Connector):
     def task(
         idempotent: bool,
         name: Optional[str] = None,
-        autoretry_for: Tuple[Type[Exception], ...] = tuple(),
+        autoretry_for: tuple[type[Exception], ...] = tuple(),
     ) -> Callable[[F], F]:
         """
         Wrapper of the celery task decorator for a smooth integration in RAPyDo.
@@ -259,7 +247,7 @@ class CeleryExt(Connector):
         return None
 
     @staticmethod
-    def get_rabbit_url(variables: Dict[str, str], protocol: str) -> str:
+    def get_rabbit_url(variables: dict[str, str], protocol: str) -> str:
         host = variables.get("host")
         port = Env.to_int(variables.get("port"))
         vhost = variables.get("vhost", "")
@@ -274,7 +262,7 @@ class CeleryExt(Connector):
         return f"{protocol}://{creds}{host}:{port}{vhost}"
 
     @staticmethod
-    def get_redis_url(variables: Dict[str, str], protocol: str, db: int) -> str:
+    def get_redis_url(variables: dict[str, str], protocol: str, db: int) -> str:
         host = variables.get("host")
         port = Env.to_int(variables.get("port"))
         pwd = variables.get("password", "")
@@ -285,8 +273,7 @@ class CeleryExt(Connector):
         return f"{protocol}://{creds}{host}:{port}/{db}"
 
     def connect(self, **kwargs: str) -> "CeleryExt":
-        variables = self.variables.copy()
-        variables.update(kwargs)
+        variables = self.variables | kwargs
         broker = variables.get("broker_service")
 
         if HOST_TYPE == DOCS:  # pragma: no cover
@@ -517,8 +504,8 @@ class CeleryExt(Connector):
         task: str,
         every: Union[str, int, timedelta],
         period: AllowedTimedeltaPeriods = "seconds",
-        args: Optional[List[Any]] = None,
-        kwargs: Optional[Dict[str, Any]] = None,
+        args: Optional[list[Any]] = None,
+        kwargs: Optional[dict[str, Any]] = None,
     ) -> None:
         if args is None:
             args = []
@@ -561,8 +548,8 @@ class CeleryExt(Connector):
         day_of_week: str = "*",
         day_of_month: str = "*",
         month_of_year: str = "*",
-        args: Optional[List[Any]] = None,
-        kwargs: Optional[Dict[str, Any]] = None,
+        args: Optional[list[Any]] = None,
+        kwargs: Optional[dict[str, Any]] = None,
     ) -> None:
         if args is None:
             args = []

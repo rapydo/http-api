@@ -6,7 +6,7 @@ import socket
 import time
 from datetime import datetime
 from types import FrameType
-from typing import List, Optional
+from typing import Optional
 
 import psutil
 
@@ -36,7 +36,7 @@ def stop_timeout() -> None:
 
 def find_process(
     process_name: str,
-    keywords: Optional[List[str]] = None,
+    keywords: Optional[list[str]] = None,
     prefix: Optional[str] = None,
 ) -> bool:
     if keywords is None:

@@ -10,8 +10,9 @@ Note that anyone can validate a token as it is a bearer token:
 there is no client id nor is client authentication required.
 """
 
+from collections.abc import Iterable
 from functools import wraps
-from typing import Any, Callable, Iterable, Optional, Tuple, Union, cast
+from typing import Any, Callable, Optional, Union, cast
 
 from flask import request
 
@@ -47,7 +48,7 @@ class HTTPTokenAuth:
     @staticmethod
     def get_authorization_token(
         allow_access_token_parameter: bool = False,
-    ) -> Tuple[Optional[str], Optional[str]]:
+    ) -> tuple[Optional[str], Optional[str]]:
         # Basic authenticaton is now allowed
         if request.authorization is not None:
             return None, None

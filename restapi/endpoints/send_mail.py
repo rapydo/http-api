@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from restapi import decorators
 from restapi.connectors import smtp
@@ -29,11 +29,11 @@ class SendMail(EndpointResource):
         subject: str,
         body: str,
         to: str,
-        cc: Optional[List[str]] = None,
-        bcc: Optional[List[str]] = None,
+        cc: Optional[list[str]] = None,
+        bcc: Optional[list[str]] = None,
         dry_run: bool = False,
     ) -> Response:
-        replaces: Dict[str, Any] = {}
+        replaces: dict[str, Any] = {}
 
         header_html = _get_html_template("email_header.html", replaces)
         footer_html = _get_html_template("email_footer.html", replaces)

@@ -5,7 +5,7 @@ Customization based on configuration 'blueprint' files
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Type, get_type_hints
+from typing import Any, Optional, get_type_hints
 
 from attr import ib as attribute
 from attr import s as ClassOfAttributes
@@ -32,31 +32,31 @@ uri_pattern = re.compile(r"\<([^\>]+)\>")
 
 @ClassOfAttributes
 class EndpointElements:
-    cls: Type[EndpointResource] = attribute(default=None)
-    uris: Set[str] = attribute(default=set())
+    cls: type[EndpointResource] = attribute(default=None)
+    uris: set[str] = attribute(default=set())
     # {'method': path, 'get': path, 'post': path}
-    methods: Dict[str, str] = attribute(default={})
-    tags: List[str] = attribute(default=[])
+    methods: dict[str, str] = attribute(default={})
+    tags: list[str] = attribute(default=[])
     private: bool = attribute(default=False)
 
 
 class EndpointsLoader:
     def __init__(self) -> None:
         # Used by server.py to load endpoints definitions
-        self.endpoints: List[EndpointElements] = []
+        self.endpoints: list[EndpointElements] = []
         # Used by server.py to remove unmapped methods
-        self.uri2methods: Dict[str, List[str]] = {}
+        self.uri2methods: dict[str, list[str]] = {}
         # Used by server.py to configure ApiSpec
-        self.tags: List[Dict[str, str]] = []
+        self.tags: list[dict[str, str]] = []
 
         # Used by swagger specs endpoints to show authentication info
-        self.authenticated_endpoints: Dict[str, Dict[str, bool]] = {}
+        self.authenticated_endpoints: dict[str, dict[str, bool]] = {}
         # Used by swagger spec endpoint to remove private endpoints from public requests
-        self.private_endpoints: Dict[str, Dict[str, bool]] = {}
+        self.private_endpoints: dict[str, dict[str, bool]] = {}
 
-        self._used_tags: Set[str] = set()
+        self._used_tags: set[str] = set()
 
-    def load_configuration(self) -> Dict[str, Any]:
+    def load_configuration(self) -> dict[str, Any]:
         # Reading configuration
 
         CONF_FOLDERS = Env.load_variables_group(prefix="project_confs")
@@ -96,7 +96,7 @@ class EndpointsLoader:
         self.detect_endpoints_shadowing()
 
     @staticmethod
-    def skip_endpoint(depends_on: List[str]) -> Tuple[bool, Optional[str]]:
+    def skip_endpoint(depends_on: list[str]) -> tuple[bool, Optional[str]]:
         for var in depends_on:
             pieces = var.strip().split(" ")
             pieces_num = len(pieces)
@@ -119,8 +119,8 @@ class EndpointsLoader:
 
         return False, None
 
-    def extract_endpoints(self, base_dir: Path) -> List[Type[EndpointResource]]:
-        endpoints_classes: List[Type[EndpointResource]] = []
+    def extract_endpoints(self, base_dir: Path) -> list[type[EndpointResource]]:
+        endpoints_classes: list[type[EndpointResource]] = []
         # get last item of the path
         # normpath is required to strip final / if any
         base_module = base_dir.name
@@ -256,7 +256,7 @@ class EndpointsLoader:
                 )
 
                 # Set default responses
-                responses: Dict[str, Dict[str, str]] = {}
+                responses: dict[str, dict[str, str]] = {}
 
                 responses.setdefault("400", ERR400)
                 if auth_required:
@@ -286,9 +286,9 @@ class EndpointsLoader:
 
     @staticmethod
     def remove_unused_tags(
-        all_tags: Dict[str, str], used_tags: Set[str]
-    ) -> List[Dict[str, str]]:
-        tags: List[Dict[str, str]] = []
+        all_tags: dict[str, str], used_tags: set[str]
+    ) -> list[dict[str, str]]:
+        tags: list[dict[str, str]] = []
         for tag, desc in all_tags.items():
             if tag not in used_tags:  # pragma: no cover
                 log.debug("Skipping unsed tag: {}", tag)
@@ -302,8 +302,8 @@ class EndpointsLoader:
         # /xyz/<variable>
         # /xyz/abc
         # The second endpoint is shadowed by the first one
-        mappings: Dict[str, Set[str]] = {}
-        classes: Dict[str, Dict[str, Type[EndpointResource]]] = {}
+        mappings: dict[str, set[str]] = {}
+        classes: dict[str, dict[str, type[EndpointResource]]] = {}
         # duplicates are found while filling the dictionaries
         for endpoint in self.endpoints:
             for method, uri in endpoint.methods.items():

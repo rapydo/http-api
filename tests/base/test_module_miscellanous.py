@@ -4,7 +4,7 @@ import time
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import psutil
 import pytest
@@ -477,12 +477,12 @@ class TestApp(BaseTests):
     # ####      YAML data load and mix
     #########################################
     def test_yaml(self) -> None:
-        data: Dict[str, Any] = {"a": 1}
+        data: dict[str, Any] = {"a": 1}
         assert mix({}, data) == data
 
-        data1: Dict[str, Any] = {"a": {"b": 1}, "c": 1}
-        data2: Dict[str, Any] = {"a": {"b": 2}}
-        expected: Dict[str, Any] = {"a": {"b": 2}, "c": 1}
+        data1: dict[str, Any] = {"a": {"b": 1}, "c": 1}
+        data2: dict[str, Any] = {"a": {"b": 2}}
+        expected: dict[str, Any] = {"a": {"b": 2}, "c": 1}
 
         assert mix(data1, data2) == expected
 
@@ -1090,16 +1090,16 @@ class TestApp(BaseTests):
         assert not match_types(Optional[str], ["test"])
         assert not match_types(Optional[str], {"test": 1})
 
-        assert not match_types(List[str], EndpointResource)
-        assert not match_types(List[str], "EndpointResource")
-        assert not match_types(List[str], None)
-        assert not match_types(List[str], 1)
-        assert match_types(List[str], [])
-        assert not match_types(List[str], {})
-        assert match_types(List[str], ["test"])
+        assert not match_types(list[str], EndpointResource)
+        assert not match_types(list[str], "EndpointResource")
+        assert not match_types(list[str], None)
+        assert not match_types(list[str], 1)
+        assert match_types(list[str], [])
+        assert not match_types(list[str], {})
+        assert match_types(list[str], ["test"])
         # list args are not verifed, so [1] is currently accepted as List[str]
-        assert match_types(List[str], [1])
-        assert not match_types(List[str], {"test": 1})
+        assert match_types(list[str], [1])
+        assert not match_types(list[str], {"test": 1})
 
         assert match_types(Union[str, int], 1)
         assert match_types(Union[str, int], "1")

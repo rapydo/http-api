@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from restapi import decorators
 from restapi.endpoints.schemas import GroupWithMembers, admin_group_input
@@ -7,7 +7,7 @@ from restapi.rest.definition import EndpointResource, Response
 from restapi.services.authentication import Group, Role, User
 
 
-def inject_group(endpoint: EndpointResource, group_id: str) -> Dict[str, Any]:
+def inject_group(endpoint: EndpointResource, group_id: str) -> dict[str, Any]:
     group = endpoint.auth.get_group(group_id=group_id)
     if not group:
         raise NotFound("This group cannot be found")
@@ -31,7 +31,7 @@ class AdminGroups(EndpointResource):
         },
     )
     def get(self, user: User) -> Response:
-        groups: List[Dict[str, Any]] = []
+        groups: list[dict[str, Any]] = []
 
         is_admin = self.auth.is_admin(user)
         for g in self.auth.get_groups():

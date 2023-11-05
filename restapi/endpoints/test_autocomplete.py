@@ -1,5 +1,3 @@
-from typing import Dict, List, Tuple
-
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.models import Schema, fields
@@ -43,7 +41,7 @@ if TESTING:
 
     class TestAutocomplete(EndpointResource):
         @staticmethod
-        def get_element(name: str, surname: str, nickname: str) -> Tuple[str, str]:
+        def get_element(name: str, surname: str, nickname: str) -> tuple[str, str]:
             return (
                 f"{name[0].upper()}{surname[0].upper()}{nickname[0].upper()}",
                 f"{name.title()} {surname.title()} the {nickname.title()}",
@@ -59,7 +57,7 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def get(self, query: str) -> Response:
-            elements: List[Dict[str, str]] = []
+            elements: list[dict[str, str]] = []
 
             for k1 in names:
                 for k2 in surnames:
@@ -78,7 +76,7 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={204: "Tests executed", 400: "Bad Input"},
         )
-        def post(self, elements: List[str]) -> Response:
+        def post(self, elements: list[str]) -> Response:
             return self.empty_response()
 
         @decorators.use_kwargs(SingleInput)

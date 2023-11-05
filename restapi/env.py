@@ -3,7 +3,7 @@ Utilities to work with environment variables
 """
 import os
 from functools import lru_cache
-from typing import Dict, Union
+from typing import Union
 
 
 class Env:
@@ -67,10 +67,10 @@ class Env:
         return default
 
     @staticmethod
-    def load_variables_group(prefix: str) -> Dict[str, str]:
+    def load_variables_group(prefix: str) -> dict[str, str]:
         prefix += "_"
 
-        variables: Dict[str, str] = {}
+        variables: dict[str, str] = {}
 
         for var, value in os.environ.items():
             var = var.lower()
@@ -79,9 +79,7 @@ class Env:
                 continue
 
             # Fix key and value before saving
-            # Can't be enabled due to mistral stuck at py38
-            # key = var.removeprefix(prefix)
-            key = var[len(prefix) :]
+            key = var.removeprefix(prefix)
             # One thing that we must avoid is any quote around our value
             value = value.strip('"').strip("'")
             # save

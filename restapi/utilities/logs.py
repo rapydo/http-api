@@ -4,7 +4,7 @@ import sys
 import urllib.parse
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 
 import orjson
 from loguru import logger as log
@@ -172,7 +172,7 @@ OBSCURED_FIELDS = [
 ]
 
 
-def handle_log_output(original_parameters_string: Optional[Any]) -> Dict[str, Any]:
+def handle_log_output(original_parameters_string: Optional[Any]) -> dict[str, Any]:
     """Print a log line by preventing the exposure of sensitive information"""
     if original_parameters_string is None:
         return {}
@@ -206,8 +206,8 @@ def obfuscate_url(url: str) -> str:
 
 
 def obfuscate_dict(
-    parameters: Dict[str, Any], urlencoded: bool = False, max_len: int = MAX_CHAR_LEN
-) -> Dict[str, Any]:
+    parameters: dict[str, Any], urlencoded: bool = False, max_len: int = MAX_CHAR_LEN
+) -> dict[str, Any]:
     """Obfuscate sensitive information in a dictionary by looking at sensitive keys"""
 
     if not isinstance(parameters, dict):
@@ -235,7 +235,7 @@ def obfuscate_dict(
     return output
 
 
-def parse_event_target(target: Any) -> Tuple[str, str]:
+def parse_event_target(target: Any) -> tuple[str, str]:
     """Extract from an object an ID to be stored in logs"""
     if not target:
         return "", ""
@@ -254,7 +254,7 @@ def parse_event_target(target: Any) -> Tuple[str, str]:
 def save_event_log(
     event: Events,
     target: Optional[Any] = None,
-    payload: Optional[Dict[str, Any]] = None,
+    payload: Optional[dict[str, Any]] = None,
     user: Optional[Any] = None,
     ip: str = "-",
     url: str = "",

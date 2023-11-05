@@ -9,7 +9,7 @@ import inspect
 import pkgutil
 from importlib import import_module
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Optional
 
 from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE
 from restapi.utilities import print_and_exit
@@ -20,7 +20,7 @@ class Meta:
     """Utilities with meta in mind"""
 
     @staticmethod
-    def get_classes_from_module(module: ModuleType) -> Dict[str, Type[Any]]:
+    def get_classes_from_module(module: ModuleType) -> dict[str, type[Any]]:
         """
         Find classes inside a python module file.
         """
@@ -37,7 +37,7 @@ class Meta:
         return {}
 
     @staticmethod
-    def get_new_classes_from_module(module: ModuleType) -> Dict[str, Type[Any]]:
+    def get_new_classes_from_module(module: ModuleType) -> dict[str, type[Any]]:
         """
         Skip classes not originated inside the module.
         """
@@ -92,7 +92,7 @@ class Meta:
     @staticmethod
     def import_models(
         name: str, package: str, mandatory: bool = False
-    ) -> Dict[str, Type[Any]]:
+    ) -> dict[str, type[Any]]:
         if package == BACKEND_PACKAGE:
             module_name = f"{package}.connectors.{name}.models"
         else:
@@ -114,14 +114,14 @@ class Meta:
         return Meta.get_new_classes_from_module(module)
 
     @staticmethod
-    def get_celery_tasks(package_name: str) -> List[Callable[..., Any]]:
+    def get_celery_tasks(package_name: str) -> list[Callable[..., Any]]:
         """
         Extract all celery tasks from a module.
         Celery tasks are functions decorated by @CeleryExt.celery_app.task(...)
         This decorator transform the function into a class child of
         celery.local.PromiseProxy
         """
-        tasks: List[Callable[..., Any]] = []
+        tasks: list[Callable[..., Any]] = []
         # package = tasks folder
         package = Meta.get_module_from_string(package_name)
         if package is None:

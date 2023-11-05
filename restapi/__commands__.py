@@ -2,7 +2,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 import click
 from flask.cli import FlaskGroup
@@ -130,8 +130,8 @@ def wait() -> None:
 
 
 def get_service_address(
-    variables: Dict[str, str], host_var: str, port_var: str, service: str
-) -> Tuple[str, int]:
+    variables: dict[str, str], host_var: str, port_var: str, service: str
+) -> tuple[str, int]:
     host = variables.get(host_var)
     if host is None:
         print_and_exit("Cannot find any variable matching {} for {}", host_var, service)

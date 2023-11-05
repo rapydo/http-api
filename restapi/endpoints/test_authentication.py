@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from restapi import decorators
 from restapi.config import TESTING
@@ -98,7 +98,7 @@ if TESTING:
         def get(self, user: User) -> Response:  # pragma: no cover
             return self.response({"email": user.email})
 
-    def verify_uuid_value(endpoint: EndpointResource, uuid: str) -> Dict[str, Any]:
+    def verify_uuid_value(endpoint: EndpointResource, uuid: str) -> dict[str, Any]:
         user = endpoint.auth.get_user(user_id=uuid)
         if not user or not endpoint.auth.is_admin(user):
             raise Unauthorized("You are not authorized")

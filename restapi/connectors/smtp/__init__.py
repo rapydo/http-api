@@ -13,7 +13,7 @@ from smtplib import (
     SMTPServerDisconnected,
 )
 from threading import Thread
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from restapi.config import TESTING
 from restapi.connectors import Connector, ExceptionsList
@@ -34,9 +34,9 @@ class Mail(Connector):
     def __init__(self) -> None:
         self.smtp: Optional[SMTP] = None
         super().__init__()
-        # instance_variables is updated with custom variabiles in connect
-        # and the used in the send method.
-        # This way the send method will be able to use variabiles overridden in connect
+        # instance_variables is updated with custom variables in connect
+        # and then used in the send method.
+        # This way the send method will be able to use variables overridden in connect
         self.instance_variables = self.variables.copy()
 
     @staticmethod
@@ -44,7 +44,8 @@ class Mail(Connector):
         return (socket.gaierror, SMTPAuthenticationError, SMTPConnectError)
 
     def connect(self, **kwargs: str) -> "Mail":
-        self.instance_variables.update(kwargs)
+        # Note: will be used later in send()
+        self.instance_variables = self.variables | kwargs
 
         port = Env.to_int(self.instance_variables.get("port")) or 25
 
@@ -99,8 +100,8 @@ class Mail(Connector):
         subject: str,
         to_address: Optional[str] = None,
         from_address: Optional[str] = None,
-        cc: Union[None, str, List[str]] = None,
-        bcc: Union[None, str, List[str]] = None,
+        cc: Union[None, str, list[str]] = None,
+        bcc: Union[None, str, list[str]] = None,
         plain_body: Optional[str] = None,
     ) -> None:
         thr = Thread(
@@ -125,8 +126,8 @@ class Mail(Connector):
         subject: str,
         to_address: Optional[str] = None,
         from_address: Optional[str] = None,
-        cc: Union[None, str, List[str]] = None,
-        bcc: Union[None, str, List[str]] = None,
+        cc: Union[None, str, list[str]] = None,
+        bcc: Union[None, str, list[str]] = None,
         plain_body: Optional[str] = None,
         retry: int = 1,
     ) -> bool:
@@ -156,8 +157,8 @@ class Mail(Connector):
         subject: str,
         to_address: Optional[str] = None,
         from_address: Optional[str] = None,
-        cc: Union[None, str, List[str]] = None,
-        bcc: Union[None, str, List[str]] = None,
+        cc: Union[None, str, list[str]] = None,
+        bcc: Union[None, str, list[str]] = None,
         plain_body: Optional[str] = None,
     ) -> bool:
         if not to_address:
@@ -184,7 +185,7 @@ class Mail(Connector):
             msg["From"] = from_address
             msg["To"] = to_address
 
-            dest_addresses: List[str] = [to_address]
+            dest_addresses: list[str] = [to_address]
 
             if cc is None:
                 pass

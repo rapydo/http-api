@@ -5,17 +5,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    TypedDict,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Optional, TypedDict, Union, cast
 
 import jwt
 import pyotp
@@ -235,10 +225,10 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     default_user: Optional[str] = None
     default_password: Optional[str] = None
-    roles: List[str] = []
-    roles_data: Dict[str, str] = {}
+    roles: list[str] = []
+    roles_data: dict[str, str] = {}
     default_role: str = Role.USER.value
-    role_descriptions: Dict[str, str] = {}
+    role_descriptions: dict[str, str] = {}
 
     # This is to let inform mypy about the existence of self.db
     def __init__(self) -> None:  # pragma: no cover
@@ -262,7 +252,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     @staticmethod
     def load_roles() -> None:
-        empty_dict: Dict[str, str] = {}
+        empty_dict: dict[str, str] = {}
         BaseAuthentication.roles_data = glom(
             mem.configuration, "variables.roles", default=empty_dict
         ).copy()
@@ -287,7 +277,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     def make_login(
         self, username: str, password: str, totp_code: Optional[str]
-    ) -> Tuple[str, Payload, User]:
+    ) -> tuple[str, Payload, User]:
         self.verify_blocked_username(username)
 
         try:
@@ -405,12 +395,12 @@ class BaseAuthentication(metaclass=ABCMeta):
     def create_token(cls, payload: Payload) -> str:
         """Generate a str token with JWT library to encrypt the payload"""
         return jwt.encode(
-            cast(Dict[str, Any], payload), cls.JWT_SECRET, algorithm=cls.JWT_ALGO
+            cast(dict[str, Any], payload), cls.JWT_SECRET, algorithm=cls.JWT_ALGO
         )
 
     def create_temporary_token(
         self, user: User, token_type: str, duration: int = 86400
-    ) -> Tuple[str, Payload]:
+    ) -> tuple[str, Payload]:
         # invalidate previous tokens with same token_type
         for t in self.get_tokens(user=user):
             ttype = t.get("token_type")
@@ -466,7 +456,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         token: Optional[str] = None,
         jti: Optional[str] = None,
         user: Optional[User] = None,
-    ) -> Tuple[bool, Optional[str], Optional[str], Optional[User]]:
+    ) -> tuple[bool, Optional[str], Optional[str], Optional[User]]:
         return (valid, token, jti, user)
 
     def verify_token(
@@ -474,7 +464,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         token: Optional[str],
         raiseErrors: bool = False,
         token_type: Optional[str] = None,
-    ) -> Tuple[bool, Optional[str], Optional[str], Optional[User]]:
+    ) -> tuple[bool, Optional[str], Optional[str], Optional[User]]:
         if token is None:
             if raiseErrors:
                 raise InvalidToken("Missing token")
@@ -521,7 +511,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         user: User,
         expiration: Optional[datetime] = None,
         token_type: Optional[str] = None,
-    ) -> Tuple[Payload, Payload]:
+    ) -> tuple[Payload, Payload]:
         """Informations to store inside the JWT token,
         starting from the user obtained from the current service
 
@@ -584,7 +574,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     def verify_roles(
         self,
         user: User,
-        roles: Optional[List[Union[str, Role]]],
+        roles: Optional[list[Union[str, Role]]],
         required_roles: str = ALL_ROLES,
         warnings: bool = True,
     ) -> bool:
@@ -624,8 +614,8 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     @staticmethod
     def custom_user_properties_pre(
-        userdata: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        userdata: dict[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         try:
             userdata, extradata = mem.customizer.custom_user_properties_pre(userdata)
         except RestApiException:  # pragma: no cover
@@ -759,7 +749,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     def verify_password_strength(
         self, pwd: str, old_pwd: Optional[str], email: str, name: str, surname: str
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         if old_pwd:
             if pwd == old_pwd:
                 return False, "The new password cannot match the previous password"
@@ -843,12 +833,12 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     def check_password_validity(
         self, user: User, totp_authentication: bool
-    ) -> Dict[str, List[str]]:
+    ) -> dict[str, list[str]]:
         # ##################################################
         # Check if something is missing in the authentication and ask additional actions
         # raises exceptions in case of errors
 
-        message: Dict[str, List[str]] = {"actions": [], "errors": []}
+        message: dict[str, list[str]] = {"actions": [], "errors": []}
         last_pwd_change = user.last_password_change
         if last_pwd_change is None or last_pwd_change == 0:
             last_pwd_change = EPOCH
@@ -944,7 +934,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         cls,
         event: Events,
         target: Optional[Any] = None,
-        payload: Optional[Dict[str, Any]] = None,
+        payload: Optional[dict[str, Any]] = None,
         user: Optional[Any] = None,
     ) -> None:
         try:
@@ -961,7 +951,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             url=url_path,
         )
 
-    def init_auth_db(self, options: Dict[str, bool]) -> None:
+    def init_auth_db(self, options: dict[str, bool]) -> None:
         self.init_roles()
 
         default_group = self.init_groups(force=options.get("force_group", False))
@@ -1037,7 +1027,7 @@ class BaseAuthentication(metaclass=ABCMeta):
 
         return default_group
 
-    def init_users(self, default_group: Group, roles: List[str], force: bool) -> User:
+    def init_users(self, default_group: Group, roles: list[str], force: bool) -> User:
         create = False
         update = False
 
@@ -1115,7 +1105,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def get_users(self) -> List[User]:
+    def get_users(self) -> list[User]:
         """
         How to retrieve a list of all users from the current authentication db
         """
@@ -1141,7 +1131,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def get_groups(self) -> List[Group]:
+    def get_groups(self) -> list[Group]:
         """
         How to retrieve groups list from the current authentication db
         """
@@ -1155,7 +1145,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def get_group_members(self, group: Group) -> List[User]:
+    def get_group_members(self, group: Group) -> list[User]:
         """
         How to retrieve group users list from the current authentication db
         """
@@ -1175,7 +1165,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         user: Optional[User] = None,
         token_jti: Optional[str] = None,
         get_all: bool = False,
-    ) -> List[Token]:
+    ) -> list[Token]:
         """
         Return the list of tokens
         """
@@ -1204,14 +1194,14 @@ class BaseAuthentication(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def get_roles(self) -> List[RoleObj]:
+    def get_roles(self) -> list[RoleObj]:
         """
         How to retrieve all the roles
         """
         ...
 
     @abstractmethod
-    def get_roles_from_user(self, user: Optional[User]) -> List[str]:
+    def get_roles_from_user(self, user: Optional[User]) -> list[str]:
         """
         Retrieve roles from a user object from the current auth service
         """
@@ -1233,7 +1223,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     # ################
     @abstractmethod
     def create_user(
-        self, userdata: Dict[str, Any], roles: List[str], group: Group
+        self, userdata: dict[str, Any], roles: list[str], group: Group
     ) -> User:
         """
         A method to create a new user
@@ -1241,14 +1231,14 @@ class BaseAuthentication(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def link_roles(self, user: User, roles: List[str]) -> None:
+    def link_roles(self, user: User, roles: list[str]) -> None:
         """
         A method to assign roles to a user
         """
         ...
 
     @abstractmethod
-    def create_group(self, groupdata: Dict[str, Any]) -> Group:
+    def create_group(self, groupdata: dict[str, Any]) -> Group:
         """
         A method to create a new group
         """
@@ -1271,7 +1261,7 @@ class BaseAuthentication(metaclass=ABCMeta):
     @abstractmethod
     def get_logins(
         self, username: Optional[str] = None, only_unflushed: bool = False
-    ) -> List[Login]:
+    ) -> list[Login]:
         """
         Save login information
         """
@@ -1288,14 +1278,14 @@ class BaseAuthentication(metaclass=ABCMeta):
 class NoAuthentication(BaseAuthentication):  # pragma: no cover
     # Also used by POST user
     def create_user(
-        self, userdata: Dict[str, Any], roles: List[str], group: Group
+        self, userdata: dict[str, Any], roles: list[str], group: Group
     ) -> User:
         raise NotImplementedError("Create User not implemented with No Authentication")
 
-    def link_roles(self, user: User, roles: List[str]) -> None:
+    def link_roles(self, user: User, roles: list[str]) -> None:
         return None
 
-    def create_group(self, groupdata: Dict[str, Any]) -> Group:
+    def create_group(self, groupdata: dict[str, Any]) -> Group:
         raise NotImplementedError("Create Group not implemented with No Authentication")
 
     def add_user_to_group(self, user: User, group: Group) -> None:
@@ -1306,7 +1296,7 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
     ) -> Optional[User]:
         return None
 
-    def get_users(self) -> List[User]:
+    def get_users(self) -> list[User]:
         return []
 
     def save_user(self, user: User) -> bool:
@@ -1320,13 +1310,13 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
     ) -> Optional[Group]:
         return None
 
-    def get_groups(self) -> List[Group]:
+    def get_groups(self) -> list[Group]:
         return []
 
     def get_user_group(self, user: User) -> Group:
         raise NotImplementedError("Get Group not implemented with No Authentication")
 
-    def get_group_members(self, group: Group) -> List[User]:
+    def get_group_members(self, group: Group) -> list[User]:
         return []
 
     def save_group(self, group: Group) -> bool:
@@ -1335,10 +1325,10 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
     def delete_group(self, group: Group) -> bool:
         return False
 
-    def get_roles(self) -> List[RoleObj]:
+    def get_roles(self) -> list[RoleObj]:
         return []
 
-    def get_roles_from_user(self, user: Optional[User]) -> List[str]:
+    def get_roles_from_user(self, user: Optional[User]) -> list[str]:
         return []
 
     def create_role(self, name: str, description: str) -> None:
@@ -1360,7 +1350,7 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
         user: Optional[User] = None,
         token_jti: Optional[str] = None,
         get_all: bool = False,
-    ) -> List[Token]:
+    ) -> list[Token]:
         return []
 
     def invalidate_token(self, token: str) -> bool:
@@ -1371,7 +1361,7 @@ class NoAuthentication(BaseAuthentication):  # pragma: no cover
 
     def get_logins(
         self, username: Optional[str] = None, only_unflushed: bool = False
-    ) -> List[Login]:
+    ) -> list[Login]:
         raise NotImplementedError("Get Login not implemented with No Authentication")
 
     def flush_failed_logins(self, username: str) -> None:

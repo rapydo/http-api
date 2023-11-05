@@ -2,7 +2,6 @@
 Base class to let projects to customize core functionalities
 """
 import abc
-from typing import Tuple
 
 from flask import Flask
 
@@ -24,7 +23,7 @@ class BaseCustomizer(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def custom_user_properties_pre(
         properties: Props,
-    ) -> Tuple[Props, Props]:  # pragma: no cover
+    ) -> tuple[Props, Props]:  # pragma: no cover
         """
         executed just before user creation
         use this method to removed or manipulate input properties

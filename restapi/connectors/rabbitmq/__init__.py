@@ -5,7 +5,7 @@ RabbitMQ connector with automatic integration in rapydo framework, based on pika
 import socket
 import ssl
 import urllib.parse
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import certifi
 import orjson
@@ -49,12 +49,10 @@ class RabbitExt(Connector):
         )  # type: ignore
 
     def connect(self, **kwargs: str) -> "RabbitExt":
-        variables = self.variables.copy()
         # Beware, if you specify a user different by the default,
-        # then the send method will fail to to PRECONDITION_FAILED because
-        # the user_id will not pass the verification
-        # Locally save self.variables + kwargs to be used in send()
-        variables.update(kwargs)
+        # then the send method will fail with PRECONDITION_FAILED
+        # because the user_id will not pass the verification
+        variables = self.variables | kwargs
 
         ssl_enabled = Env.to_bool(variables.get("ssl_enabled"))
 
@@ -203,7 +201,7 @@ class RabbitExt(Connector):
             if_empty=False,
         )
 
-    def get_bindings(self, exchange: str) -> Optional[List[Dict[str, str]]]:
+    def get_bindings(self, exchange: str) -> Optional[list[dict[str, str]]]:
         if not self.exchange_exists(exchange):
             log.error("Exchange {} does not exist", exchange)
             return None
@@ -252,7 +250,7 @@ class RabbitExt(Connector):
             #   'destination': queue-or-dest-exchange-name,
             #   'destination_type': 'queue' or 'exchange',
             #   'routing_key': routing_key,
-            #   'arguments': Dict,
+            #   'arguments': dict,
             #   'properties_key': ?? as routing_key?
             # }
 
@@ -279,7 +277,7 @@ class RabbitExt(Connector):
         message: Any,
         routing_key: str = "",
         exchange: str = "",
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Optional[dict[str, Any]] = None,
     ) -> bool:
         return self.send(
             body=orjson.dumps(message),
@@ -293,7 +291,7 @@ class RabbitExt(Connector):
         body: bytes,
         routing_key: str = "",
         exchange: str = "",
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Optional[dict[str, Any]] = None,
     ) -> bool:
         """
         Send a message to the RabbitMQ queue

@@ -9,7 +9,7 @@ import warnings
 from enum import Enum
 from threading import Lock
 from types import FrameType
-from typing import Dict, Optional
+from typing import Optional
 
 import werkzeug.exceptions
 from apispec import APISpec
@@ -84,7 +84,7 @@ def teardown_handler(
 def create_app(
     name: str,
     mode: ServerModes,
-    options: Dict[str, bool],
+    options: dict[str, bool],
 ) -> Flask:
     """Create the server istance for Flask application"""
 

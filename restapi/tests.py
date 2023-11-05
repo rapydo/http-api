@@ -7,10 +7,11 @@ import re
 import urllib.parse
 import uuid
 from collections import namedtuple
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Tuple, TypedDict, Union, cast
+from typing import Any, Optional, TypedDict, Union, cast
 
 import jwt
 import orjson
@@ -40,7 +41,7 @@ from restapi.utilities.logs import LOGS_FOLDER, Events, log
 
 class MockedEmail(TypedDict):
     # from: str
-    cc: List[str]
+    cc: list[str]
     msg: str
     # body and headers are added by read_mock_email function
     body: str
@@ -73,7 +74,7 @@ class BaseTests:
     faker: Faker = get_faker()
     # This will store credentials to be used to test unused credentials ban
     # Tuple = (email, password, uuid)
-    unused_credentials: Optional[Tuple[str, str, str]] = None
+    unused_credentials: Optional[tuple[str, str, str]] = None
 
     @classmethod
     def save(cls, variable: str, value: Any) -> None:
@@ -97,9 +98,9 @@ class BaseTests:
     def get_dynamic_input_schema(
         client: FlaskClient,
         endpoint: str,
-        headers: Optional[Dict[str, str]],
+        headers: Optional[dict[str, str]],
         method: str = "post",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Retrieve a dynamic data schema associated with a endpoint
         """
@@ -126,7 +127,7 @@ class BaseTests:
     @staticmethod
     def get_content(
         http_out: Response,
-    ) -> Union[str, float, int, bool, List[Any], Dict[str, Any]]:
+    ) -> Union[str, float, int, bool, list[Any], dict[str, Any]]:
         try:
             response = orjson.loads(http_out.get_data().decode())
             if isinstance(
@@ -167,9 +168,9 @@ class BaseTests:
         USER: Optional[str],
         PWD: Optional[str],
         status_code: int = 200,
-        data: Optional[Dict[str, Any]] = None,
+        data: Optional[dict[str, Any]] = None,
         test_failures: bool = False,
-    ) -> Tuple[Optional[Dict[str, str]], str]:
+    ) -> tuple[Optional[dict[str, str]], str]:
         """
         Make login and return both token and authorization header
         """
@@ -328,10 +329,10 @@ class BaseTests:
     def create_user(
         cls,
         client: FlaskClient,
-        data: Optional[Dict[str, Any]] = None,
-        roles: Optional[List[Union[str, Role]]] = None,
+        data: Optional[dict[str, Any]] = None,
+        roles: Optional[list[Union[str, Role]]] = None,
         group: Optional[str] = None,
-    ) -> Tuple[str, Dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any]]:
         assert Env.get_bool("MAIN_LOGIN_ENABLE")
 
         admin_headers, _ = cls.do_login(client, None, None)
@@ -374,8 +375,8 @@ class BaseTests:
 
     @classmethod
     def create_group(
-        cls, client: FlaskClient, data: Optional[Dict[str, Any]] = None
-    ) -> Tuple[str, Dict[str, Any]]:
+        cls, client: FlaskClient, data: Optional[dict[str, Any]] = None
+    ) -> tuple[str, dict[str, Any]]:
         assert Env.get_bool("MAIN_LOGIN_ENABLE")
 
         admin_headers, _ = cls.do_login(client, None, None)
@@ -455,12 +456,12 @@ class BaseTests:
         )
 
     @classmethod
-    def buildData(cls, schema: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def buildData(cls, schema: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Input: a Marshmallow schema
         Output: a dictionary of random data
         """
-        data: Dict[str, Any] = {}
+        data: dict[str, Any] = {}
         for d in schema:
             assert "key" in d
             assert "type" in d
@@ -653,7 +654,7 @@ class BaseTests:
         if user_id is None:
             user_id = str(uuid.uuid4())
 
-        payload: Dict[str, Any] = {"user_id": user_id, "jti": str(uuid.uuid4())}
+        payload: dict[str, Any] = {"user_id": user_id, "jti": str(uuid.uuid4())}
         payload["t"] = token_type
         now = datetime.now(pytz.utc)
         payload["iat"] = now
@@ -669,7 +670,7 @@ class BaseTests:
         return jwt.encode(payload, secret, algorithm=algorithm)
 
     @staticmethod
-    def event_matches_filters(event: Event, filters: Dict[str, str]) -> bool:
+    def event_matches_filters(event: Event, filters: dict[str, str]) -> bool:
         for filt, value in filters.items():  # pragma: no cover
             if filt == "date" and event.date != value:
                 return False
@@ -688,8 +689,8 @@ class BaseTests:
 
     @classmethod
     def get_last_events(
-        cls, num: int = 1, filters: Optional[Dict[str, str]] = None
-    ) -> List[Event]:
+        cls, num: int = 1, filters: Optional[dict[str, str]] = None
+    ) -> list[Event]:
         fpath = LOGS_FOLDER.joinpath("security-events.log")
         if not fpath.exists():  # pragma: no cover
             return []
@@ -699,7 +700,7 @@ class BaseTests:
             lines = file.readlines()
             lines.reverse()
 
-            events: List[Event] = []
+            events: list[Event] = []
             # read last num lines
             for line in lines:
                 # Found enough events, let's stop

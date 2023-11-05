@@ -1,9 +1,10 @@
 """
 Download data from APIs
 """
+from collections.abc import Iterator
 from mimetypes import MimeTypes
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Optional
 
 from flask import Response, send_from_directory, stream_with_context
 from werkzeug.utils import secure_filename

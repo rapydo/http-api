@@ -1,5 +1,5 @@
 import re
-from typing import Dict, List, Optional
+from typing import Optional
 
 import pytest
 
@@ -24,11 +24,11 @@ class TestApp1(BaseTests):
     # METHOD /path, e.g.
     # GET /api/admin/users
     # POST /api/admin/users
-    def get_paths(self, client: FlaskClient) -> List[str]:
+    def get_paths(self, client: FlaskClient) -> list[str]:
         loader = EndpointsLoader()
         loader.load_endpoints_folder(ABS_RESTAPI_PATH)
 
-        paths: List[str] = []
+        paths: list[str] = []
         for endpoint_class in loader.endpoints:
             for method, path in endpoint_class.methods.items():
                 if path.startswith("/api/tests/"):
@@ -45,10 +45,10 @@ class TestApp1(BaseTests):
         client: FlaskClient,
         method: str,
         endpoint: str,
-        headers: Optional[Dict[str, str]],
+        headers: Optional[dict[str, str]],
         expected_authorized: bool,
-        paths: List[str],
-    ) -> List[str]:
+        paths: list[str],
+    ) -> list[str]:
         assert method in (
             "GET",
             "POST",

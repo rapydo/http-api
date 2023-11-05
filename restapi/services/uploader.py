@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 from flask import request
 from plumbum.cmd import file
@@ -16,9 +16,9 @@ DEFAULT_PERMISSIONS = 0o440
 
 
 class Uploader:
-    allowed_exts: List[str] = []
+    allowed_exts: list[str] = []
 
-    def set_allowed_exts(self, exts: List[str]) -> None:
+    def set_allowed_exts(self, exts: list[str]) -> None:
         self.allowed_exts = exts
 
     def allowed_file(self, filename: str) -> bool:
@@ -46,7 +46,7 @@ class Uploader:
             raise Forbidden("Invalid file path")
 
     @staticmethod
-    def get_file_metadata(abs_file: Path) -> Dict[str, str]:
+    def get_file_metadata(abs_file: Path) -> dict[str, str]:
         try:
             # Check the type
             # Example of output:
@@ -158,7 +158,7 @@ class Uploader:
     @staticmethod
     def parse_content_range(
         range_header: Optional[str],
-    ) -> Tuple[Optional[int], Optional[int], Optional[int]]:
+    ) -> tuple[Optional[int], Optional[int], Optional[int]]:
         if range_header is None:
             return None, None, None
 
@@ -203,7 +203,7 @@ class Uploader:
     # Ref. http://stackoverflow.com/a/9533843/2114395
     def chunk_upload(
         self, upload_dir: Path, filename: str, chunk_size: Optional[int] = None
-    ) -> Tuple[bool, Response]:
+    ) -> tuple[bool, Response]:
         Uploader.validate_upload_folder(upload_dir)
 
         filename = secure_filename(filename)

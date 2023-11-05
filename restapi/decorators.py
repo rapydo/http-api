@@ -7,7 +7,6 @@ from functools import wraps
 from typing import (
     Any,
     Callable,
-    Dict,
     Optional,
     Union,
     cast,
@@ -68,16 +67,16 @@ def endpoint(
     path: str,
     summary: Optional[str] = None,
     description: Optional[str] = None,
-    responses: Optional[Dict[Union[str, int], str]] = None,
+    responses: Optional[dict[Union[str, int], str]] = None,
     **kwargs: Any,
 ) -> Callable[[EndpointFunction], EndpointFunction]:
     def decorator(func: EndpointFunction) -> EndpointFunction:
-        specs: Dict[str, Any] = {}
+        specs: dict[str, Any] = {}
 
         specs["summary"] = summary
         specs["description"] = description
 
-        specs_responses: Dict[str, Dict[str, str]] = {}
+        specs_responses: dict[str, dict[str, str]] = {}
         if responses:
             for code, message in responses.items():
                 specs_responses[str(code)] = {"description": message}
@@ -143,7 +142,7 @@ def match_types(static_type: Any, runtime_value: Any) -> bool:
         )
 
     # TODO: typing.get_args(static_type) is not verified
-    # Ths means that [1] will be accepted as List[str]
+    # This means that [1] will be accepted as List[str]
     return match_types(origin_type, runtime_value)
 
 
@@ -153,9 +152,9 @@ def match_types(static_type: Any, runtime_value: Any) -> bool:
 # type, then a None is returned and the preload decorator will raise a ServerError
 def inject_callback_parameters(
     callback_fn: Callable[..., Optional[Any]],
-    kwargs: Dict[str, Any],
-    view_args: Optional[Dict[str, Any]],
-) -> Optional[Dict[str, Any]]:
+    kwargs: dict[str, Any],
+    view_args: Optional[dict[str, Any]],
+) -> Optional[dict[str, Any]]:
     callback_name = callback_fn.__name__
     parameters = get_type_hints(callback_fn)
 
@@ -174,7 +173,7 @@ def inject_callback_parameters(
         )
         return None
 
-    injected_parameters: Dict[str, Any] = {}
+    injected_parameters: dict[str, Any] = {}
     for name, parameter in parameters.items():
         # endpoint will be injected by the preload decorator and it is not expected
         # to be found in kwargs / view_args
@@ -226,13 +225,13 @@ def inject_callback_parameters(
 # I can't define with mypy something like:
 # Callable[[EndpointResource, ...],
 def preload(
-    callback: Callable[..., Dict[str, Any]]
+    callback: Callable[..., dict[str, Any]]
 ) -> Callable[[EndpointFunction], EndpointFunction]:
     """
     callback example:
 
     from flask import request
-    def myfunc(endpoint: EndpointResource, user: User) -> Dict[str, Any]:
+    def myfunc(endpoint: EndpointResource, user: User) -> dict[str, Any]:
 
         if (
             not user
@@ -381,7 +380,7 @@ class Pagination(PartialSchema):
     input_filter = fields.Str(required=False, load_default=None)
 
     @post_load
-    def verify_parameters(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+    def verify_parameters(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         if "get_total" in data:
             data["page"] = None
             data["size"] = None

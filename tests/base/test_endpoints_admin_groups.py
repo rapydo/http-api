@@ -1,5 +1,3 @@
-from typing import Set
-
 import orjson
 import pytest
 from faker import Faker
@@ -254,7 +252,7 @@ class TestApp(BaseTests):
             assert len(groups) > 0
 
             # Extract all coordinators:
-            coordinators: Set[str] = set()
+            coordinators: set[str] = set()
             for group in groups:
                 for coordinator in group["coordinators"]:
                     coordinators.add(coordinator["email"])

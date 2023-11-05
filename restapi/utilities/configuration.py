@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, cast
+from typing import Any, Optional, cast
 
 import yaml
 
@@ -10,7 +10,7 @@ PROJECTS_DEFAULTS_FILE = Path("projects_defaults.yaml")
 PROJECT_CONF_FILENAME = Path("project_configuration.yaml")
 
 
-ConfigurationType = Dict[str, Any]
+ConfigurationType = dict[str, Any]
 
 
 def read_configuration(
@@ -18,7 +18,7 @@ def read_configuration(
     base_project_path: Path,
     projects_path: Path,
     submodules_path: Path,
-) -> Tuple[ConfigurationType, Optional[str], Optional[Path]]:
+) -> tuple[ConfigurationType, Optional[str], Optional[Path]]:
     """
     Read default configuration
     """

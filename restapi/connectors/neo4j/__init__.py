@@ -6,7 +6,7 @@ import re
 import socket
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
+from typing import Any, Callable, Optional, TypeVar, cast
 
 import pytz
 from neo4j.exceptions import (
@@ -135,8 +135,7 @@ class NeoModel(Connector):
         )  # type: ignore
 
     def connect(self, **kwargs: str) -> "NeoModel":
-        variables = self.variables.copy()
-        variables.update(kwargs)
+        variables = self.variables | kwargs
 
         USER = variables.get("user", "neo4j")
         PWD = variables.get("password")
@@ -230,7 +229,7 @@ class NeoModel(Connector):
 
     @staticmethod
     # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
-    def update_properties(instance: StructuredNode, properties: Dict[str, Any]) -> None:  # type: ignore  # noqa
+    def update_properties(instance: StructuredNode, properties: dict[str, Any]) -> None:  # type: ignore  # noqa
         for field, value in properties.items():
             instance.__dict__[field] = value
 
@@ -291,8 +290,8 @@ class Authentication(BaseAuthentication):
         # reached if both username and user_id are None
         return None
 
-    def get_users(self) -> List[User]:
-        return cast(List[User], self.db.User.nodes.all())
+    def get_users(self) -> list[User]:
+        return cast(list[User], self.db.User.nodes.all())
 
     def save_user(self, user: User) -> bool:
         if not user:
@@ -319,13 +318,13 @@ class Authentication(BaseAuthentication):
 
         return None
 
-    def get_groups(self) -> List[Group]:
-        return cast(List[Group], self.db.Group.nodes.all())
+    def get_groups(self) -> list[Group]:
+        return cast(list[Group], self.db.Group.nodes.all())
 
     def get_user_group(self, user: User) -> Group:
         return user.belongs_to.single()
 
-    def get_group_members(self, group: Group) -> List[User]:
+    def get_group_members(self, group: Group) -> list[User]:
         return list(group.members)
 
     def save_group(self, group: Group) -> bool:
@@ -342,7 +341,7 @@ class Authentication(BaseAuthentication):
         group.delete()
         return True
 
-    def get_roles(self) -> List[RoleObj]:
+    def get_roles(self) -> list[RoleObj]:
         roles = []
         for role in self.db.Role.nodes.all():
             if role:
@@ -350,7 +349,7 @@ class Authentication(BaseAuthentication):
 
         return roles
 
-    def get_roles_from_user(self, user: Optional[User]) -> List[str]:
+    def get_roles_from_user(self, user: Optional[User]) -> list[str]:
         # No user for non authenticated endpoints -> return no role
         if user is None:
             return []
@@ -369,7 +368,7 @@ class Authentication(BaseAuthentication):
 
     # Also used by POST user
     def create_user(
-        self, userdata: Dict[str, Any], roles: List[str], group: Group
+        self, userdata: dict[str, Any], roles: list[str], group: Group
     ) -> User:
         userdata.setdefault("authmethod", "credentials")
 
@@ -389,7 +388,7 @@ class Authentication(BaseAuthentication):
         return user
 
     # Also used by PUT user
-    def link_roles(self, user: User, roles: List[str]) -> None:
+    def link_roles(self, user: User, roles: list[str]) -> None:
         if not roles:
             roles = [self.default_role]
 
@@ -404,7 +403,7 @@ class Authentication(BaseAuthentication):
                 raise Exception(f"Graph role {role} does not exist") from e
             user.roles.connect(role_obj)
 
-    def create_group(self, groupdata: Dict[str, Any]) -> Group:
+    def create_group(self, groupdata: dict[str, Any]) -> Group:
         group = self.db.Group(**groupdata).save()
 
         return group
@@ -485,8 +484,8 @@ class Authentication(BaseAuthentication):
         user: Optional[User] = None,
         token_jti: Optional[str] = None,
         get_all: bool = False,
-    ) -> List[Token]:
-        tokens_list: List[Token] = []
+    ) -> list[Token]:
+        tokens_list: list[Token] = []
         tokens = None
 
         if get_all:
@@ -548,7 +547,7 @@ class Authentication(BaseAuthentication):
 
     def get_logins(
         self, username: Optional[str] = None, only_unflushed: bool = False
-    ) -> List[Login]:
+    ) -> list[Login]:
         if not username:
             logins = self.db.Login.nodes.all()
         elif only_unflushed:

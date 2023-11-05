@@ -7,7 +7,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import Any, Dict, Optional, Tuple, Type, TypeVar, cast
+from typing import Any, Optional, TypeVar, cast
 
 from flask import Flask
 
@@ -36,9 +36,9 @@ NO_AUTH = "NO_AUTHENTICATION"
 DEFAULT_DATETIME = datetime.fromtimestamp(0)
 
 # service-name => dict of variables
-Services = Dict[str, Dict[str, str]]
+Services = dict[str, dict[str, str]]
 
-ExceptionsList = Optional[Tuple[Type[Exception]]]
+ExceptionsList = Optional[tuple[type[Exception]]]
 
 
 class Connector(metaclass=abc.ABCMeta):
@@ -53,10 +53,10 @@ class Connector(metaclass=abc.ABCMeta):
     _authentication_module: Optional[ModuleType] = None
 
     # Returned by __getattr__ in neo4j and sqlalchemy connectors
-    _models: Dict[str, Type[Any]] = {}
+    _models: dict[str, type[Any]] = {}
 
     # Used by set_object and get_object
-    _instances: Dict[str, T] = {}  # type: ignore
+    _instances: dict[str, T] = {}  # type: ignore
 
     def __init__(self) -> None:
         # This is the lower-cased class name (neomodel, celeryext)
@@ -113,7 +113,7 @@ class Connector(metaclass=abc.ABCMeta):
 
     def __exit__(
         self,
-        exctype: Optional[Type[Exception]],
+        exctype: Optional[type[Exception]],
         excinst: Optional[Exception],
         exctb: Optional[TracebackType],
     ) -> bool:
@@ -147,7 +147,7 @@ class Connector(metaclass=abc.ABCMeta):
         print_and_exit("Missing initialize method in {}", self.__class__.__name__)
 
     @property
-    def variables(self) -> Dict[str, str]:
+    def variables(self) -> dict[str, str]:
         return self.services.get(self.name) or {}
 
     @classmethod
@@ -228,7 +228,7 @@ class Connector(metaclass=abc.ABCMeta):
         )
 
     @staticmethod
-    def get_class(connector_module: Optional[ModuleType]) -> Optional[Type[Any]]:
+    def get_class(connector_module: Optional[ModuleType]) -> Optional[type[Any]]:
         if not connector_module:  # pragma: no cover
             return None
 
@@ -275,7 +275,7 @@ class Connector(metaclass=abc.ABCMeta):
         authentication_instance.module_initialization()
 
     @staticmethod
-    def project_init(options: Dict[str, bool]) -> None:
+    def project_init(options: dict[str, bool]) -> None:
         if Connector.authentication_service != NO_AUTH:
             authentication_instance = Connector.get_authentication_instance()
 
@@ -344,9 +344,9 @@ class Connector(metaclass=abc.ABCMeta):
     @classmethod
     def set_models(
         cls,
-        base_models: Dict[str, Type[Any]],
-        extended_models: Dict[str, Type[Any]],
-        custom_models: Dict[str, Type[Any]],
+        base_models: dict[str, type[Any]],
+        extended_models: dict[str, type[Any]],
+        custom_models: dict[str, type[Any]],
     ) -> None:
         # Join models as described by issue #16
         cls._models = base_models

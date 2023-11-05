@@ -28,8 +28,7 @@ class RedisExt(Connector):
         return None
 
     def connect(self, **kwargs: str) -> "RedisExt":
-        variables = self.variables.copy()
-        variables.update(kwargs)
+        variables = self.variables | kwargs
 
         # ssl=True, ssl_ca_certs=certifi.where()
         # turning off hostname verification (not recommended):

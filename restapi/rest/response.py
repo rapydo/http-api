@@ -5,7 +5,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Optional, Union, cast
 from urllib import parse as urllib_parse
 
 import orjson
@@ -86,7 +86,7 @@ def handle_marshmallow_errors(error: HTTPException) -> Response:
     errors = {}
 
     error_messages = cast(
-        Dict[str, Dict[str, str]], error.data.get("messages")  # type: ignore
+        dict[str, dict[str, str]], error.data.get("messages")  # type: ignore
     )
     for key, messages in error_messages.items():
         for k, msg in messages.items():
@@ -197,7 +197,7 @@ class ResponseMaker:
     # Have a look here: (from flask import request)
     # request.user_agent.browser
     @staticmethod
-    def get_accepted_formats() -> List[str]:
+    def get_accepted_formats() -> list[str]:
         """
         Possible outputs:
         '*/*'
@@ -239,8 +239,8 @@ class ResponseMaker:
 
     @staticmethod
     def get_html(
-        content: ResponseContent, code: int, headers: Dict[str, str]
-    ) -> Tuple[str, Dict[str, str]]:
+        content: ResponseContent, code: int, headers: dict[str, str]
+    ) -> tuple[str, dict[str, str]]:
         if isinstance(content, list):  # pragma: no cover
             content = content.pop()
 
@@ -257,7 +257,7 @@ class ResponseMaker:
         code: int,
         content_encoding: Optional[str],
         content_type: Optional[str],
-    ) -> Tuple[Optional[bytes], Dict[str, str]]:
+    ) -> tuple[Optional[bytes], dict[str, str]]:
         if code < 200 or code >= 300 or content_encoding is not None:
             return None, {}
 
@@ -314,10 +314,10 @@ class ResponseMaker:
         return gzipped_content, headers
 
     @staticmethod
-    def convert_model_to_schema(schema: Schema) -> List[Dict[str, Any]]:
+    def convert_model_to_schema(schema: Schema) -> list[dict[str, Any]]:
         schema_fields = []
         for field, field_def in schema.declared_fields.items():
-            f: Dict[str, Any] = {}
+            f: dict[str, Any] = {}
 
             f["key"] = field_def.data_key or field
 
@@ -359,7 +359,7 @@ class ResponseMaker:
             elif not isinstance(field_def.load_default, _Missing):  # pragma: no cover
                 f["default"] = field_def.load_default
 
-            validators: List[validate.Validator] = []
+            validators: list[validate.Validator] = []
             if field_def.validate:
                 validators.append(field_def.validate)  # type: ignore
 

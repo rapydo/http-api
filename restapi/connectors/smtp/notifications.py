@@ -1,4 +1,5 @@
-from typing import Any, Dict, Iterator, Optional, Tuple
+from collections.abc import Iterator
+from typing import Any, Optional
 
 import html2text
 import jinja2
@@ -20,8 +21,8 @@ from restapi.utilities.time import seconds_to_human
 
 
 def get_html_template(
-    template_file: str, replaces: Dict[str, Any]
-) -> Tuple[Optional[str], Optional[str]]:
+    template_file: str, replaces: dict[str, Any]
+) -> tuple[Optional[str], Optional[str]]:
     html = _get_html_template(template_file, replaces)
     header_html = _get_html_template("email_header.html", replaces)
     footer_html = _get_html_template("email_footer.html", replaces)
@@ -47,7 +48,7 @@ def convert_html2text(html_body: str) -> str:
     return h2t.handle(html_body)
 
 
-def _get_html_template(template_file: str, replaces: Dict[str, Any]) -> Optional[str]:
+def _get_html_template(template_file: str, replaces: dict[str, Any]) -> Optional[str]:
     # Custom templates from project backend/models/email/
     template_path = CODE_DIR.joinpath(
         CUSTOM_PACKAGE, MODELS_DIR, "emails", template_file
@@ -84,7 +85,7 @@ def send_notification(
     template: str,
     # if None will be sent to the administrator
     to_address: Optional[str] = None,
-    data: Optional[Dict[str, Any]] = None,
+    data: Optional[dict[str, Any]] = None,
     user: Optional[User] = None,
     send_async: bool = False,
 ) -> bool:

@@ -1,5 +1,6 @@
 import re
-from typing import Any, Mapping, Optional, Tuple, Union
+from collections.abc import Mapping
+from typing import Any, Optional, Union
 
 import orjson
 from marshmallow import ValidationError, types
@@ -76,7 +77,7 @@ class Nested(fields.Nested):
     def __init__(
         self,
         # nested: Union[SchemaABC, type, str, Callable[[], SchemaABC]],
-        # the above type is from marshmallow, but it fails with Dict[str, Any] (imc)
+        # the above type is from marshmallow, but it fails with dict[str, Any] (imc)
         nested: Any,
         *,
         default: Any = missing_,
@@ -101,7 +102,7 @@ class Nested(fields.Nested):
         value: Any,
         attr: Optional[str],
         data: Optional[Mapping[str, Any]],
-        partial: Optional[Union[bool, Tuple[str]]] = None,
+        partial: Optional[Union[bool, tuple[str]]] = None,
         **kwargs: Any,
     ) -> Any:
         # this is the case when requests (or pytest) send some json-dumped object

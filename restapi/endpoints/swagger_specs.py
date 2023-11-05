@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from glom import glom
 
@@ -9,7 +9,7 @@ from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 
 
-def add_model(definitions: Dict[str, bool], def_name: str, is_private: bool) -> None:
+def add_model(definitions: dict[str, bool], def_name: str, is_private: bool) -> None:
     def_name = def_name.replace("#/definitions/", "")
 
     definitions.setdefault(def_name, True)
@@ -52,11 +52,11 @@ class NewSwaggerSpecifications(EndpointResource):
 
         log.debug("Unauthenticated request, filtering out private endpoints")
         # Remove sensible data
-        filtered_specs: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        filtered_specs: dict[str, dict[str, dict[str, Any]]] = {}
         # schemaName => True|False (private|public)
-        privatedefs: Dict[str, bool] = {}
+        privatedefs: dict[str, bool] = {}
         # schemaName => [list of definitions including this]
-        parentdefs: Dict[str, List[Any]] = {}
+        parentdefs: dict[str, list[Any]] = {}
         for key, data in specs.items():
             # Find endpoint mapping flagged as private
             if key == "paths":
@@ -162,8 +162,8 @@ class NewSwaggerSpecifications(EndpointResource):
     def is_definition_private(
         self,
         schema_name: str,
-        privatedefs: Dict[str, bool],
-        parentdefs: Dict[str, Any],
+        privatedefs: dict[str, bool],
+        parentdefs: dict[str, Any],
         recursion: int = 0,
     ) -> bool:
         # can be True|False|None

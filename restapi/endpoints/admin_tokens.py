@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from glom import glom
 
@@ -10,7 +10,7 @@ from restapi.services.authentication import Role, Token, User
 from restapi.utilities.logs import log
 
 
-def inject_token(endpoint: EndpointResource, token_id: str) -> Dict[str, Any]:
+def inject_token(endpoint: EndpointResource, token_id: str) -> dict[str, Any]:
     tokens = endpoint.auth.get_tokens(token_jti=token_id)
 
     if not tokens:

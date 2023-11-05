@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from restapi import decorators
 from restapi.connectors.smtp.notifications import (
@@ -18,7 +18,7 @@ from restapi.utilities.time import date_lower_than as dt_lower
 # from restapi.utilities.logs import log
 
 
-def inject_user(endpoint: EndpointResource, user_id: str, user: User) -> Dict[str, Any]:
+def inject_user(endpoint: EndpointResource, user_id: str, user: User) -> dict[str, Any]:
     target_user = endpoint.auth.get_user(user_id=user_id)
     if target_user is None:
         raise NotFound("This user cannot be found or you are not authorized")
@@ -86,7 +86,7 @@ class AdminUsers(EndpointResource):
         },
     )
     def post(self, user: User, **kwargs: Any) -> Response:
-        roles: List[str] = kwargs.pop("roles", [])
+        roles: list[str] = kwargs.pop("roles", [])
 
         # The role is already refused by webards... This is an additional check
         # to improve the security, but can't be reached
@@ -141,7 +141,7 @@ class AdminUsers(EndpointResource):
             unhashed_password = None
 
         payload = kwargs.copy()
-        roles: List[str] = kwargs.pop("roles", [])
+        roles: list[str] = kwargs.pop("roles", [])
 
         # The role is already refused by webards... This is an additional check
         # to improve the security, but can't be reached

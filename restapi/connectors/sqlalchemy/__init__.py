@@ -5,7 +5,7 @@ Connector based on SQLalchemy with automatic integration with RAPyDo framework
 import re
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
+from typing import Any, Callable, Optional, TypeVar, cast
 
 import pytz
 from psycopg2 import OperationalError as PsycopgOperationalError
@@ -50,7 +50,7 @@ from restapi.utilities.uuid import getUUID
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-def parse_postgres_duplication_error(excpt: List[str]) -> Optional[str]:
+def parse_postgres_duplication_error(excpt: list[str]) -> Optional[str]:
     if m0 := re.search(
         r".*duplicate key value violates unique constraint \"(.*)\"", excpt[0]
     ):
@@ -68,7 +68,7 @@ def parse_postgres_duplication_error(excpt: List[str]) -> Optional[str]:
     return None
 
 
-def parse_missing_error(excpt: List[str]) -> Optional[str]:
+def parse_missing_error(excpt: list[str]) -> Optional[str]:
     if m := re.search(
         r"null value in column \"(.*)\" of relation \"(.*)\" "
         "violates not-null constraint",
@@ -169,8 +169,7 @@ class SQLAlchemy(Connector):
         )  # type: ignore
 
     def connect(self, **kwargs: str) -> "SQLAlchemy":
-        variables = self.variables.copy()
-        variables.update(kwargs)
+        variables = self.variables | kwargs
 
         query = {}
         if self.is_mysql():  # pragma: no cover
@@ -263,7 +262,7 @@ class SQLAlchemy(Connector):
         instance.db.metadata.drop_all(engine)
 
     @staticmethod
-    def update_properties(instance: Any, properties: Dict[str, Any]) -> None:
+    def update_properties(instance: Any, properties: dict[str, Any]) -> None:
         for field, value in properties.items():
             set_attribute(instance, field, value)
 
@@ -272,13 +271,13 @@ class Authentication(BaseAuthentication):
     def __init__(self) -> None:
         self.db: SQLAlchemy = get_instance()
 
-    def init_auth_db(self, options: Dict[str, bool]) -> None:
+    def init_auth_db(self, options: dict[str, bool]) -> None:
         self.db.initialize()
         return super().init_auth_db(options)
 
     # Also used by POST user
     def create_user(
-        self, userdata: Dict[str, Any], roles: List[str], group: Group
+        self, userdata: dict[str, Any], roles: list[str], group: Group
     ) -> User:
         userdata.setdefault("authmethod", "credentials")
         userdata.setdefault("uuid", getUUID())
@@ -298,7 +297,7 @@ class Authentication(BaseAuthentication):
         # why commit is not needed here!?
         return user
 
-    def link_roles(self, user: User, roles: List[str]) -> None:
+    def link_roles(self, user: User, roles: list[str]) -> None:
         if not roles:
             roles = [BaseAuthentication.default_role]
 
@@ -313,7 +312,7 @@ class Authentication(BaseAuthentication):
         user.roles = roles_instances
         # why commit is not needed here!?
 
-    def create_group(self, groupdata: Dict[str, Any]) -> Group:
+    def create_group(self, groupdata: dict[str, Any]) -> Group:
         groupdata.setdefault("uuid", getUUID())
 
         group = self.db.Group(**groupdata)
@@ -360,7 +359,7 @@ class Authentication(BaseAuthentication):
         # only reached if both username and user_id are None
         return None
 
-    def get_users(self) -> List[User]:
+    def get_users(self) -> list[User]:
         users = list(self.db.session.execute(select(self.db.User)).scalars())
         self.db.session.commit()
         return users
@@ -400,7 +399,7 @@ class Authentication(BaseAuthentication):
 
         return None
 
-    def get_groups(self) -> List[Group]:
+    def get_groups(self) -> list[Group]:
         groups = list(self.db.session.execute(select(self.db.Group)).scalars())
         self.db.session.commit()
         return groups
@@ -410,7 +409,7 @@ class Authentication(BaseAuthentication):
         self.db.session.commit()
         return group
 
-    def get_group_members(self, group: Group) -> List[User]:
+    def get_group_members(self, group: Group) -> list[User]:
         members = list(group.members)
         self.db.session.commit()
         return members
@@ -431,7 +430,7 @@ class Authentication(BaseAuthentication):
         self.db.session.commit()
         return True
 
-    def get_roles(self) -> List[RoleObj]:
+    def get_roles(self) -> list[RoleObj]:
         # Get default URL
         engine = mem.sqlalchemy_engines.get(None)
         if not engine and mem.sqlalchemy_engines:
@@ -448,7 +447,7 @@ class Authentication(BaseAuthentication):
         self.db.session.commit()
         return roles
 
-    def get_roles_from_user(self, user: Optional[User]) -> List[str]:
+    def get_roles_from_user(self, user: Optional[User]) -> list[str]:
         # No user for non authenticated endpoints -> return no role
         if user is None:
             return []
@@ -551,8 +550,8 @@ class Authentication(BaseAuthentication):
         user: Optional[User] = None,
         token_jti: Optional[str] = None,
         get_all: bool = False,
-    ) -> List[Token]:
-        tokens_list: List[Token] = []
+    ) -> list[Token]:
+        tokens_list: list[Token] = []
         tokens = None
 
         if get_all:
@@ -610,7 +609,7 @@ class Authentication(BaseAuthentication):
         date = datetime.now(pytz.utc)
         ip_address = self.get_remote_ip()
 
-        login_data: Dict[str, Any] = {}
+        login_data: dict[str, Any] = {}
 
         login_data["date"] = date
         login_data["username"] = username
@@ -636,7 +635,7 @@ class Authentication(BaseAuthentication):
 
     def get_logins(
         self, username: Optional[str] = None, only_unflushed: bool = False
-    ) -> List[Login]:
+    ) -> list[Login]:
         logins = select(self.db.Login)
         if username:
             logins = logins.where(self.db.Login.username == username)

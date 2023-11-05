@@ -1,6 +1,6 @@
 """ Models for the relational database """
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy import Column, DateTime, ForeignKey, String, Table
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -30,7 +30,7 @@ class Role(Base):
     name: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    users: Mapped[List["User"]] = relationship(
+    users: Mapped[list["User"]] = relationship(
         "User",
         secondary=roles_users,
         back_populates="roles",
@@ -62,7 +62,7 @@ class User(Base):
     privacy_accepted: Mapped[bool] = mapped_column(default=True)
     expiration: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
-    roles: Mapped[List["Role"]] = relationship(
+    roles: Mapped[list["Role"]] = relationship(
         "Role",
         secondary=roles_users,
         back_populates="users",
@@ -74,13 +74,13 @@ class User(Base):
         cascade_backrefs=False,
         foreign_keys=[group_id],
     )
-    tokens: Mapped[List["Token"]] = relationship(
+    tokens: Mapped[list["Token"]] = relationship(
         "Token",
         back_populates="emitted_for",
         cascade_backrefs=False,
         cascade="delete",
     )
-    logins: Mapped[List["Login"]] = relationship(
+    logins: Mapped[list["Login"]] = relationship(
         "Login",
         back_populates="user",
         cascade_backrefs=False,
@@ -124,7 +124,7 @@ class Group(Base):
     shortname: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     fullname: Mapped[str] = mapped_column(String(256), nullable=False)
 
-    members: Mapped[List["User"]] = relationship(
+    members: Mapped[list["User"]] = relationship(
         "User",
         back_populates="belongs_to",
         cascade_backrefs=False,

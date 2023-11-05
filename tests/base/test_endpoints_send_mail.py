@@ -1,5 +1,4 @@
-import json
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from faker import Faker
@@ -29,7 +28,7 @@ class TestApp(BaseTests):
         r = client.delete(f"{API_URI}/admin/mail", headers=headers)
         assert r.status_code == 405
 
-        data: Dict[str, Any] = {"dry_run": False}
+        data: dict[str, Any] = {"dry_run": False}
         r = client.post(f"{API_URI}/admin/mail", json=data, headers=headers)
         assert r.status_code == 400
 

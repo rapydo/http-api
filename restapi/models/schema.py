@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Dict, Optional, Type, Union, cast
+from typing import Any, Optional, Union, cast
 
 from marshmallow import EXCLUDE
 from marshmallow import Schema as MarshmallowSchema
@@ -22,7 +22,7 @@ class Schema(MarshmallowSchema):
     @classmethod
     def from_dict(
         cls,
-        fields: Dict[str, Union[fields.Field, type]],
+        fields: dict[str, Union[fields.Field, type]],
         *,
         name: str = "GeneratedSchema",
     ) -> type:
@@ -36,9 +36,9 @@ class Schema(MarshmallowSchema):
     @pre_load
     def raise_get_schema(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if GET_SCHEMA_KEY in data:
             raise ValidationError("Schema requested")
 
@@ -54,7 +54,7 @@ class Schema(MarshmallowSchema):
         except TypeError:  # pragma: no cover
             mutable_data = data.to_dict()  # type: ignore
             mutable_data.pop("access_token")
-            return cast(Dict[str, Any], mutable_data)
+            return cast(dict[str, Any], mutable_data)
 
 
 class PartialSchema(Schema):
@@ -65,7 +65,7 @@ class PartialSchema(Schema):
 
 class Neo4jSchema(Schema):
     def __init__(
-        self, model: Type[Any], fields: Optional[Any], *args: Any, **kwargs: Any
+        self, model: type[Any], fields: Optional[Any], *args: Any, **kwargs: Any
     ) -> None:
         super().__init__(**kwargs)
 
@@ -88,7 +88,7 @@ class Neo4jSchema(Schema):
         # this fields and the from marshmallow import fields above
         self.build_schema(model)
 
-    def build_schema(self, model: Type[Any]) -> None:
+    def build_schema(self, model: type[Any]) -> None:
         # Get the full list of parent classes from model to object
         classes = inspect.getmro(model)
 

@@ -1,6 +1,4 @@
-""" Models for graph database """
-from typing import Type
-
+""" Models for neo4j database """
 from neomodel import (
     AliasProperty,
     ArrayProperty,
@@ -26,11 +24,11 @@ from restapi.connectors.neo4j.types import IdentifiedNode, TimestampedNode
 from restapi.utilities.meta import Meta
 
 # mypy: ignore-errors
-UserCustomClass: Type[IdentifiedNode] = (
+UserCustomClass: type[IdentifiedNode] = (
     Meta.get_class("models.neo4j", "UserCustom") or IdentifiedNode
 )
 # mypy: ignore-errors
-GroupCustomClass: Type[IdentifiedNode] = (
+GroupCustomClass: type[IdentifiedNode] = (
     Meta.get_class("models.neo4j", "GroupCustom") or IdentifiedNode
 )
 

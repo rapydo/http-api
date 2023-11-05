@@ -1,9 +1,9 @@
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from flask_apispec.utils import Annotation
 
 
-def inject_apispec_docs(fn: Any, conf: Any, labels: Optional[List[str]]) -> None:
+def inject_apispec_docs(fn: Any, conf: Any, labels: Optional[list[str]]) -> None:
     # retrieve attributes already set with @docs decorator
     fn.__apispec__ = fn.__dict__.get("__apispec__", {})
     docs = {}
