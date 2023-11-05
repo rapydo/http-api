@@ -74,7 +74,7 @@ jobs:
           sleep 25
           rapydo logs
 
-          if [[ "${{github.actor}}" == "dependabot[bot]" ]] || [[ "${{github.event_name}}" == "pull_request" ]] || [[ "${{github.event.pull_request.merged}}" == "true" ]]; then
+          if [[ "${{github.actor}}" == "renovate[bot]" ]] || [[ "${{github.event_name}}" == "pull_request" ]] || [[ "${{github.event.pull_request.merged}}" == "true" ]]; then
             # Do not install at root level to prevent:
             # ERROR: Could not install packages due to an OSError:
             #        [Errno 16] Device or resource busy: '/usr/local/lib/python3.10/dist-packages/restapi/'
@@ -103,7 +103,7 @@ jobs:
           curl --insecure -X GET --max-time 5 https://localhost/api/status | grep "Server is alive"
           rapydo logs --tail 20 proxy backend
 
-          if [[ "${{github.actor}}" == "dependabot[bot]" ]] || [[ "${{github.event_name}}" == "pull_request" ]] || [[ "${{github.event.pull_request.merged}}" == "true" ]]; then
+          if [[ "${{github.actor}}" == "renovate[bot]" ]] || [[ "${{github.event_name}}" == "pull_request" ]] || [[ "${{github.event.pull_request.merged}}" == "true" ]]; then
             # Do not install at root level to prevent:
             # ERROR: Could not install packages due to an OSError:
             #        [Errno 16] Device or resource busy: '/usr/local/lib/python3.10/dist-packages/restapi/'
