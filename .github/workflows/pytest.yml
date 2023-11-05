@@ -22,7 +22,6 @@ jobs:
             noauth,
             low_security,
             extra,
-            legacy38,
             legacy39,
             legacy310,
             neo4j,
