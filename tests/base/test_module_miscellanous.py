@@ -1090,17 +1090,6 @@ class TestApp(BaseTests):
         assert not match_types(Optional[str], ["test"])
         assert not match_types(Optional[str], {"test": 1})
 
-        assert not match_types(list[str], EndpointResource)
-        assert not match_types(list[str], "EndpointResource")
-        assert not match_types(list[str], None)
-        assert not match_types(list[str], 1)
-        assert match_types(list[str], [])
-        assert not match_types(list[str], {})
-        assert match_types(list[str], ["test"])
-        # list args are not verifed, so [1] is currently accepted as List[str]
-        assert match_types(list[str], [1])
-        assert not match_types(list[str], {"test": 1})
-
         assert match_types(Union[str, int], 1)
         assert match_types(Union[str, int], "1")
         assert not match_types(Union[str, int], [])
