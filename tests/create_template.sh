@@ -93,4 +93,8 @@ fi
 BRANCH=${BRANCH/refs\/tags\/v/}
 
 echo "Forcing http-api to branch ${BRANCH}"
-sed -i "s|# branch: \"http-api-branch\"|branch: \"${BRANCH}\"|g" projects/${PROJECT_NAME}/project_configuration.yaml
+echo """
+  submodules:
+    http-api:
+      branch \"${BRANCH}\"
+""" >> projects/${PROJECT_NAME}/project_configuration.yaml
