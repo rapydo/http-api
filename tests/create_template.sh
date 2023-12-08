@@ -96,5 +96,5 @@ echo "Forcing http-api to branch ${BRANCH}"
 echo """
   submodules:
     http-api:
-      branch \"${BRANCH}\"
+      branch: \"${BRANCH}\"
 """ >> projects/${PROJECT_NAME}/project_configuration.yaml
