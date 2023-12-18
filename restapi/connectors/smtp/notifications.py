@@ -80,6 +80,14 @@ def _get_html_template(template_file: str, replaces: dict[str, Any]) -> Optional
         return None
 
 
+def get_reply_to() -> str:
+    if addr := Env.get("SMTP_REPLYTO", ""):
+        return addr
+    if addr := Env.get("SMTP_NOREPLY", ""):
+        return addr
+    return Env.get("SMTP_ADMIN", "")
+
+
 def send_notification(
     subject: str,
     template: str,
@@ -94,7 +102,8 @@ def send_notification(
         return False
 
     title = get_project_configuration("project.title", default="Unkown title")
-    reply_to = Env.get("SMTP_NOREPLY", Env.get("SMTP_ADMIN", ""))
+
+    reply_to = get_reply_to()
 
     if data is None:
         data = {}
