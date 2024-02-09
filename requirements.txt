@@ -22,7 +22,7 @@ flower==2.0.1
 celery-redbeat==2.1.1
 amqp==5.2.0
 pyotp==2.9.0
-segno==1.5.3
+segno==1.6.1
 PyYAML==6.0.1
 loguru==0.7.2
 glom==23.5.0
