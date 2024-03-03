@@ -192,6 +192,7 @@ class SQLAlchemy(Connector):
                 uri,
                 pool_size=poolsize,
                 max_overflow=poolsize + 10,
+                execution_options={"isolation_level": "READ COMMITTED"},
                 future=True,
             )
         engine = mem.sqlalchemy_engines[uri]
@@ -337,14 +338,14 @@ class Authentication(BaseAuthentication):
                 users = self.db.session.execute(
                     select(self.db.User).where(self.db.User.email == username)
                 ).scalar()
-                self.db.session.commit()
+                # self.db.session.commit()
                 return users
 
             if user_id:
                 users = self.db.session.execute(
                     select(self.db.User).where(self.db.User.uuid == user_id)
                 ).scalar()
-                self.db.session.commit()
+                # self.db.session.commit()
                 return users
 
         except (StatementError, InvalidRequestError) as e:
@@ -361,7 +362,7 @@ class Authentication(BaseAuthentication):
 
     def get_users(self) -> list[User]:
         users = list(self.db.session.execute(select(self.db.User)).scalars())
-        self.db.session.commit()
+        # self.db.session.commit()
         return users
 
     def save_user(self, user: User) -> bool:
@@ -387,31 +388,31 @@ class Authentication(BaseAuthentication):
             group = self.db.session.execute(
                 select(self.db.Group).where(self.db.Group.uuid == group_id)
             ).scalar()
-            self.db.session.commit()
+            # self.db.session.commit()
             return group
 
         if name:
             group = self.db.session.execute(
                 select(self.db.Group).where(self.db.Group.shortname == name)
             ).scalar()
-            self.db.session.commit()
+            # self.db.session.commit()
             return group
 
         return None
 
     def get_groups(self) -> list[Group]:
         groups = list(self.db.session.execute(select(self.db.Group)).scalars())
-        self.db.session.commit()
+        # self.db.session.commit()
         return groups
 
     def get_user_group(self, user: User) -> Group:
         group = user.belongs_to
-        self.db.session.commit()
+        # self.db.session.commit()
         return group
 
     def get_group_members(self, group: Group) -> list[User]:
         members = list(group.members)
-        self.db.session.commit()
+        # self.db.session.commit()
         return members
 
     def save_group(self, group: Group) -> bool:
@@ -444,7 +445,7 @@ class Authentication(BaseAuthentication):
         ):  # pragma: no cover
             return []
         roles = list(self.db.session.execute(select(self.db.Role)).scalars())
-        self.db.session.commit()
+        # self.db.session.commit()
         return roles
 
     def get_roles_from_user(self, user: Optional[User]) -> list[str]:
@@ -453,7 +454,7 @@ class Authentication(BaseAuthentication):
             return []
 
         roles = [role.name for role in user.roles]
-        self.db.session.commit()
+        # self.db.session.commit()
         return roles
 
     def create_role(self, name: str, description: str) -> None:
@@ -505,7 +506,7 @@ class Authentication(BaseAuthentication):
         token_entry = self.db.session.execute(
             select(self.db.Token).where(self.db.Token.jti == jti)
         ).scalar()
-        self.db.session.commit()
+        # self.db.session.commit()
 
         if token_entry is None:
             return False
@@ -583,14 +584,14 @@ class Authentication(BaseAuthentication):
                     t["user"] = token.emitted_for
                 tokens_list.append(t)
 
-        self.db.session.commit()
+        # self.db.session.commit()
         return tokens_list
 
     def invalidate_token(self, token: str) -> bool:
         token_entry = self.db.session.execute(
             select(self.db.Token).where(self.db.Token.token == token)
         ).scalar()
-        self.db.session.commit()
+        # self.db.session.commit()
         if token_entry:
             try:
                 self.db.session.delete(token_entry)
@@ -642,7 +643,7 @@ class Authentication(BaseAuthentication):
             if only_unflushed:
                 logins = logins.where(self.db.Login.flushed == False)  # noqa
         logins_list = list(self.db.session.execute(logins).scalars())
-        self.db.session.commit()
+        # self.db.session.commit()
         return logins_list
 
     def flush_failed_logins(self, username: str) -> None:
