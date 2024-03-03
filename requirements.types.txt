@@ -2,7 +2,7 @@ rapydo_http[dev]
 mypy==1.6.1
 lxml==4.9.4
 html5lib==1.1
-celery-types==0.20.0
+celery-types==0.22.0
 pika-stubs==0.1.3
 types-certifi==2021.10.8.3
 types-click==7.1.8
