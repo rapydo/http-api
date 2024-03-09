@@ -7,6 +7,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional, TypedDict, Union, cast
 
+import bcrypt
 import jwt
 import pyotp
 import pytz
@@ -73,8 +74,6 @@ def import_secret(abs_filename: Path) -> bytes:
         abs_filename.chmod(0o400)
         return key
 
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 ALL_ROLES = "all"
 ANY_ROLE = "any"
@@ -333,21 +332,23 @@ class BaseAuthentication(metaclass=ABCMeta):
 
     # #####################
     # # Password handling #
-    ####################
+    # #####################
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
-        try:
-            return pwd_context.verify(plain_password, hashed_password)
-        except ValueError as e:  # pragma: no cover
-            log.error(e)
-
-            return False
+        password_byte_enc = plain_password.encode("utf-8", errors="strict")
+        hashed_password_byte_enc = hashed_password.encode("utf-8", errors="strict")
+        return bcrypt.checkpw(
+            password=password_byte_enc, hashed_password=hashed_password_byte_enc
+        )
 
     @staticmethod
     def get_password_hash(password: Optional[str]) -> str:
         if not password:
             raise Unauthorized("Invalid password")
-        return pwd_context.hash(password)
+        pwd_bytes = password.encode("utf-8")
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(password=pwd_bytes, salt=salt).decode("utf-8")
+        return hashed_password
 
     @staticmethod
     def get_remote_ip(raise_warnings: bool = True) -> str:

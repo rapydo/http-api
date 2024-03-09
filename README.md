@@ -10,7 +10,6 @@ Based on:
 - webargs
 - Flask-Caching
 - PyJWT
-- passlib
 - pyotp With segno
 - Neomodel
 - PyMySQL
