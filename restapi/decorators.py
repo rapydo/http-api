@@ -278,7 +278,7 @@ def cache_response_filter(response: Response) -> bool:
         return True
 
     if len(response) < 3:  # pragma: no cover
-        return True
+        return True  # type: ignore[unreachable]
 
     return response[1] < 500
 

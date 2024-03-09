@@ -84,16 +84,16 @@ class SMTP:
         b = email.message_from_string(msg)
         if b.is_multipart():
             # get the first payload (the non html version)
-            first_payload = b.get_payload()[0]
+            first_payload = b.get_payload()[0]  # type: ignore
             # This is enough when the message is not based64-encoded
-            payload = first_payload.get_payload()
+            # payload = first_payload.get_payload()
             # Otherwise this is needed:
-            payload = first_payload.get_payload(decode=True).decode("utf-8")
+            payload = first_payload.get_payload(decode=True).decode("utf-8")  # type: ignore
         else:
             # This is enough when the message is not based64-encoded
             # payload = b.get_payload()
             # Otherwise this is needed:
-            payload = b.get_payload(decode=True).decode("utf-8")
+            payload = b.get_payload(decode=True).decode("utf-8")  # type: ignore
 
         with open(body_fpath, "w+") as file:
             file.write(payload)
