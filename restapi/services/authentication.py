@@ -17,7 +17,6 @@ from cryptography.fernet import InvalidToken as InvalidFernetToken
 from flask import request
 from glom import glom
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
-from passlib.context import CryptContext
 
 from restapi.config import (
     BACKEND_HOSTNAME,
