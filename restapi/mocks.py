@@ -1,6 +1,7 @@
 """
 Mock classes used to replace customization classes when building the documentation
 """
+
 from restapi.connectors import Connector
 from restapi.customizer import BaseCustomizer, FlaskRequest, Props, User
 from restapi.rest.definition import EndpointResource

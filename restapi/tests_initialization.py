@@ -1,6 +1,7 @@
 """
 Initialization script for unit tests
 """
+
 from datetime import datetime
 
 import pytz

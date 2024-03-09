@@ -164,7 +164,6 @@ def get_login_ban_time(val: int) -> int:
 
 
 class BaseAuthentication(metaclass=ABCMeta):
-
     """
     An almost abstract class with methods
     to be implemented with a new service
@@ -1152,12 +1151,10 @@ class BaseAuthentication(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def save_group(self, group: Group) -> bool:
-        ...
+    def save_group(self, group: Group) -> bool: ...
 
     @abstractmethod
-    def delete_group(self, group: Group) -> bool:
-        ...
+    def delete_group(self, group: Group) -> bool: ...
 
     @abstractmethod
     def get_tokens(
@@ -1215,8 +1212,7 @@ class BaseAuthentication(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def save_role(self, role: RoleObj) -> bool:
-        ...
+    def save_role(self, role: RoleObj) -> bool: ...
 
     # ################
     # # Create Users #

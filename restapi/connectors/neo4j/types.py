@@ -9,7 +9,6 @@ from restapi.utilities.uuid import getUUID
 
 # Base type StructuredNode becomes "Any" due to an unfollowed import
 class IdentifiedNode(StructuredNode):  # type: ignore
-
     """
     A StructuredNode identified by an uuid
     """
@@ -24,7 +23,6 @@ class IdentifiedNode(StructuredNode):  # type: ignore
 
 
 class TimestampedNode(IdentifiedNode):
-
     """
     An IdentifiedNode with creation and modification dates
     """

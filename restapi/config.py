@@ -1,6 +1,7 @@
 """
 Configuration variables set for the server instance
 """
+
 from functools import lru_cache
 from pathlib import Path
 

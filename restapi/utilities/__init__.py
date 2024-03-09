@@ -1,6 +1,7 @@
 """
 Set of utilities to handle wit logs, processes, time, uuid and others
 """
+
 import sys
 from typing import NoReturn, Optional
 

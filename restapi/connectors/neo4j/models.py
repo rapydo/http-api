@@ -1,4 +1,5 @@
 """ Models for neo4j database """
+
 from neomodel import (
     AliasProperty,
     ArrayProperty,

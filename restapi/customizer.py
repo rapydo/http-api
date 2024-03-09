@@ -1,6 +1,7 @@
 """
 Base class to let projects to customize core functionalities
 """
+
 import abc
 
 from flask import Flask

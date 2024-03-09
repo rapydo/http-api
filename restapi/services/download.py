@@ -1,6 +1,7 @@
 """
 Download data from APIs
 """
+
 from collections.abc import Iterator
 from mimetypes import MimeTypes
 from pathlib import Path

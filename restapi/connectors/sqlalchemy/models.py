@@ -1,4 +1,5 @@
 """ Models for the relational database """
+
 from datetime import datetime
 from typing import Optional
 

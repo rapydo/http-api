@@ -6,6 +6,7 @@ https://pythonconquerstheuniverse.wordpress.com/
     2010/10/20/a-globals-class-pattern-for-python/
 
 """
+
 from typing import Any, Optional
 
 from flask_caching import Cache

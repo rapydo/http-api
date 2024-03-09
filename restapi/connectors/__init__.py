@@ -1,6 +1,7 @@
 """
 Set of modules for the connection and handling of external services
 """
+
 import abc
 import os
 import time

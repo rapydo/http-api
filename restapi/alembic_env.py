@@ -3,6 +3,7 @@ This is the RAPyDo version of the env.py for alembic.
 It is copied into the migrations folder to create the
 connection engine used by the migrate commands
 """
+
 from logging.config import fileConfig
 
 from alembic import context

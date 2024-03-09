@@ -3,6 +3,7 @@ This test is intended to be executed as last, just after the destroy test
 (this is why it is prefixed as zzz2)
 Beware: if env TEST_DESTROY_MODE == 1 this test will destroy your database, be careful
 """
+
 import os
 
 import pytest

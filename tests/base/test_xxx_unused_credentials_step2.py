@@ -2,6 +2,7 @@
 This will used credentials created at the beginning of the suite
 to verify that unused credentialas are banned
 """
+
 from faker import Faker
 
 from restapi.env import Env

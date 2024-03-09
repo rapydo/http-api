@@ -3,6 +3,7 @@ This endpoint validates an UNLOCK token to re-enable credentials
 after a block due to too many failed attemps.
 Unlock URL (including token) is sent by email
 """
+
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 
 from restapi import decorators
