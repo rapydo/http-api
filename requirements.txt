@@ -2,7 +2,7 @@ Flask==2.2.5
 flask-apispec==0.11.4
 Flask-Caching==2.1.0
 Flask-Cors==4.0.0
-SQLAlchemy==2.0.27
+SQLAlchemy==2.0.28
 alembic==1.13.1
 Werkzeug==2.2.3
 PyJWT==2.8.0
