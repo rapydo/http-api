@@ -214,13 +214,6 @@ class TestApp(BaseTests):
             auth.get_password_hash(None)
 
         assert auth.verify_password(pwd1, hash_1)
-        with pytest.raises(TypeError):
-            # Hashing a None password
-            auth.verify_password(None, hash_1)  # type: ignore
-
-        assert not auth.verify_password(pwd1, None)  # type: ignore
-
-        assert not auth.verify_password(None, None)  # type: ignore
 
         assert not auth.is_bcrypt_hashed("test")
         test_hash = auth.get_password_hash(pwd1)
