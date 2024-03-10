@@ -217,7 +217,7 @@ class TestApp(BaseTests):
 
         assert not auth.is_bcrypt_hashed("test")
         test_hash = auth.get_password_hash(pwd1)
-        assert not auth.is_bcrypt_hashed(test_hash)
+        assert auth.is_bcrypt_hashed(test_hash)
 
     @staticmethod
     @pytest.mark.skipif(
