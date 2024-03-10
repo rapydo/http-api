@@ -754,10 +754,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             if pwd == old_pwd:
                 return False, "The new password cannot match the previous password"
 
-            if self.verify_password(
-                BaseAuthentication.get_password_hash(pwd),
-                BaseAuthentication.get_password_hash(old_pwd),
-            ):
+            if self.verify_password(pwd, BaseAuthentication.get_password_hash(old_pwd)):
                 return False, "The new password cannot match the previous password"
 
         if len(pwd) < self.MIN_PASSWORD_LENGTH:
