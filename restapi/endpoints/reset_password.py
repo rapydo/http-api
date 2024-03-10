@@ -138,6 +138,7 @@ if Connector.check_availability("smtp"):
             token_obj = tokens_obj.pop(0)
             emitted = token_obj["emitted"]
 
+            log.critical("DEBUG CODE - 1")
             last_change = None
             # If user logged in after the token emission invalidate the token
             if user.last_login is not None:
@@ -147,6 +148,7 @@ if Connector.check_availability("smtp"):
             elif user.last_password_change is not None:  # pragma: no cover
                 last_change = user.last_password_change
 
+            log.critical("DEBUG CODE - 2")
             if last_change is not None:
                 # Can't happen because the change password also invalidated the token
                 if last_change > emitted:  # pragma: no cover
@@ -154,6 +156,7 @@ if Connector.check_availability("smtp"):
                     raise BadRequest(
                         "Invalid reset token: this request is no longer valid",
                     )
+            log.critical("DEBUG CODE - 3")
 
             # The reset token is valid, do something
 
@@ -161,21 +164,28 @@ if Connector.check_availability("smtp"):
             if new_password is None and password_confirm is None:
                 return self.empty_response()
 
+            log.critical("DEBUG CODE - 4")
             # Something is missing
             if new_password is None or password_confirm is None:
                 raise BadRequest("Invalid password")
 
+            log.critical("DEBUG CODE - 5")
             if new_password != password_confirm:
                 raise BadRequest("New password does not match with confirmation")
 
+            log.critical("DEBUG CODE - 6")
             self.auth.change_password(
                 user, user.password, new_password, password_confirm
             )
+            log.critical("DEBUG CODE - 7")
             # I really don't know why this save is required... since it is already
             # in change_password ... But if I remove it the new pwd is not saved...
             self.auth.save_user(user)
 
+            log.critical("DEBUG CODE - 8")
+            log.critical(token)
             # Bye bye token (reset tokens are valid only once)
             self.auth.invalidate_token(token)
 
+            log.critical("DEBUG CODE - 9")
             return self.response("Password changed")
