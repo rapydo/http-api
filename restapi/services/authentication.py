@@ -333,7 +333,17 @@ class BaseAuthentication(metaclass=ABCMeta):
     # # Password handling #
     # #####################
     @staticmethod
+    def is_bcrypt_hashed(password: str) -> bool:
+        try:
+            bcrypt.checkpw(b"password", password.encode("utf-8"))
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
+        if not BaseAuthentication.is_bcrypt_hashed(hashed_password):
+            hashed_password = BaseAuthentication.get_password_hash(hashed_password)
         password_byte_enc = plain_password.encode("utf-8", errors="strict")
         hashed_password_byte_enc = hashed_password.encode("utf-8", errors="strict")
         return bcrypt.checkpw(
@@ -754,7 +764,7 @@ class BaseAuthentication(metaclass=ABCMeta):
             if pwd == old_pwd:
                 return False, "The new password cannot match the previous password"
 
-            if self.verify_password(pwd, BaseAuthentication.get_password_hash(old_pwd)):
+            if self.verify_password(pwd, old_pwd):
                 return False, "The new password cannot match the previous password"
 
         if len(pwd) < self.MIN_PASSWORD_LENGTH:

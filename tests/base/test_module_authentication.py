@@ -222,6 +222,10 @@ class TestApp(BaseTests):
 
         assert not auth.verify_password(None, None)  # type: ignore
 
+        assert not auth.is_bcrypt_hashed("test")
+        test_hash = auth.get_password_hash(pwd1)
+        assert not auth.is_bcrypt_hashed(test_hash)
+
     @staticmethod
     @pytest.mark.skipif(
         not Env.get_bool("AUTH_SECOND_FACTOR_AUTHENTICATION"),
