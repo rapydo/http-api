@@ -344,9 +344,10 @@ class BaseAuthentication(metaclass=ABCMeta):
     def get_password_hash(password: Optional[str]) -> str:
         if not password:
             raise Unauthorized("Invalid password")
-        pwd_bytes = password.encode("utf-8")
-        salt = bcrypt.gensalt()
-        hashed_password = bcrypt.hashpw(password=pwd_bytes, salt=salt).decode("utf-8")
+        hashed_password = bcrypt.hashpw(
+            password=password.encode("utf-8"),
+            salt=bcrypt.gensalt(),
+        ).decode("utf-8")
         return hashed_password
 
     @staticmethod
@@ -753,8 +754,10 @@ class BaseAuthentication(metaclass=ABCMeta):
             if pwd == old_pwd:
                 return False, "The new password cannot match the previous password"
 
-            # in case old_pwd is a hash
-            if self.verify_password(pwd, old_pwd):
+            if self.verify_password(
+                BaseAuthentication.get_password_hash(pwd),
+                BaseAuthentication.get_password_hash(old_pwd),
+            ):
                 return False, "The new password cannot match the previous password"
 
         if len(pwd) < self.MIN_PASSWORD_LENGTH:
