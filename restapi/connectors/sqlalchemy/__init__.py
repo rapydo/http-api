@@ -152,15 +152,6 @@ class SQLAlchemy(Connector):
         raise AttributeError(f"Model {name} not found")
 
     @staticmethod
-    def is_mysql() -> bool:
-        # could be based on self.variables but this version Env based
-        # can be used as static method and be used before creating instances
-        return (
-            Env.get("AUTH_SERVICE", "NO_AUTHENTICATION") == "sqlalchemy"
-            and Env.get("ALCHEMY_DBTYPE", "postgresql") == "mysql+pymysql"
-        )
-
-    @staticmethod
     def get_connection_exception() -> ExceptionsList:
         # type is ignored here due to untyped psycopg2
         return (
@@ -171,11 +162,6 @@ class SQLAlchemy(Connector):
     def connect(self, **kwargs: str) -> "SQLAlchemy":
         variables = self.variables | kwargs
 
-        query = {}
-        if self.is_mysql():  # pragma: no cover
-            if not Connector.is_external(variables.get("host", "")):
-                query = {"charset": "utf8mb4"}
-
         uri = URL.create(
             drivername=variables.get("dbtype", "postgresql"),
             username=variables.get("user"),
@@ -183,7 +169,7 @@ class SQLAlchemy(Connector):
             host=variables.get("host"),
             port=Env.to_int(variables.get("port"), 5432),
             database=variables.get("db"),
-            query=query,
+            query={},
         )
 
         poolsize = Env.to_int(variables.get("poolsize"), 30)

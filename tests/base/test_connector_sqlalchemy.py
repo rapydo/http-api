@@ -30,9 +30,8 @@ def test_no_sqlalchemy() -> None:
 def test_sqlalchemy(app: Flask) -> None:
     log.info("Executing {} tests", CONNECTOR)
 
-    if not connector.SQLAlchemy.is_mysql():
-        with pytest.raises(ServiceUnavailable):
-            connector.get_instance(host="invalidhostname", port="123")
+    with pytest.raises(ServiceUnavailable):
+        connector.get_instance(host="invalidhostname", port="123")
 
     with pytest.raises(ServiceUnavailable):
         connector.get_instance(user="invaliduser")
