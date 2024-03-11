@@ -6,7 +6,7 @@ SQLAlchemy==2.0.28
 alembic==1.13.1
 Werkzeug==2.2.3
 PyJWT==2.8.0
-pyOpenSSL==24.0.0
+pyOpenSSL==24.1.0
 marshmallow==3.21.1
 webargs==8.4.0
 apispec==6.3.1
