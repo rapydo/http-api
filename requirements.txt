@@ -4,7 +4,7 @@ Flask-Caching==2.1.0
 Flask-Cors==4.0.0
 SQLAlchemy==2.0.28
 alembic==1.13.1
-Werkzeug==2.2.3
+Werkzeug==2.3.8
 PyJWT==2.8.0
 pyOpenSSL==24.1.0
 marshmallow==3.21.1
