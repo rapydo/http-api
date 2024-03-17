@@ -26,6 +26,7 @@ from restapi.services.authentication import (
 )
 from restapi.types import EndpointFunction
 from restapi.utilities import print_and_exit
+from werkzeug.datastructures import Authorization
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
@@ -44,14 +45,16 @@ class HTTPTokenAuth:
     def get_authorization_token(
         allow_access_token_parameter: bool = False,
     ) -> tuple[Optional[str], Optional[str]]:
-        log.critical("DEBUG a1 {}", request.authorization)
-        log.critical("DEBUG a2 {}", request.headers)
         if request.authorization is not None:
             auth_type = request.authorization.type
             token = request.authorization.token
-            log.critical("DEBUG t1 {}", auth_type)
-            log.critical("DEBUG t2 {}", token)
             return auth_type, token
+        elif HTTPAUTH_AUTH_FIELD in request.headers:
+            parsed_auth_header = Authorization.from_header(
+                request.headers.get(HTTPAUTH_AUTH_FIELD)
+            )
+            auth_type = parsed_auth_header.type
+            token = parsed_auth_header.token
         elif ALLOW_ACCESS_TOKEN_PARAMETER or allow_access_token_parameter:
             if not (token := request.args.get("access_token", "")):
                 return None, None
