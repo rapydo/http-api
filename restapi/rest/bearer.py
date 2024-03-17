@@ -29,7 +29,7 @@ from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
-HTTPAUTH_SCHEME = "Bearer"
+HTTPAUTH_SCHEME = "bearer"
 HTTPAUTH_AUTH_FIELD = "Authorization"
 # Base header for errors
 HTTPAUTH_ERR_HEADER = {
@@ -40,41 +40,18 @@ TOKEN_VALIDATED_KEY = "TOKEN_VALIDATED"
 
 
 class HTTPTokenAuth:
-    """
-    A class to implement a Generic Token (oauth2-like) authentication.
-    Started on a draft of the great miguel: http://bit.ly/2nTqQKA
-    """
-
     @staticmethod
     def get_authorization_token(
         allow_access_token_parameter: bool = False,
     ) -> tuple[Optional[str], Optional[str]]:
-        # Basic authenticaton is now allowed
         if request.authorization is not None:
-            return None, None
-
-        if HTTPAUTH_AUTH_FIELD in request.headers:
-            # Flask/Werkzeug do not recognize any authentication types
-            # other than Basic or Digest, so here we parse the header by hand
-            try:
-                auth_header: str = request.headers.get(HTTPAUTH_AUTH_FIELD, "")
-                # Do not return directly auth_header.split
-                # Otherwise in case of malformed tokens the exception will be raised
-                # outside this function and probably not properly catched
-                # e.g. {'Authorization': 'Bearer'}  # no token provided
-                # will raise not enough values to unpack (expected 2, got 1)
-                auth_type, token = auth_header.split(None, 1)
-                return auth_type, token
-            except ValueError:
-                # The Authorization header is either empty or has no token
-                return None, None
-
+            auth_type = request.authorization.type
+            token = request.authorization.token
+            return auth_type, token
         elif ALLOW_ACCESS_TOKEN_PARAMETER or allow_access_token_parameter:
             if not (token := request.args.get("access_token", "")):
                 return None, None
-
             return HTTPAUTH_SCHEME, token
-
         return None, None
 
     @staticmethod
