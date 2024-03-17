@@ -53,17 +53,17 @@ class TestApp(BaseTests):
         # Token type is case insensitive.
         r = client.get(
             f"{API_URI}/tests/authentication",
-            headers={"Authorization": "bearer {token}"},
+            headers={"Authorization": f"bearer {token}"},
         )
         assert r.status_code == 200
         r = client.get(
             f"{API_URI}/tests/authentication",
-            headers={"Authorization": "BEARER {token}"},
+            headers={"Authorization": f"BEARER {token}"},
         )
         assert r.status_code == 200
         r = client.get(
             f"{API_URI}/tests/authentication",
-            headers={"Authorization": "BeArEr {token}"},
+            headers={"Authorization": f"BeArEr {token}"},
         )
         assert r.status_code == 200
 
