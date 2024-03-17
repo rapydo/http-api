@@ -44,6 +44,8 @@ class HTTPTokenAuth:
     def get_authorization_token(
         allow_access_token_parameter: bool = False,
     ) -> tuple[Optional[str], Optional[str]]:
+        log.critical("DEBUG a1 {}", request.authorization)
+        log.critical("DEBUG a2 {}", request.headers)
         if request.authorization is not None:
             auth_type = request.authorization.type
             token = request.authorization.token
