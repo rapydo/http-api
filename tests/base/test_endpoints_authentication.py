@@ -50,6 +50,23 @@ class TestApp(BaseTests):
         assert "email" in content
         assert content["email"] == BaseAuthentication.default_user
 
+        # Token type is case insensitive.
+        r = client.get(
+            f"{API_URI}/tests/authentication",
+            headers={"Authorization": f"bearer {token}"},
+        )
+        assert r.status_code == 200
+        r = client.get(
+            f"{API_URI}/tests/authentication",
+            headers={"Authorization": f"BEARER {token}"},
+        )
+        assert r.status_code == 200
+        r = client.get(
+            f"{API_URI}/tests/authentication",
+            headers={"Authorization": f"BeArEr {token}"},
+        )
+        assert r.status_code == 200
+
         if not Env.get_bool("ALLOW_ACCESS_TOKEN_PARAMETER"):
             # access token parameter is not allowed by default
             r = client.get(

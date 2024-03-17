@@ -174,7 +174,7 @@ class TestApp(BaseTests):
         r = client.get(f"{AUTH_URI}/status", headers=headers)
         assert r.status_code == 401
 
-        # Bearer realm is expected to be case sensitive
+        # Bearer realm is expected to be case insensitive
         token = self.get("auth_token")
         headers = {"Authorization": f"Bearer {token}"}
         r = client.get(f"{AUTH_URI}/status", headers=headers)
@@ -182,11 +182,11 @@ class TestApp(BaseTests):
 
         headers = {"Authorization": f"bearer {token}"}
         r = client.get(f"{AUTH_URI}/status", headers=headers)
-        assert r.status_code == 401
+        assert r.status_code == 200
 
         headers = {"Authorization": f"BEARER {token}"}
         r = client.get(f"{AUTH_URI}/status", headers=headers)
-        assert r.status_code == 401
+        assert r.status_code == 200
 
         token = self.get("auth_token")
         headers = {"Authorization": f"Bear {token}"}
