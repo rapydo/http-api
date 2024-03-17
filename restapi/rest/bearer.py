@@ -15,6 +15,7 @@ from functools import wraps
 from typing import Any, Callable, Optional, Union, cast
 
 from flask import request
+from werkzeug.datastructures import Authorization
 
 from restapi.customizer import FlaskRequest
 from restapi.env import Env
@@ -26,7 +27,6 @@ from restapi.services.authentication import (
 )
 from restapi.types import EndpointFunction
 from restapi.utilities import print_and_exit
-from werkzeug.datastructures import Authorization
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
@@ -53,6 +53,8 @@ class HTTPTokenAuth:
             parsed_auth_header = Authorization.from_header(
                 request.headers.get(HTTPAUTH_AUTH_FIELD)
             )
+            if parsed_auth_header is None:
+                return None, None
             auth_type = parsed_auth_header.type
             token = parsed_auth_header.token
         elif ALLOW_ACCESS_TOKEN_PARAMETER or allow_access_token_parameter:
