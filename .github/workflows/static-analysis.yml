@@ -7,7 +7,7 @@ on:
 
 jobs:
   codeql:
-    name: Analyze
+    name: CodeQL
     runs-on: ubuntu-latest
 
     strategy:
@@ -40,6 +40,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
   ossar:
+    name: OSSAR
     # OSSAR runs on windows-latest.
     # ubuntu-latest and macos-latest support coming soon
     runs-on: windows-latest
@@ -68,22 +69,25 @@ jobs:
         with:
           sarif_file: ${{ steps.ossar.outputs.sarifFile }}
 
-  # semgrep:
-  #   name: Scan
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     # Checkout project source
-  #     - uses: actions/checkout@v4
+  semgrep:
+    name: Semgrep
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout project source
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install Semgrep
+        run: python3 -m pip install semgrep
+      - name: Run Semgrep
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+        run: semgrep ci --sarif > semgrep.sarif
 
-  #     # Scan code using project's configuration on https://semgrep.dev/manage
-  #     - uses: returntocorp/semgrep-action@v1
-  #       with:
-  #         publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
-  #         generateSarif: "1"
-
-  #     # Upload SARIF file generated in previous step
-  #     - name: Upload SARIF file
-  #       uses: github/codeql-action/upload-sarif@v3
-  #       with:
-  #         sarif_file: semgrep.sarif
-  #       if: always()
+      # Upload SARIF file generated in previous step
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
