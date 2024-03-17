@@ -46,7 +46,9 @@ class HTTPTokenAuth:
     ) -> tuple[Optional[str], Optional[str]]:
         if request.authorization is not None:
             auth_type = request.authorization.type
-            token = request.authorization.token  # type: ignore [attr-defined]
+            token = request.authorization.token
+            log.critical("DEBUG t1 {}", auth_type)
+            log.critical("DEBUG t2 {}", token)
             return auth_type, token
         elif ALLOW_ACCESS_TOKEN_PARAMETER or allow_access_token_parameter:
             if not (token := request.args.get("access_token", "")):
