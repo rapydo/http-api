@@ -308,6 +308,10 @@ def cache(*args: Any, **kwargs: Any) -> Any:
         kwargs["response_filter"] = cache_response_filter
     if "make_name" not in kwargs:
         kwargs["make_name"] = make_cache_function_name
+
+    if not hasattr(mem, "cache"):
+        print_and_exit("Cannot load @decorators.cache, is Redis connector available?")
+
     return mem.cache.memoize(*args, **kwargs)
 
 

@@ -10,8 +10,6 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
 
-# from restapi.utilities.logs import log
-
 
 class RedisExt(Connector):
     DB = 0
