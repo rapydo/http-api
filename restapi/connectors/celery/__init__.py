@@ -431,6 +431,10 @@ class CeleryExt(Connector):
         # The setting will be set to True by default in Celery 6.0.
         self.celery_app.conf.worker_cancel_long_running_tasks_on_connection_loss = True
 
+        # Automatically try to establish the connection to the AMQP broker on Celery startup
+        # if it is unavailable.
+        self.celery_app.conf.broker_connection_retry_on_startup = True
+
         if Env.get_bool("CELERYBEAT_ENABLED"):
             CeleryExt.CELERYBEAT_SCHEDULER = backend
 
