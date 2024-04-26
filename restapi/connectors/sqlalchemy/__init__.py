@@ -156,7 +156,7 @@ class SQLAlchemy(Connector):
         return (
             OperationalError,
             PsycopgOperationalError,
-        )
+        )  # type: ignore[return-value]
 
     def connect(self, **kwargs: str) -> "SQLAlchemy":
         variables = self.variables | kwargs
