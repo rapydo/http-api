@@ -39,7 +39,6 @@ jobs:
             neo4j \
             neobolt \
             neomodel \
-            psycopg2 \
             redbeat \
             plumbum \
             psutil \
