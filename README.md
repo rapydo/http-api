@@ -12,7 +12,7 @@ Based on:
 - PyJWT
 - pyotp With segno
 - Neomodel
-- PyMySQL
+- SQLAlchemy
 - Redis-py
 - pika with amqp
 - celery with celery-redbeat
