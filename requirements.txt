@@ -30,7 +30,7 @@ psutil==5.9.8
 plumbum==1.8.2
 html2text==2024.2.26
 orjson==3.10.1
-sentry-sdk[flask]==1.45.0
+sentry-sdk[flask]==2.0.1
 bcrypt==4.1.2
 
 # Redis 5.0.3 dropped this dependency, but it's currently still used
