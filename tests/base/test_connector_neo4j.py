@@ -1,4 +1,5 @@
 import time
+import warnings
 from datetime import datetime
 from unittest.mock import patch
 
@@ -19,6 +20,13 @@ from restapi.utilities.logs import log
 
 CONNECTOR = "neo4j"
 CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
+
+
+# Raised from neomodel with python 3.12
+warnings.filterwarnings(
+    "ignore",
+    message="datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version",  # noqa
+)
 
 
 @pytest.mark.skipif(

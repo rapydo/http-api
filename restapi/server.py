@@ -269,11 +269,6 @@ def create_app(
             message="Relying on Driver's destructor to close the session is deprecated.",
         )
 
-        # Raised from neomodel with python 3.12
-        warnings.filterwarnings(
-            "ignore",
-            message="datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version",  # noqa
-        )
         if Connector.check_availability("redis"):
             mem.cache = Cache.get_instance(flask_app)
 
