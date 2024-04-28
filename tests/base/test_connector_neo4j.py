@@ -22,13 +22,6 @@ CONNECTOR = "neo4j"
 CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
 
 
-# Raised from neomodel with python 3.12
-warnings.filterwarnings(
-    "ignore",
-    message="datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version",  # noqa
-)
-
-
 @pytest.mark.skipif(
     CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
 )
@@ -50,6 +43,12 @@ class TestNeo4j(BaseTests):
 
         r = client.get(f"{API_URI}/tests/neo4j/2")
         assert r.status_code == 400
+
+        # Raised from neomodel with python 3.12
+        warnings.filterwarnings(
+            "ignore",
+            message="datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version",  # noqa
+        )
 
         r = client.get(f"{API_URI}/tests/neo4j/3")
         assert r.status_code == 200
