@@ -32,7 +32,7 @@ from neomodel.exceptions import (
     RequiredProperty,
     UniqueProperty,
 )
-from neomodel.match import NodeSet
+from neomodel.sync_.match import NodeSet
 
 from restapi.connectors import Connector, ExceptionsList
 from restapi.exceptions import (
