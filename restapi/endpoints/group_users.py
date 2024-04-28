@@ -5,7 +5,6 @@ from restapi.services.authentication import Role, User
 
 
 class GroupUsers(EndpointResource):
-
     depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
     labels = ["management"]
 
@@ -20,7 +19,6 @@ class GroupUsers(EndpointResource):
         },
     )
     def get(self, user: User) -> Response:
-
         group = self.auth.get_user_group(user)
 
         members = self.auth.get_group_members(group)

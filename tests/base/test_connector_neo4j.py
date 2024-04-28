@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+from unittest.mock import patch
 
 import dateutil.parser
 import pytest
@@ -24,7 +25,6 @@ CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
     CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
 )
 def test_no_neo4j() -> None:
-
     with pytest.raises(ServiceUnavailable):
         connector.get_instance()
 
@@ -55,7 +55,6 @@ class TestNeo4j(BaseTests):
 
     @staticmethod
     def test_connector(app: Flask, faker: Faker) -> None:
-
         obj = connector.get_instance()
         assert obj is not None
 
@@ -78,7 +77,7 @@ class TestNeo4j(BaseTests):
         assert t.emitted_for.single() is None
         t.delete()
 
-        with pytest.raises(CypherSyntaxError, match=r"{code: None} {message: None}"):
+        with pytest.raises(CypherSyntaxError, match=r"Failed to execute Cypher Query"):
             obj.cypher("MATCH (n) RETURN n with a syntax error")
         # Query information are removed from the CypherSyntaxError exception
 
@@ -139,9 +138,36 @@ class TestNeo4j(BaseTests):
         with pytest.raises(ServiceUnavailable):
             connector.get_instance(user="invaliduser")
 
+        with pytest.raises(ServiceUnavailable, match=r"Invalid retry value: 0"):
+            connector.get_instance(retries=0, retry_wait=0)
+        with pytest.raises(ServiceUnavailable, match=r"Invalid retry value: -1"):
+            connector.get_instance(retries=-1, retry_wait=0)
+        with pytest.raises(ServiceUnavailable, match=r"Invalid retry wait value: -1"):
+            connector.get_instance(retries=1, retry_wait=-1)
+        obj = connector.get_instance(retries=1, retry_wait=0)
+        assert obj is not None
+
+        MOCKED_RETURN = connector.get_instance()
+        # Clean the cache
+        Connector.disconnect_all()
+        WAIT = 1
+        with patch.object(Connector, "initialize_connection") as mock:
+            start = time.time()
+            mock.side_effect = [
+                ServiceUnavailable("first"),
+                ServiceUnavailable("second"),
+                MOCKED_RETURN,
+            ]
+            obj = connector.get_instance(retries=10, retry_wait=WAIT)
+
+            assert mock.call_count == 3
+            assert obj == MOCKED_RETURN
+            end = time.time()
+
+            assert end - start > WAIT
+
     @staticmethod
     def test_parser() -> None:
-
         with pytest.raises(ValueError):
             # missing :type
             node1 = NodeDump("TestNode1", fields=["f1"])

@@ -5,7 +5,7 @@ RabbitMQ connector with automatic integration in rapydo framework, based on pika
 import socket
 import ssl
 import urllib.parse
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import certifi
 import orjson
@@ -49,13 +49,10 @@ class RabbitExt(Connector):
         )  # type: ignore
 
     def connect(self, **kwargs: str) -> "RabbitExt":
-
-        variables = self.variables.copy()
         # Beware, if you specify a user different by the default,
-        # then the send method will fail to to PRECONDITION_FAILED because
-        # the user_id will not pass the verification
-        # Locally save self.variables + kwargs to be used in send()
-        variables.update(kwargs)
+        # then the send method will fail with PRECONDITION_FAILED
+        # because the user_id will not pass the verification
+        variables = self.variables | kwargs
 
         ssl_enabled = Env.to_bool(variables.get("ssl_enabled"))
 
@@ -74,7 +71,6 @@ class RabbitExt(Connector):
         vhost = variables.get("vhost", "/")
 
         if ssl_enabled:
-
             # This started failing with python 3.10:
             # context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             # -> Cannot create a client socket with a PROTOCOL_TLS_SERVER context
@@ -110,7 +106,6 @@ class RabbitExt(Connector):
             )
 
         else:
-
             self.connection = pika.BlockingConnection(
                 pika.ConnectionParameters(
                     host=host,
@@ -174,14 +169,12 @@ class RabbitExt(Connector):
             return False
 
     def create_exchange(self, exchange: str) -> None:
-
         channel = self.get_channel()
         channel.exchange_declare(
             exchange=exchange, exchange_type="direct", durable=True, auto_delete=False
         )
 
     def delete_exchange(self, exchange: str) -> None:
-
         channel = self.get_channel()
         channel.exchange_delete(exchange, if_unused=False)
 
@@ -195,14 +188,12 @@ class RabbitExt(Connector):
             return False
 
     def create_queue(self, queue: str) -> None:
-
         channel = self.get_channel()
         channel.queue_declare(
             queue=queue, durable=True, exclusive=False, auto_delete=False
         )
 
     def delete_queue(self, queue: str) -> None:
-
         channel = self.get_channel()
         channel.queue_delete(
             queue,
@@ -210,7 +201,7 @@ class RabbitExt(Connector):
             if_empty=False,
         )
 
-    def get_bindings(self, exchange: str) -> Optional[List[Dict[str, str]]]:
+    def get_bindings(self, exchange: str) -> Optional[list[dict[str, str]]]:
         if not self.exchange_exists(exchange):
             log.error("Exchange {} does not exist", exchange)
             return None
@@ -229,6 +220,10 @@ class RabbitExt(Connector):
         vhost = urllib.parse.quote(self.variables.get("vhost", "/"), safe="")
         user = self.variables.get("user")
         password = self.variables.get("password")
+        if not user or not password:  # pragma: no cover
+            log.error("Invalid rabbitmq username or password, can't retrieve bindings")
+            return None
+
         # API Reference:
         # A list of all bindings in which a given exchange is the source.
         r = requests.get(
@@ -255,7 +250,7 @@ class RabbitExt(Connector):
             #   'destination': queue-or-dest-exchange-name,
             #   'destination_type': 'queue' or 'exchange',
             #   'routing_key': routing_key,
-            #   'arguments': Dict,
+            #   'arguments': dict,
             #   'properties_key': ?? as routing_key?
             # }
 
@@ -270,12 +265,10 @@ class RabbitExt(Connector):
         return bindings
 
     def queue_bind(self, queue: str, exchange: str, routing_key: str) -> None:
-
         channel = self.get_channel()
         channel.queue_bind(queue=queue, exchange=exchange, routing_key=routing_key)
 
     def queue_unbind(self, queue: str, exchange: str, routing_key: str) -> None:
-
         channel = self.get_channel()
         channel.queue_unbind(queue=queue, exchange=exchange, routing_key=routing_key)
 
@@ -284,7 +277,7 @@ class RabbitExt(Connector):
         message: Any,
         routing_key: str = "",
         exchange: str = "",
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Optional[dict[str, Any]] = None,
     ) -> bool:
         return self.send(
             body=orjson.dumps(message),
@@ -298,7 +291,7 @@ class RabbitExt(Connector):
         body: bytes,
         routing_key: str = "",
         exchange: str = "",
-        headers: Optional[Dict[str, Any]] = None,
+        headers: Optional[dict[str, Any]] = None,
     ) -> bool:
         """
         Send a message to the RabbitMQ queue
@@ -332,7 +325,6 @@ class RabbitExt(Connector):
         )
 
         try:
-
             channel = self.get_channel()
             channel.basic_publish(
                 exchange=exchange,
@@ -388,9 +380,14 @@ instance = RabbitExt()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
+    retries: int = 1,
+    retry_wait: int = 0,
     **kwargs: str,
 ) -> "RabbitExt":
-
     return instance.get_instance(
-        verification=verification, expiration=expiration, **kwargs
+        verification=verification,
+        expiration=expiration,
+        retries=retries,
+        retry_wait=retry_wait,
+        **kwargs,
     )

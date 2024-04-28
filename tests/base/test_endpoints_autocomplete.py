@@ -7,7 +7,6 @@ from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
 
 class TestApp(BaseTests):
     def test_autocomplete(self, client: FlaskClient) -> None:
-
         # This test verifies that buildData is always able to randomly create
         # valid inputs for endpoints with inputs defined by marshamallow schemas
         schema = self.get_dynamic_input_schema(client, "tests/autocomplete", {})

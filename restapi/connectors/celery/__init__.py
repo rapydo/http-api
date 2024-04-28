@@ -6,19 +6,7 @@ import ssl
 import traceback
 from datetime import timedelta
 from functools import wraps
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    List,
-    NoReturn,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, Callable, NoReturn, Optional, TypeVar, Union, cast
 
 import certifi
 from celery import Celery, states
@@ -95,7 +83,6 @@ def mark_task_as_failed(self: Any, name: str, exception: Exception) -> NoReturn:
 
 
 def mark_task_as_failed_ignore(self: Any, name: str, exception: Exception) -> NoReturn:
-
     if TESTING:
         self.request.id = "fixed-id"
         self.request.task = name
@@ -138,7 +125,8 @@ def mark_task_as_retriable(
 
     # All retries attempts failed,
     # the error will be converted to permanent
-    if retry_num > MAX_RETRIES:
+    # TODO: it is not tested
+    if retry_num > MAX_RETRIES:  # pragma: no cover
         log.critical("MAX retries reached")
         mark_task_as_failed(self=self, name=name, exception=exception)
 
@@ -183,7 +171,7 @@ class CeleryExt(Connector):
     def task(
         idempotent: bool,
         name: Optional[str] = None,
-        autoretry_for: Tuple[Type[Exception], ...] = tuple(),
+        autoretry_for: tuple[type[Exception], ...] = tuple(),
     ) -> Callable[[F], F]:
         """
         Wrapper of the celery task decorator for a smooth integration in RAPyDo.
@@ -229,18 +217,16 @@ class CeleryExt(Connector):
             )
             @wraps(func)
             def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-
                 try:
-                    with CeleryExt.app.app_context():
+                    # app is officially Optional[Flask]... but can never be None at runtime
+                    with CeleryExt.app.app_context():  # type: ignore
                         return func(self, *args, **kwargs)
                 except Ignore as ex:
-
                     mark_task_as_failed_ignore(
                         self=self, name=name or func.__name__, exception=ex
                     )
 
                 except autoretry_for as ex:
-
                     mark_task_as_retriable(
                         self=self,
                         name=name or func.__name__,
@@ -248,7 +234,6 @@ class CeleryExt(Connector):
                         MAX_RETRIES=MAX_RETRIES,
                     )
                 except Exception as ex:
-
                     mark_task_as_failed(
                         self=self, name=name or func.__name__, exception=ex
                     )
@@ -262,7 +247,7 @@ class CeleryExt(Connector):
         return None
 
     @staticmethod
-    def get_rabbit_url(variables: Dict[str, str], protocol: str) -> str:
+    def get_rabbit_url(variables: dict[str, str], protocol: str) -> str:
         host = variables.get("host")
         port = Env.to_int(variables.get("port"))
         vhost = variables.get("vhost", "")
@@ -277,7 +262,7 @@ class CeleryExt(Connector):
         return f"{protocol}://{creds}{host}:{port}{vhost}"
 
     @staticmethod
-    def get_redis_url(variables: Dict[str, str], protocol: str, db: int) -> str:
+    def get_redis_url(variables: dict[str, str], protocol: str, db: int) -> str:
         host = variables.get("host")
         port = Env.to_int(variables.get("port"))
         pwd = variables.get("password", "")
@@ -288,9 +273,7 @@ class CeleryExt(Connector):
         return f"{protocol}://{creds}{host}:{port}/{db}"
 
     def connect(self, **kwargs: str) -> "CeleryExt":
-
-        variables = self.variables.copy()
-        variables.update(kwargs)
+        variables = self.variables | kwargs
         broker = variables.get("broker_service")
 
         if HOST_TYPE == DOCS:  # pragma: no cover
@@ -448,12 +431,14 @@ class CeleryExt(Connector):
         # The setting will be set to True by default in Celery 6.0.
         self.celery_app.conf.worker_cancel_long_running_tasks_on_connection_loss = True
 
-        if Env.get_bool("CELERYBEAT_ENABLED"):
+        # Automatically try to establish the connection to the AMQP broker on Celery startup
+        # if it is unavailable.
+        self.celery_app.conf.broker_connection_retry_on_startup = True
 
+        if Env.get_bool("CELERYBEAT_ENABLED"):
             CeleryExt.CELERYBEAT_SCHEDULER = backend
 
             if backend == "REDIS":
-
                 service_vars = Env.load_variables_group(prefix="redis")
                 url = self.get_redis_url(
                     service_vars, protocol="redis", db=RedisExt.CELERY_BEAT_DB
@@ -488,13 +473,11 @@ class CeleryExt(Connector):
         self.disconnected = True
 
     def is_connected(self) -> bool:
-
         log.warning("celery.is_connected method is not implemented")
         return not self.disconnected
 
     @classmethod
     def get_periodic_task(cls, name: str) -> Any:
-
         if cls.CELERYBEAT_SCHEDULER == "REDIS":
             from redbeat.schedulers import RedBeatSchedulerEntry
 
@@ -525,8 +508,8 @@ class CeleryExt(Connector):
         task: str,
         every: Union[str, int, timedelta],
         period: AllowedTimedeltaPeriods = "seconds",
-        args: Optional[List[Any]] = None,
-        kwargs: Optional[Dict[str, Any]] = None,
+        args: Optional[list[Any]] = None,
+        kwargs: Optional[dict[str, Any]] = None,
     ) -> None:
         if args is None:
             args = []
@@ -569,10 +552,9 @@ class CeleryExt(Connector):
         day_of_week: str = "*",
         day_of_month: str = "*",
         month_of_year: str = "*",
-        args: Optional[List[Any]] = None,
-        kwargs: Optional[Dict[str, Any]] = None,
+        args: Optional[list[Any]] = None,
+        kwargs: Optional[dict[str, Any]] = None,
     ) -> None:
-
         if args is None:
             args = []
         if kwargs is None:
@@ -607,9 +589,14 @@ instance = CeleryExt()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
+    retries: int = 1,
+    retry_wait: int = 0,
     **kwargs: str,
 ) -> "CeleryExt":
-
     return instance.get_instance(
-        verification=verification, expiration=expiration, **kwargs
+        verification=verification,
+        expiration=expiration,
+        retries=retries,
+        retry_wait=retry_wait,
+        **kwargs,
     )

@@ -5,7 +5,6 @@ from restapi.tests import API_URI, BaseTests, FlaskClient
 
 class TestApp(BaseTests):
     def test_parameter_injection(self, client: FlaskClient) -> None:
-
         if Env.get_bool("AUTH_ENABLE"):
             headers, _ = self.do_login(client, None, None)
             r = client.get(f"{API_URI}/tests/inject/myparam", headers=headers)

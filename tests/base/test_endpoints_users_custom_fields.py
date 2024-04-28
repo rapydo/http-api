@@ -13,7 +13,6 @@ class TestApp(BaseTests):
         reason="This test needs authentication and registration to be available",
     )
     def test_users_custom_fields(self, client: FlaskClient) -> None:
-
         output_fields = mem.customizer.get_custom_output_fields(None)
 
         profile_inputs = mem.customizer.get_custom_input_fields(

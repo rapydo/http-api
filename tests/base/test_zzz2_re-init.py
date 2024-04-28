@@ -3,6 +3,7 @@ This test is intended to be executed as last, just after the destroy test
 (this is why it is prefixed as zzz2)
 Beware: if env TEST_DESTROY_MODE == 1 this test will destroy your database, be careful
 """
+
 import os
 
 import pytest
@@ -25,10 +26,10 @@ def test_init() -> None:
         Connector.disconnect_all()
 
     try:
-        create_app(mode=ServerModes.INIT)
+        create_app(name="Flask Tests", mode=ServerModes.INIT, options={})
         # This is only a rough retry to prevent random errors from sqlalchemy
     except Exception:  # pragma: no cover
-        create_app(mode=ServerModes.INIT)
+        create_app(name="Flask Tests", mode=ServerModes.INIT, options={})
 
     auth = Connector.get_authentication_instance()
     try:

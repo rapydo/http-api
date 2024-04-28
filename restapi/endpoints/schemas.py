@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, Type, TypedDict, Union
+from typing import TypedDict, Union
 
 from restapi.connectors import Connector
 from restapi.customizer import FlaskRequest
@@ -11,7 +11,7 @@ from restapi.utilities.globals import mem
 auth = Connector.get_authentication_instance()
 
 # as defined in Marshmallow.schema.from_dict
-MarshmallowSchema = Dict[str, Union[fields.Field, type]]
+MarshmallowSchema = dict[str, Union[fields.Field, type]]
 
 #########################################
 # #############   Schemas   #############
@@ -219,8 +219,7 @@ def group_users_output() -> Schema:
 
 # Can't use request.method because it is not passed at loading time, i.e. the Specs will
 # be created with empty request
-def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
-
+def admin_user_input(request: FlaskRequest, is_post: bool) -> type[Schema]:
     is_admin = HTTPTokenAuth.is_session_user_admin(request, auth)
 
     attributes: MarshmallowSchema = {}
@@ -317,17 +316,16 @@ def admin_user_input(request: FlaskRequest, is_post: bool) -> Type[Schema]:
     return Schema.from_dict(attributes, name="UserDefinition")
 
 
-def admin_user_post_input(request: FlaskRequest) -> Type[Schema]:
+def admin_user_post_input(request: FlaskRequest) -> type[Schema]:
     return admin_user_input(request, True)
 
 
-def admin_user_put_input(request: FlaskRequest) -> Type[Schema]:
+def admin_user_put_input(request: FlaskRequest) -> type[Schema]:
     return admin_user_input(request, False)
 
 
 # Should to transformed again in a Schema
-def admin_group_input(request: FlaskRequest) -> Type[Schema]:
-
+def admin_group_input(request: FlaskRequest) -> type[Schema]:
     attributes: MarshmallowSchema = {}
 
     attributes["shortname"] = fields.Str(
@@ -392,8 +390,7 @@ def profile_output() -> Schema:
     return schema()  # type: ignore
 
 
-def user_registration_input(request: FlaskRequest) -> Type[Schema]:
-
+def user_registration_input(request: FlaskRequest) -> type[Schema]:
     attributes: MarshmallowSchema = {}
 
     attributes["name"] = fields.Str(required=True)

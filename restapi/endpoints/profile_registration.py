@@ -18,7 +18,6 @@ from restapi.utilities.logs import log
 if Connector.check_availability("smtp"):
 
     class ProfileRegistration(EndpointResource):
-
         depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_REGISTRATION", "AUTH_ENABLE"]
         labels = ["profile"]
 
@@ -65,16 +64,13 @@ if Connector.check_availability("smtp"):
             kwargs["email"] = email
             kwargs["password"] = password
             kwargs["is_active"] = False
-            user = self.auth.create_user(kwargs, [self.auth.default_role])
-
-            default_group = self.auth.get_group(name=DEFAULT_GROUP_NAME)
-            self.auth.add_user_to_group(user, default_group)
+            group = self.auth.get_group(name=DEFAULT_GROUP_NAME)
+            user = self.auth.create_user(kwargs, [self.auth.default_role], group)
             self.auth.save_user(user)
 
             self.log_event(self.events.create, user, kwargs)
 
             try:
-
                 auth = Connector.get_authentication_instance()
 
                 activation_token, payload = auth.create_temporary_token(
@@ -101,7 +97,9 @@ if Connector.check_availability("smtp"):
 
             except Exception as e:  # pragma: no cover
                 self.auth.delete_user(user)
-                raise ServiceUnavailable(f"Errors during account registration: {e}")
+                raise ServiceUnavailable(
+                    f"Errors during account registration: {e}"
+                ) from e
 
             return self.response(
                 "We are sending an email to your email address where "

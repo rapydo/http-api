@@ -10,11 +10,9 @@ Based on:
 - webargs
 - Flask-Caching
 - PyJWT
-- passlib
 - pyotp With segno
-- Flask-SQLAlchemy
 - Neomodel
-- PyMySQL
+- SQLAlchemy
 - Redis-py
 - pika with amqp
 - celery with celery-redbeat

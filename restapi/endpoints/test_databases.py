@@ -10,12 +10,10 @@ from restapi.services.authentication import DEFAULT_GROUP_NAME
 # from restapi.utilities.logs import log
 
 if TESTING:
-
     # This endpoint will try to create database object with unique keys
     # A duplicated entry exception will be raised and catched by the
     # database_transaction that will restore previous modifications
     class TestDatabase(EndpointResource):
-
         labels = ["tests"]
 
         @decorators.database_transaction
@@ -30,7 +28,6 @@ if TESTING:
             },
         )
         def post(self, data: str) -> Response:
-
             # Special value! This will try to create a group without shortname
             # A BadRequest will be raised due to the missing property
             if data == "400":
@@ -40,10 +37,6 @@ if TESTING:
                 self.auth.save_group(group)  # pragma: no cover
                 return self.response("0")  # pragma: no cover
 
-            # This was just to limit schemathesis to create troubles :-)
-            if not re.match(r"^[A-Za-z]+$", data):
-                raise BadRequest(f"Invalid input name {data}")
-
             # Only DatabaseDuplicatedEntry will be raised by this endpoint
             # Any other exceptions will be suppressed. This will ensure that
             # DatabaseDuplicatedEntry is raised and no others.
@@ -51,7 +44,6 @@ if TESTING:
             # Group if the exception is not raised. Otherwise this modification will
             # be undo by the database_transaction decorator
             try:
-
                 default_group = self.auth.get_group(name=DEFAULT_GROUP_NAME)
 
                 if default_group is None:  # pragma: no cover

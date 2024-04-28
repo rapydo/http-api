@@ -10,10 +10,12 @@ Note that anyone can validate a token as it is a bearer token:
 there is no client id nor is client authentication required.
 """
 
+from collections.abc import Iterable
 from functools import wraps
-from typing import Any, Callable, Iterable, Optional, Tuple, Union, cast
+from typing import Any, Callable, Optional, Union, cast
 
 from flask import request
+from werkzeug.datastructures import Authorization
 
 from restapi.customizer import FlaskRequest
 from restapi.env import Env
@@ -28,7 +30,7 @@ from restapi.utilities import print_and_exit
 from restapi.utilities.logs import log
 from restapi.utilities.meta import Meta
 
-HTTPAUTH_SCHEME = "Bearer"
+HTTPAUTH_SCHEME = "bearer"
 HTTPAUTH_AUTH_FIELD = "Authorization"
 # Base header for errors
 HTTPAUTH_ERR_HEADER = {
@@ -39,42 +41,26 @@ TOKEN_VALIDATED_KEY = "TOKEN_VALIDATED"
 
 
 class HTTPTokenAuth:
-    """
-    A class to implement a Generic Token (oauth2-like) authentication.
-    Started on a draft of the great miguel: http://bit.ly/2nTqQKA
-    """
-
     @staticmethod
     def get_authorization_token(
         allow_access_token_parameter: bool = False,
-    ) -> Tuple[Optional[str], Optional[str]]:
-        # Basic authenticaton is now allowed
+    ) -> tuple[Optional[str], Optional[str]]:
         if request.authorization is not None:
-            return None, None
-
-        if HTTPAUTH_AUTH_FIELD in request.headers:
-            # Flask/Werkzeug do not recognize any authentication types
-            # other than Basic or Digest, so here we parse the header by hand
-            try:
-                auth_header: str = request.headers.get(HTTPAUTH_AUTH_FIELD, "")
-                # Do not return directly auth_header.split
-                # Otherwise in case of malformed tokens the exception will be raised
-                # outside this function and probably not properly catched
-                # e.g. {'Authorization': 'Bearer'}  # no token provided
-                # will raise not enough values to unpack (expected 2, got 1)
-                auth_type, token = auth_header.split(None, 1)
-                return auth_type, token
-            except ValueError:
-                # The Authorization header is either empty or has no token
+            auth_type = request.authorization.type
+            token = request.authorization.token
+            return auth_type, token
+        elif HTTPAUTH_AUTH_FIELD in request.headers:
+            parsed_auth_header = Authorization.from_header(
+                request.headers.get(HTTPAUTH_AUTH_FIELD)
+            )
+            if parsed_auth_header is None:
                 return None, None
-
+            auth_type = parsed_auth_header.type
+            token = parsed_auth_header.token
         elif ALLOW_ACCESS_TOKEN_PARAMETER or allow_access_token_parameter:
-
             if not (token := request.args.get("access_token", "")):
                 return None, None
-
             return HTTPAUTH_SCHEME, token
-
         return None, None
 
     @staticmethod
@@ -121,7 +107,6 @@ class HTTPTokenAuth:
                     and auth_type == HTTPAUTH_SCHEME
                     and request.method != "OPTIONS"
                 ):
-
                     # valid, token, jti, user
                     valid, token, _, user = caller.auth.verify_token(token)
 
@@ -223,7 +208,6 @@ class HTTPTokenAuth:
                 # Handling OPTIONS forwarded to our application:
                 # ignore headers and let go, avoid unwanted interactions with CORS
                 if request.method != "OPTIONS":
-
                     # valid, token, jti, user
                     valid, token, _, user = caller.auth.verify_token(token)
                     # Check authentication

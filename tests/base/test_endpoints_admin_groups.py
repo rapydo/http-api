@@ -1,5 +1,3 @@
-from typing import Set
-
 import orjson
 import pytest
 from faker import Faker
@@ -19,7 +17,6 @@ def get_random_group_name(faker: Faker) -> str:
 
 class TestApp(BaseTests):
     def test_admin_groups(self, client: FlaskClient, faker: Faker) -> None:
-
         if not Env.get_bool("MAIN_LOGIN_ENABLE") or not Env.get_bool("AUTH_ENABLE"):
             log.warning("Skipping admin/groups tests")
             return
@@ -30,7 +27,6 @@ class TestApp(BaseTests):
             Role.ADMIN,
             Role.STAFF,
         ):
-
             if not staff_role_enabled:  # pragma: no cover
                 log.warning(
                     "Skipping tests of admin/groups endpoints, role Staff not enabled"
@@ -88,7 +84,6 @@ class TestApp(BaseTests):
             fullname = None
             for g in groups:
                 if g.get("uuid") == uuid:
-
                     fullname = g.get("fullname")
                     break
             else:  # pragma: no cover
@@ -141,13 +136,18 @@ class TestApp(BaseTests):
             assert isinstance(groups, list)
             for g in groups:
                 if g.get("uuid") == uuid:
-
                     assert g.get("fullname") == newdata.get("fullname")
                     assert g.get("fullname") != data.get("fullname")
                     assert g.get("fullname") != fullname
 
             r = client.put(f"{API_URI}/admin/groups/xyz", json=data, headers=headers)
             assert r.status_code == 404
+
+            # members = auth.get_group_members(group)
+            # with pytest.raises(
+            #     Forbidden,
+            #     match=rf"Cannot delete this group, it is assigned to {len(members)} user(s)",
+            # ):
 
             # Event 3: delete
             r = client.delete(f"{API_URI}/admin/groups/{uuid}", headers=headers)
@@ -252,7 +252,7 @@ class TestApp(BaseTests):
             assert len(groups) > 0
 
             # Extract all coordinators:
-            coordinators: Set[str] = set()
+            coordinators: set[str] = set()
             for group in groups:
                 for coordinator in group["coordinators"]:
                     coordinators.add(coordinator["email"])

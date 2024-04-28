@@ -25,7 +25,6 @@ class ProfileActivation(EndpointResource):
         },
     )
     def put(self, token: str) -> Response:
-
         token = token.replace("%2B", ".")
         token = token.replace("+", ".")
 
@@ -36,18 +35,18 @@ class ProfileActivation(EndpointResource):
             )
 
         # If token is expired
-        except ExpiredSignatureError:
+        except ExpiredSignatureError as e:
             raise BadRequest(
                 "Invalid activation token: this request is expired",
-            )
+            ) from e
 
         # if token is not active yet
-        except ImmatureSignatureError:
-            raise BadRequest("Invalid activation token")
+        except ImmatureSignatureError as e:
+            raise BadRequest("Invalid activation token") from e
 
         # if token does not exist (or other generic errors)
-        except Exception:
-            raise BadRequest("Invalid activation token")
+        except Exception as e:
+            raise BadRequest("Invalid activation token") from e
 
         if user is None:  # pragma: no cover
             raise BadRequest("Invalid activation token")
@@ -91,7 +90,6 @@ class ProfileActivation(EndpointResource):
         },
     )
     def post(self, username: str) -> Response:
-
         self.auth.verify_blocked_username(username)
 
         user = self.auth.get_user(username=username)
@@ -99,7 +97,6 @@ class ProfileActivation(EndpointResource):
         # if user is None this endpoint does nothing but the response
         # remain the same to prevent any user guessing
         if user is not None:
-
             auth = Connector.get_authentication_instance()
 
             activation_token, payload = auth.create_temporary_token(

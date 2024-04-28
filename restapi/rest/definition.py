@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from flask import Response as FlaskResponse
 from flask import request
@@ -22,8 +22,7 @@ DEFAULT_PERPAGE = 10
 # Base type MethodResource becomes "Any" due to an unfollowed import
 # Base type Resource becomes "Any" due to an unfollowed import
 class EndpointResource(MethodResource, MethodView):  # type: ignore
-
-    depends_on: List[str] = []
+    depends_on: list[str] = []
     labels = ["undefined"]
     private = False
     events = Events
@@ -57,12 +56,11 @@ class EndpointResource(MethodResource, MethodView):  # type: ignore
     def response(
         content: ResponseContent = None,
         code: Optional[int] = None,
-        headers: Optional[Dict[str, str]] = None,
+        headers: Optional[dict[str, str]] = None,
         head_method: bool = False,
         allow_html: bool = False,
         force_json: bool = False,
     ) -> Response:
-
         if headers is None:
             headers = {}
 
@@ -112,10 +110,9 @@ class EndpointResource(MethodResource, MethodView):  # type: ignore
         self,
         event: Events,
         target: Optional[Any] = None,
-        payload: Optional[Dict[str, Any]] = None,
+        payload: Optional[dict[str, Any]] = None,
         user: Optional[Any] = None,
     ) -> None:
-
         if not user:
             user = self.auth.get_user(user_id=self.authorized_user)
 

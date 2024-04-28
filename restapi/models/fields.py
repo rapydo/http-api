@@ -1,5 +1,6 @@
 import re
-from typing import Any, Mapping, Optional, Tuple, Union
+from collections.abc import Mapping
+from typing import Any, Optional, Union
 
 import orjson
 from marshmallow import ValidationError, types
@@ -48,7 +49,6 @@ class List(fields.List):
         data: Optional[Mapping[str, Any]],
         **kwargs: Any,
     ) -> Any:
-
         # this is the case when requests (or pytest) send some json-dumped lists
         # for example for a multi-value select
         if isinstance(value, str):
@@ -77,7 +77,7 @@ class Nested(fields.Nested):
     def __init__(
         self,
         # nested: Union[SchemaABC, type, str, Callable[[], SchemaABC]],
-        # the above type is from marshmallow, but it fails with Dict[str, Any] (imc)
+        # the above type is from marshmallow, but it fails with dict[str, Any] (imc)
         nested: Any,
         *,
         default: Any = missing_,
@@ -87,7 +87,6 @@ class Nested(fields.Nested):
         unknown: Optional[str] = None,
         **kwargs: Any,
     ):
-
         super().__init__(
             nested,
             default=default,
@@ -103,10 +102,9 @@ class Nested(fields.Nested):
         value: Any,
         attr: Optional[str],
         data: Optional[Mapping[str, Any]],
-        partial: Optional[Union[bool, Tuple[str]]] = None,
+        partial: Optional[Union[bool, tuple[str]]] = None,
         **kwargs: Any,
     ) -> Any:
-
         # this is the case when requests (or pytest) send some json-dumped object
         if isinstance(value, str):
             try:
@@ -141,7 +139,6 @@ class DelimitedList(fields.DelimitedList, List):
         data: Optional[Mapping[str, Any]],
         **kwargs: Any,
     ) -> Any:
-
         if not value:
             return value
 
@@ -175,7 +172,9 @@ class Neo4jChoice(fields.Field):
             for k, v in choices_model:
                 self.choices_dict.setdefault(k, v)
 
-    def _serialize(self, value: Any, attr: str, obj: Any, **kwargs: Any) -> Any:
+    def _serialize(
+        self, value: Any, attr: Optional[str], obj: Any, **kwargs: Any
+    ) -> Any:
         return {
             "key": value,
             # the value correspondance from choices_dict or value as default
@@ -197,7 +196,7 @@ class Neo4jRelationshipToMany(Nested):
     # Signature of "_serialize" incompatible with supertype "Nested"
     # This is because Nested is not typed on marshmallow
     def _serialize(  # type: ignore
-        self, value: Any, attr: str, obj: Any, **kwargs: Any
+        self, value: Any, attr: Optional[str], obj: Any, **kwargs: Any
     ) -> Any:
         self.many = True
         # This is because Nested is not typed on marshmallow
@@ -211,7 +210,7 @@ class Neo4jRelationshipToSingle(Nested):
     def _serialize(  # type: ignore
         self,
         value: Any,
-        attr: str,
+        attr: Optional[str],
         obj: Any,
         **kwargs: Any,
     ) -> Any:
@@ -223,7 +222,9 @@ class Neo4jRelationshipToSingle(Nested):
 
 class Neo4jRelationshipToCount(fields.Int):
     # value: StructuredRel
-    def _serialize(self, value: Any, attr: str, obj: Any, **kwargs: Any) -> Any:
+    def _serialize(
+        self, value: Any, attr: Optional[str], obj: Any, **kwargs: Any
+    ) -> Any:
         return self._format_num(len(value))
 
 
@@ -235,7 +236,6 @@ class TOTP(String):
         data: Optional[Mapping[str, Any]],
         **kwargs: Any,
     ) -> Any:
-
         value = super()._deserialize(value, attr, data, **kwargs)
 
         if not re.match(r"^[0-9]{6}$", value):

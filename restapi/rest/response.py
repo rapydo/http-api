@@ -1,17 +1,17 @@
-import decimal
 import gzip
 import sys
 import time
 from datetime import date, datetime
+from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Optional, Union, cast
 from urllib import parse as urllib_parse
 
 import orjson
 from flask import Response as FlaskResponse
 from flask import jsonify, render_template, request
-from flask.json import JSONEncoder
+from flask.json.provider import JSONProvider
 from marshmallow import fields as marshmallow_fields
 from marshmallow.utils import _Missing
 from werkzeug.exceptions import HTTPException
@@ -29,35 +29,32 @@ from restapi.types import Response, ResponseContent
 from restapi.utilities.logs import handle_log_output, log, obfuscate_dict
 
 
-def jsonifier(content: Any) -> Any:
-    if isinstance(content, set):
-        return jsonifier(list(content))
-    if isinstance(content, (datetime, date)):
-        return jsonifier(content.isoformat())
-    if isinstance(content, decimal.Decimal):
-        return jsonifier(float(content))
-    if isinstance(content, Path):
-        return jsonifier(str(content))
+def jsonifier(content: Any) -> str:
+    def default(obj: Any) -> Any:
+        if isinstance(obj, set):
+            return list(obj)
+        if isinstance(obj, (datetime, date)):  # pragma: no cover
+            return obj.isoformat()
+        if isinstance(obj, Decimal):
+            return float(obj)
+        if isinstance(obj, Path):
+            return str(obj)
+        raise TypeError  # pragma: no cover
 
-    return orjson.dumps(content).decode("UTF8")
+    return orjson.dumps(
+        content, default=default, option=orjson.OPT_NON_STR_KEYS
+    ).decode("UTF8")
 
 
-class ExtendedJSONEncoder(JSONEncoder):
-    def default(self, o: Any) -> Any:
-        if isinstance(o, set):
-            return list(o)
-        if isinstance(o, (datetime, date)):
-            return o.isoformat()
-        if isinstance(o, decimal.Decimal):
-            return float(o)
-        if isinstance(o, Path):
-            return str(o)
-        # Otherwise: TypeError: Object of type xxx is not JSON serializable
-        return super().default(o)  # pragma: no cover
+class ExtendedJSONEncoder(JSONProvider):
+    def dumps(self, obj: Any, **kwargs: Any) -> str:
+        return jsonifier(obj)
+
+    def loads(self, s: Union[str, bytes], **kwargs: Any) -> Any:
+        return orjson.loads(s)
 
 
 def handle_http_errors(error: HTTPException) -> Response:
-
     return FlaskResponse(
         jsonifier({"message": error.description}),
         status=error.code,
@@ -67,9 +64,7 @@ def handle_http_errors(error: HTTPException) -> Response:
 
 
 def handle_marshmallow_errors(error: HTTPException) -> Response:
-
     try:
-
         if request.args:
             if request.args.get(GET_SCHEMA_KEY, False):  # pragma: no cover
                 schema = cast(Schema, error.data.get("schema"))  # type: ignore
@@ -91,7 +86,7 @@ def handle_marshmallow_errors(error: HTTPException) -> Response:
     errors = {}
 
     error_messages = cast(
-        Dict[str, Dict[str, str]], error.data.get("messages")  # type: ignore
+        dict[str, dict[str, str]], error.data.get("messages")  # type: ignore
     )
     for key, messages in error_messages.items():
         for k, msg in messages.items():
@@ -144,7 +139,6 @@ def get_data_from_request() -> str:
 
 
 def handle_response(response: FlaskResponse) -> FlaskResponse:
-
     response.headers["_RV"] = str(version)
 
     PROJECT_VERSION = get_project_configuration("project.version", default="0")
@@ -200,11 +194,10 @@ def handle_response(response: FlaskResponse) -> FlaskResponse:
 
 
 class ResponseMaker:
-
     # Have a look here: (from flask import request)
     # request.user_agent.browser
     @staticmethod
-    def get_accepted_formats() -> List[str]:
+    def get_accepted_formats() -> list[str]:
         """
         Possible outputs:
         '*/*'
@@ -246,9 +239,8 @@ class ResponseMaker:
 
     @staticmethod
     def get_html(
-        content: ResponseContent, code: int, headers: Dict[str, str]
-    ) -> Tuple[str, Dict[str, str]]:
-
+        content: ResponseContent, code: int, headers: dict[str, str]
+    ) -> tuple[str, dict[str, str]]:
         if isinstance(content, list):  # pragma: no cover
             content = content.pop()
 
@@ -265,7 +257,7 @@ class ResponseMaker:
         code: int,
         content_encoding: Optional[str],
         content_type: Optional[str],
-    ) -> Tuple[Optional[bytes], Dict[str, str]]:
+    ) -> tuple[Optional[bytes], dict[str, str]]:
         if code < 200 or code >= 300 or content_encoding is not None:
             return None, {}
 
@@ -322,12 +314,10 @@ class ResponseMaker:
         return gzipped_content, headers
 
     @staticmethod
-    def convert_model_to_schema(schema: Schema) -> List[Dict[str, Any]]:
-
+    def convert_model_to_schema(schema: Schema) -> list[dict[str, Any]]:
         schema_fields = []
         for field, field_def in schema.declared_fields.items():
-
-            f: Dict[str, Any] = {}
+            f: dict[str, Any] = {}
 
             f["key"] = field_def.data_key or field
 
@@ -369,7 +359,7 @@ class ResponseMaker:
             elif not isinstance(field_def.load_default, _Missing):  # pragma: no cover
                 f["default"] = field_def.load_default
 
-            validators: List[validate.Validator] = []
+            validators: list[validate.Validator] = []
             if field_def.validate:
                 validators.append(field_def.validate)  # type: ignore
 
@@ -379,7 +369,6 @@ class ResponseMaker:
 
             for validator in validators:
                 if isinstance(validator, validate.Length):
-
                     if validator.min is not None:
                         f["min"] = validator.min
                     if validator.max is not None:
@@ -389,7 +378,6 @@ class ResponseMaker:
                         f["max"] = validator.equal
 
                 elif isinstance(validator, validate.Range):
-
                     if validator.min is not None:
                         f["min"] = validator.min
                         if not validator.min_inclusive:
@@ -401,7 +389,6 @@ class ResponseMaker:
                             f["max"] -= 1
 
                 elif isinstance(validator, validate.OneOf):
-
                     choices = validator.choices
                     labels = validator.labels
                     if len(tuple(labels)) != len(tuple(choices)):
@@ -409,7 +396,6 @@ class ResponseMaker:
                     f["options"] = dict(zip(choices, labels))
 
                 else:  # pragma: no cover
-
                     log.warning(
                         "Unsupported validation schema: {}.{}",
                         type(validator).__module__,
@@ -426,7 +412,6 @@ class ResponseMaker:
 
     @staticmethod
     def respond_with_schema(schema: Schema) -> Response:
-
         try:
             fields = ResponseMaker.convert_model_to_schema(schema)
             return (jsonify(fields), 200, {})
@@ -439,7 +424,6 @@ class ResponseMaker:
     def get_schema_type(
         field: str, schema: marshmallow_fields.Field, default: Optional[Any] = None
     ) -> str:
-
         if schema.metadata.get("password", False):
             return "password"
         # types from https://github.com/danohu/py2ng

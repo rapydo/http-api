@@ -1,7 +1,6 @@
 import io
 import os
 import warnings
-from typing import Dict
 
 from faker import Faker
 
@@ -9,7 +8,7 @@ from restapi.config import DATA_PATH, PRODUCTION, get_backend_url
 from restapi.tests import API_URI, SERVER_URI, BaseTests, FlaskClient
 
 
-def get_location_header(headers: Dict[str, str], expected: str) -> str:
+def get_location_header(headers: dict[str, str], expected: str) -> str:
     assert "Location" in headers
     location = headers["Location"]
 
@@ -27,11 +26,9 @@ class TestUploadAndDownload(BaseTests):
     def test_simple_upload_and_download(
         self, client: FlaskClient, faker: Faker
     ) -> None:
-
         warnings.filterwarnings(
             "ignore", message="unclosed file <_io.BufferedReader name="
         )
-
         self.fcontent = faker.paragraph()
         self.save("fcontent", self.fcontent)
         # as defined in test_upload.py for normal uploads
@@ -145,7 +142,6 @@ class TestUploadAndDownload(BaseTests):
     def test_chunked_upload_and_download(
         self, client: FlaskClient, faker: Faker
     ) -> None:
-
         warnings.filterwarnings(
             "ignore", message="unclosed file <_io.BufferedReader name="
         )

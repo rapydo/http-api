@@ -1,7 +1,7 @@
 import email
 from smtplib import SMTPException, SMTPServerDisconnected
 from types import TracebackType
-from typing import Optional, Tuple, Type, TypeVar
+from typing import Optional, TypeVar
 
 import orjson
 
@@ -24,7 +24,7 @@ class SMTP:
 
     def __exit__(
         self,
-        _type: Optional[Type[Exception]],
+        _type: Optional[type[Exception]],
         value: Optional[Exception],
         tb: Optional[TracebackType],
     ) -> bool:  # pragma: no cover
@@ -56,7 +56,6 @@ class SMTP:
 
     @staticmethod
     def sendmail(from_address: str, dest_addresses: str, msg: str) -> None:
-
         if from_address == "invalid1":
             raise SMTPException("SMTP Error")
 
@@ -85,23 +84,23 @@ class SMTP:
         b = email.message_from_string(msg)
         if b.is_multipart():
             # get the first payload (the non html version)
-            first_payload = b.get_payload()[0]
+            first_payload = b.get_payload()[0]  # type: ignore
             # This is enough when the message is not based64-encoded
-            payload = first_payload.get_payload()
+            # payload = first_payload.get_payload()
             # Otherwise this is needed:
-            payload = first_payload.get_payload(decode=True).decode("utf-8")
+            payload = first_payload.get_payload(decode=True).decode("utf-8")  # type: ignore
         else:
             # This is enough when the message is not based64-encoded
             # payload = b.get_payload()
             # Otherwise this is needed:
-            payload = b.get_payload(decode=True).decode("utf-8")
+            payload = b.get_payload(decode=True).decode("utf-8")  # type: ignore
 
         with open(body_fpath, "w+") as file:
             file.write(payload)
 
         log.info("Mail body written in {}", body_fpath)
 
-    def noop(self) -> Tuple[int]:
+    def noop(self) -> tuple[int]:
         if self.disconnected:
             raise SMTPServerDisconnected  # pragma: no cover
 

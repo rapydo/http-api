@@ -6,9 +6,14 @@ import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
-from smtplib import SMTPAuthenticationError, SMTPException, SMTPServerDisconnected
+from smtplib import (
+    SMTPAuthenticationError,
+    SMTPConnectError,
+    SMTPException,
+    SMTPServerDisconnected,
+)
 from threading import Thread
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from restapi.config import TESTING
 from restapi.connectors import Connector, ExceptionsList
@@ -29,17 +34,18 @@ class Mail(Connector):
     def __init__(self) -> None:
         self.smtp: Optional[SMTP] = None
         super().__init__()
-        # instance_variables is updated with custom variabiles in connect
-        # and the used in the send method.
-        # This way the send method will be able to use variabiles overridden in connect
+        # instance_variables is updated with custom variables in connect
+        # and then used in the send method.
+        # This way the send method will be able to use variables overridden in connect
         self.instance_variables = self.variables.copy()
 
     @staticmethod
     def get_connection_exception() -> ExceptionsList:
-        return (socket.gaierror, SMTPAuthenticationError)
+        return (socket.gaierror, SMTPAuthenticationError, SMTPConnectError)
 
     def connect(self, **kwargs: str) -> "Mail":
-        self.instance_variables.update(kwargs)
+        # Note: will be used later in send()
+        self.instance_variables = self.variables | kwargs
 
         port = Env.to_int(self.instance_variables.get("port")) or 25
 
@@ -78,7 +84,6 @@ class Mail(Connector):
         return None
 
     def is_connected(self) -> bool:
-
         if not self.smtp or self.disconnected:
             return False
 
@@ -95,11 +100,10 @@ class Mail(Connector):
         subject: str,
         to_address: Optional[str] = None,
         from_address: Optional[str] = None,
-        cc: Union[None, str, List[str]] = None,
-        bcc: Union[None, str, List[str]] = None,
+        cc: Union[None, str, list[str]] = None,
+        bcc: Union[None, str, list[str]] = None,
         plain_body: Optional[str] = None,
     ) -> None:
-
         thr = Thread(
             target=cls.send_async_thread,
             args=[body, subject, to_address, from_address, cc, bcc, plain_body],
@@ -122,12 +126,11 @@ class Mail(Connector):
         subject: str,
         to_address: Optional[str] = None,
         from_address: Optional[str] = None,
-        cc: Union[None, str, List[str]] = None,
-        bcc: Union[None, str, List[str]] = None,
+        cc: Union[None, str, list[str]] = None,
+        bcc: Union[None, str, list[str]] = None,
         plain_body: Optional[str] = None,
         retry: int = 1,
     ) -> bool:
-
         with get_instance() as client:
             sent = client.send(
                 body, subject, to_address, from_address, cc, bcc, plain_body
@@ -154,11 +157,10 @@ class Mail(Connector):
         subject: str,
         to_address: Optional[str] = None,
         from_address: Optional[str] = None,
-        cc: Union[None, str, List[str]] = None,
-        bcc: Union[None, str, List[str]] = None,
+        cc: Union[None, str, list[str]] = None,
+        bcc: Union[None, str, list[str]] = None,
         plain_body: Optional[str] = None,
     ) -> bool:
-
         if not to_address:
             to_address = self.instance_variables.get("admin")
         if not to_address:
@@ -174,7 +176,6 @@ class Mail(Connector):
             return False
 
         try:
-
             if plain_body is not None:
                 msg = MIMEMultipart("alternative")
             else:
@@ -184,7 +185,7 @@ class Mail(Connector):
             msg["From"] = from_address
             msg["To"] = to_address
 
-            dest_addresses = [to_address]
+            dest_addresses: list[str] = [to_address]
 
             if cc is None:
                 pass
@@ -193,7 +194,7 @@ class Mail(Connector):
                 dest_addresses.append(cc.split(","))
             elif isinstance(cc, list):
                 msg["Cc"] = ",".join(cc)
-                dest_addresses.append(cc)
+                dest_addresses.extend(cc)
             else:
                 log.warning("Invalid CC value: {}", cc)
                 cc = None
@@ -205,7 +206,7 @@ class Mail(Connector):
                 dest_addresses.append(bcc.split(","))
             elif isinstance(bcc, list):
                 msg["Bcc"] = ",".join(bcc)
-                dest_addresses.append(bcc)
+                dest_addresses.extend(bcc)
             else:
                 log.warning("Invalid BCC value: {}", bcc)
                 bcc = None
@@ -246,9 +247,14 @@ instance = Mail()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
+    retries: int = 1,
+    retry_wait: int = 0,
     **kwargs: str,
 ) -> "Mail":
-
     return instance.get_instance(
-        verification=verification, expiration=expiration, **kwargs
+        verification=verification,
+        expiration=expiration,
+        retries=retries,
+        retry_wait=retry_wait,
+        **kwargs,
     )

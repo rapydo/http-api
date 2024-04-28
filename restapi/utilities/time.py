@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta, tzinfo
-from typing import List, Literal, Optional
+from datetime import datetime, timedelta
+from typing import Literal
 
 import pytz
 
@@ -12,22 +12,11 @@ AllowedTimedeltaPeriods = Literal[
 ]
 
 
-def get_now(tz: Optional[tzinfo]) -> datetime:
-
-    if tz is None:
-        # Create a offset-naive datetime
-        return datetime.now()
-
-    # Create a offset-aware datetime
-    return datetime.now(pytz.utc)
-
-
 def date_lower_than(a: datetime, b: datetime) -> bool:
     return a.replace(tzinfo=pytz.utc) < b.replace(tzinfo=pytz.utc)
 
 
 def get_timedelta(every: int, period: AllowedTimedeltaPeriods) -> timedelta:
-
     if period == "seconds":
         return timedelta(seconds=every)
 
@@ -59,8 +48,7 @@ def pluralize(value: int, unit: str) -> str:
 
 
 def seconds_to_human(seconds: int) -> str:
-
-    elements: List[str] = []
+    elements: list[str] = []
     if seconds < 60:
         elements.append(pluralize(seconds, "second"))
 

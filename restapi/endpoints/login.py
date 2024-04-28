@@ -34,7 +34,6 @@ class Login(EndpointResource):
         password_confirm: Optional[str] = None,
         totp_code: Optional[str] = None,
     ) -> Response:
-
         username = username.lower()
         if not self.auth.SECOND_FACTOR_AUTHENTICATION:
             totp_code = None
@@ -58,7 +57,6 @@ class Login(EndpointResource):
         # ##################################################
         # If requested, change the password
         if new_password is not None and password_confirm is not None:
-
             pwd_changed = self.auth.change_password(
                 user, password, new_password, password_confirm
             )
@@ -72,7 +70,7 @@ class Login(EndpointResource):
         message = self.auth.check_password_validity(
             user, totp_authentication=self.auth.SECOND_FACTOR_AUTHENTICATION
         )
-        if message["errors"]:
+        if message["errors"]:  # pragma: no cover
             return self.response(message, code=403)
 
         # Everything is ok, let's save authentication information

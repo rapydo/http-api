@@ -1,6 +1,7 @@
 """
 Set of Exceptions used to raise HTTP error statuses from endpoints
 """
+
 from typing import Union
 
 ExceptionType = Union[str, Exception]
@@ -13,7 +14,6 @@ class RestApiException(Exception):
         status_code: int = 404,
         is_warning: bool = False,
     ):
-
         super().__init__(exception)
         self.status_code = status_code or 404
         self.is_warning = is_warning

@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from restapi import decorators
 from restapi.endpoints.schemas import TokenSchema
@@ -11,8 +11,7 @@ from restapi.services.authentication import User
 
 def inject_token(
     endpoint: EndpointResource, token_id: str, user: User
-) -> Dict[str, Any]:
-
+) -> dict[str, Any]:
     tokens = endpoint.auth.get_tokens(user=user)
 
     for token in tokens:
@@ -36,7 +35,6 @@ class Tokens(EndpointResource):
         responses={200: "List of tokens"},
     )
     def get(self, user: User) -> Response:
-
         tokens = self.auth.get_tokens(user=user)
 
         return self.response(tokens)
@@ -50,7 +48,6 @@ class Tokens(EndpointResource):
         responses={204: "Token has been invalidated"},
     )
     def delete(self, token_id: str, token: str, user: User) -> Response:
-
         if self.auth.invalidate_token(token=token):
             return self.empty_response()
 

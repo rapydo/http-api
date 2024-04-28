@@ -2,6 +2,7 @@
 This will used credentials created at the beginning of the suite
 to verify that unused credentialas are banned
 """
+
 from faker import Faker
 
 from restapi.env import Env
@@ -14,7 +15,6 @@ if Env.get_int("AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER") > 0:
         def test_test_unused_credentials(
             self, client: FlaskClient, faker: Faker
         ) -> None:
-
             assert BaseTests.unused_credentials is not None
             assert len(BaseTests.unused_credentials) == 3
 
@@ -40,8 +40,7 @@ if Env.get_int("AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER") > 0:
             resp = self.get_content(r)
             assert resp == "Sorry, this account is blocked for inactivity"
 
-            # Also password reset and blocked... how to recover the account !?
-
+            # Also password reset is blocked... how to recover the account !?
             reset_data = {"reset_email": BaseTests.unused_credentials[0]}
             r = client.post(f"{AUTH_URI}/reset", json=reset_data)
             assert r.status_code == 403

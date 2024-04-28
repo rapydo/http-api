@@ -1,12 +1,9 @@
-from typing import Dict, List, Tuple
-
 from restapi import decorators
 from restapi.config import TESTING
 from restapi.models import Schema, fields
 from restapi.rest.definition import EndpointResource, Response
 
 if TESTING:
-
     names = ["oliver", "jack", "harry", "charlie", "thomas"]
     surnames = ["smith", "jones", "taylor", "brown", "williams"]
     nicknames = ["kid", "good", "bad", "ugly", "ripper"]
@@ -44,7 +41,7 @@ if TESTING:
 
     class TestAutocomplete(EndpointResource):
         @staticmethod
-        def get_element(name: str, surname: str, nickname: str) -> Tuple[str, str]:
+        def get_element(name: str, surname: str, nickname: str) -> tuple[str, str]:
             return (
                 f"{name[0].upper()}{surname[0].upper()}{nickname[0].upper()}",
                 f"{name.title()} {surname.title()} the {nickname.title()}",
@@ -60,8 +57,7 @@ if TESTING:
             responses={200: "Tests executed"},
         )
         def get(self, query: str) -> Response:
-
-            elements: List[Dict[str, str]] = []
+            elements: list[dict[str, str]] = []
 
             for k1 in names:
                 for k2 in surnames:
@@ -80,8 +76,7 @@ if TESTING:
             description="Only enabled in testing mode",
             responses={204: "Tests executed", 400: "Bad Input"},
         )
-        def post(self, elements: List[str]) -> Response:
-
+        def post(self, elements: list[str]) -> Response:
             return self.empty_response()
 
         @decorators.use_kwargs(SingleInput)
@@ -92,5 +87,4 @@ if TESTING:
             responses={204: "Tests executed", 400: "Bad Input"},
         )
         def put(self, element: str) -> Response:
-
             return self.empty_response()

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from restapi import decorators
 from restapi.connectors.smtp.notifications import (
@@ -18,8 +18,7 @@ from restapi.utilities.time import date_lower_than as dt_lower
 # from restapi.utilities.logs import log
 
 
-def inject_user(endpoint: EndpointResource, user_id: str, user: User) -> Dict[str, Any]:
-
+def inject_user(endpoint: EndpointResource, user_id: str, user: User) -> dict[str, Any]:
     target_user = endpoint.auth.get_user(user_id=user_id)
     if target_user is None:
         raise NotFound("This user cannot be found or you are not authorized")
@@ -45,14 +44,12 @@ class AdminSingleUser(EndpointResource):
         responses={200: "User information successfully retrieved"},
     )
     def get(self, user_id: str, target_user: User, user: User) -> Response:
-
         self.log_event(self.events.access, target_user)
 
         return self.response(target_user)
 
 
 class AdminUsers(EndpointResource):
-
     depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
     labels = ["management"]
     private = True
@@ -65,7 +62,6 @@ class AdminUsers(EndpointResource):
         responses={200: "List of users successfully retrieved"},
     )
     def get(self, user: User) -> Response:
-
         users = self.auth.get_users()
 
         # Filter out admin users when requested from a Staff user
@@ -90,8 +86,7 @@ class AdminUsers(EndpointResource):
         },
     )
     def post(self, user: User, **kwargs: Any) -> Response:
-
-        roles: List[str] = kwargs.pop("roles", [])
+        roles: list[str] = kwargs.pop("roles", [])
 
         # The role is already refused by webards... This is an additional check
         # to improve the security, but can't be reached
@@ -108,13 +103,13 @@ class AdminUsers(EndpointResource):
         # If created by admins users must accept privacy at first login
         kwargs["privacy_accepted"] = False
 
-        user = self.auth.create_user(kwargs, roles)
-        self.auth.save_user(user)
-
         group = self.auth.get_group(group_id=group_id)
         if not group:
             # Can't be reached because group_id is prefiltered by marshmallow
             raise NotFound("This group cannot be found")  # pragma: no cover
+
+        user = self.auth.create_user(kwargs, roles, group)
+        self.auth.save_user(user)
 
         self.auth.add_user_to_group(user, group)
 
@@ -137,7 +132,6 @@ class AdminUsers(EndpointResource):
     def put(
         self, user_id: str, target_user: User, user: User, **kwargs: Any
     ) -> Response:
-
         if "password" in kwargs:
             unhashed_password = kwargs["password"]
             kwargs["password"] = BaseAuthentication.get_password_hash(
@@ -147,7 +141,7 @@ class AdminUsers(EndpointResource):
             unhashed_password = None
 
         payload = kwargs.copy()
-        roles: List[str] = kwargs.pop("roles", [])
+        roles: list[str] = kwargs.pop("roles", [])
 
         # The role is already refused by webards... This is an additional check
         # to improve the security, but can't be reached
@@ -211,7 +205,6 @@ class AdminUsers(EndpointResource):
         responses={200: "User successfully deleted"},
     )
     def delete(self, user_id: str, target_user: User, user: User) -> Response:
-
         self.auth.delete_user(target_user)
 
         self.log_event(self.events.delete, target_user)

@@ -7,7 +7,6 @@ from restapi.rest.definition import EndpointResource, Response
 from restapi.utilities.logs import log
 
 if TESTING and Connector.check_availability("neo4j"):
-
     from neomodel import (
         DateProperty,
         FloatProperty,
@@ -61,7 +60,6 @@ if TESTING and Connector.check_availability("neo4j"):
         choices2 = fields.Neo4jChoice(CHOICES_dict)
 
     class TestNeo4j(EndpointResource):
-
         depends_on = ["NEO4J_ENABLE_CONNECTOR"]
         labels = ["tests"]
 
@@ -92,8 +90,6 @@ if TESTING and Connector.check_availability("neo4j"):
                     n.save()
                     data["modified2"] = n.modified
                     return self.response(data)
-                else:
-                    log.info("No Test")
             except Exception as e:
-                raise BadRequest(str(e))
+                raise BadRequest(str(e)) from e
             return self.response({"val": 1})

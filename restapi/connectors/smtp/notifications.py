@@ -1,4 +1,5 @@
-from typing import Any, Dict, Iterator, Optional, Tuple
+from collections.abc import Iterator
+from typing import Any, Optional
 
 import html2text
 import jinja2
@@ -20,9 +21,8 @@ from restapi.utilities.time import seconds_to_human
 
 
 def get_html_template(
-    template_file: str, replaces: Dict[str, Any]
-) -> Tuple[Optional[str], Optional[str]]:
-
+    template_file: str, replaces: dict[str, Any]
+) -> tuple[Optional[str], Optional[str]]:
     html = _get_html_template(template_file, replaces)
     header_html = _get_html_template("email_header.html", replaces)
     footer_html = _get_html_template("email_footer.html", replaces)
@@ -36,7 +36,6 @@ def get_html_template(
 
 
 def convert_html2text(html_body: str) -> str:
-
     h2t = html2text.HTML2Text()
     h2t.unicode_snob = False
     h2t.ignore_emphasis = True
@@ -49,7 +48,7 @@ def convert_html2text(html_body: str) -> str:
     return h2t.handle(html_body)
 
 
-def _get_html_template(template_file: str, replaces: Dict[str, Any]) -> Optional[str]:
+def _get_html_template(template_file: str, replaces: dict[str, Any]) -> Optional[str]:
     # Custom templates from project backend/models/email/
     template_path = CODE_DIR.joinpath(
         CUSTOM_PACKAGE, MODELS_DIR, "emails", template_file
@@ -69,7 +68,6 @@ def _get_html_template(template_file: str, replaces: Dict[str, Any]) -> Optional
         return None
 
     try:
-
         templateLoader = jinja2.FileSystemLoader(searchpath=template_path.parent)
         templateEnv = jinja2.Environment(loader=templateLoader, autoescape=True)
         template = templateEnv.get_template(template_file)
@@ -82,22 +80,30 @@ def _get_html_template(template_file: str, replaces: Dict[str, Any]) -> Optional
         return None
 
 
+def get_reply_to() -> str:
+    if addr := Env.get("SMTP_REPLYTO", ""):
+        return addr
+    if addr := Env.get("SMTP_NOREPLY", ""):
+        return addr
+    return Env.get("SMTP_ADMIN", "")
+
+
 def send_notification(
     subject: str,
     template: str,
     # if None will be sent to the administrator
     to_address: Optional[str] = None,
-    data: Optional[Dict[str, Any]] = None,
+    data: Optional[dict[str, Any]] = None,
     user: Optional[User] = None,
     send_async: bool = False,
 ) -> bool:
-
     # Always enabled during tests
     if not Connector.check_availability("smtp"):  # pragma: no cover
         return False
 
     title = get_project_configuration("project.title", default="Unkown title")
-    reply_to = Env.get("SMTP_NOREPLY", Env.get("SMTP_ADMIN", ""))
+
+    reply_to = get_reply_to()
 
     if data is None:
         data = {}
@@ -137,7 +143,6 @@ def send_notification(
 
 
 def send_registration_notification(user: User) -> None:
-
     # no return value since it is a send_async
     send_notification(
         subject="New user registered",
@@ -150,7 +155,6 @@ def send_registration_notification(user: User) -> None:
 
 
 def send_activation_link(user: User, url: str) -> bool:
-
     return send_notification(
         subject=Env.get("EMAIL_ACTIVATION_SUBJECT", "Account activation"),
         template="activate_account.html",
@@ -161,7 +165,6 @@ def send_activation_link(user: User, url: str) -> bool:
 
 
 def send_password_reset_link(user: User, uri: str, reset_email: str) -> bool:
-
     return send_notification(
         subject="Password Reset",
         template="reset_password.html",
@@ -174,7 +177,6 @@ def send_password_reset_link(user: User, uri: str, reset_email: str) -> bool:
 def notify_login_block(
     user: User, events: Iterator[Login], duration: int, url: str
 ) -> None:
-
     # no return value since it is a send_async
     send_notification(
         subject="Your credentials have been blocked",
@@ -187,7 +189,6 @@ def notify_login_block(
 
 
 def notify_new_credentials_to_user(user: User, unhashed_password: str) -> None:
-
     # no return value since it is a send_async
     send_notification(
         subject="New credentials",
@@ -200,7 +201,6 @@ def notify_new_credentials_to_user(user: User, unhashed_password: str) -> None:
 
 
 def notify_update_credentials_to_user(user: User, unhashed_password: str) -> None:
-
     # no return value since it is a send_async
     send_notification(
         subject="Password changed",
@@ -215,7 +215,6 @@ def notify_update_credentials_to_user(user: User, unhashed_password: str) -> Non
 def send_celery_error_notification(
     task_id: str, task_name: str, arguments: str, error_stack: Any, retry_num: int
 ) -> None:
-
     if retry_num > 0:
         subject = f"Task {task_name} failed (failure #{retry_num})"
     else:

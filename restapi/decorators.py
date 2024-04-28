@@ -2,12 +2,12 @@
 Decorators used to configure endpoints with metadata, authentication, caching
 , pagination, input validation, output serialization, etc
 """
+
 import inspect
 from functools import wraps
 from typing import (
     Any,
     Callable,
-    Dict,
     Optional,
     Union,
     cast,
@@ -68,17 +68,16 @@ def endpoint(
     path: str,
     summary: Optional[str] = None,
     description: Optional[str] = None,
-    responses: Optional[Dict[Union[str, int], str]] = None,
+    responses: Optional[dict[Union[str, int], str]] = None,
     **kwargs: Any,
 ) -> Callable[[EndpointFunction], EndpointFunction]:
     def decorator(func: EndpointFunction) -> EndpointFunction:
-
-        specs: Dict[str, Any] = {}
+        specs: dict[str, Any] = {}
 
         specs["summary"] = summary
         specs["description"] = description
 
-        specs_responses: Dict[str, Dict[str, str]] = {}
+        specs_responses: dict[str, dict[str, str]] = {}
         if responses:
             for code, message in responses.items():
                 specs_responses[str(code)] = {"description": message}
@@ -96,16 +95,16 @@ def endpoint(
         if hasattr(func, "uri"):  # pragma: no cover
             print_and_exit(
                 "Unsupported multiple endpoint mapping found: {}, {}",
-                getattr(func, "uri"),
+                func.uri,
                 normalized_path,
             )
 
-        setattr(func, "uri", normalized_path)
+        # "EndpointFunction" has no attribute "uri"
+        func.uri = normalized_path  # type: ignore[attr-defined]
         inject_apispec_docs(func, specs, None)
 
         @wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> EndpointFunction:
-
             return cast(EndpointFunction, func(self, *args, **kwargs))
 
         return cast(EndpointFunction, wrapper)
@@ -114,7 +113,6 @@ def endpoint(
 
 
 def match_types(static_type: Any, runtime_value: Any) -> bool:
-
     # parameters annotated as Any are always accepted, regardless the runtime type
     if static_type == Any:
         return True
@@ -145,7 +143,7 @@ def match_types(static_type: Any, runtime_value: Any) -> bool:
         )
 
     # TODO: typing.get_args(static_type) is not verified
-    # Ths means that [1] will be accepted as List[str]
+    # This means that [1] will be accepted as List[str]
     return match_types(origin_type, runtime_value)
 
 
@@ -155,10 +153,9 @@ def match_types(static_type: Any, runtime_value: Any) -> bool:
 # type, then a None is returned and the preload decorator will raise a ServerError
 def inject_callback_parameters(
     callback_fn: Callable[..., Optional[Any]],
-    kwargs: Dict[str, Any],
-    view_args: Optional[Dict[str, Any]],
-) -> Optional[Dict[str, Any]]:
-
+    kwargs: dict[str, Any],
+    view_args: Optional[dict[str, Any]],
+) -> Optional[dict[str, Any]]:
     callback_name = callback_fn.__name__
     parameters = get_type_hints(callback_fn)
 
@@ -177,7 +174,7 @@ def inject_callback_parameters(
         )
         return None
 
-    injected_parameters: Dict[str, Any] = {}
+    injected_parameters: dict[str, Any] = {}
     for name, parameter in parameters.items():
         # endpoint will be injected by the preload decorator and it is not expected
         # to be found in kwargs / view_args
@@ -195,10 +192,9 @@ def inject_callback_parameters(
             input_param = kwargs[name]
 
         else:
-
             p = inspect.signature(callback_fn).parameters[name]
             # Parameter is missing but it has a default value, so can be safely skipped
-            if p.default is not p.empty:
+            if p.default is not p.empty:  # pragma: no cover
                 continue
 
             log.critical(
@@ -230,13 +226,13 @@ def inject_callback_parameters(
 # I can't define with mypy something like:
 # Callable[[EndpointResource, ...],
 def preload(
-    callback: Callable[..., Dict[str, Any]]
+    callback: Callable[..., dict[str, Any]]
 ) -> Callable[[EndpointFunction], EndpointFunction]:
     """
     callback example:
 
     from flask import request
-    def myfunc(endpoint: EndpointResource, user: User) -> Dict[str, Any]:
+    def myfunc(endpoint: EndpointResource, user: User) -> dict[str, Any]:
 
         if (
             not user
@@ -254,7 +250,6 @@ def preload(
     def decorator(func: EndpointFunction) -> EndpointFunction:
         @wraps(func)
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-
             injected_parameters = inject_callback_parameters(
                 callback, kwargs, request.view_args
             )
@@ -275,22 +270,25 @@ def preload(
     return decorator
 
 
-# Prevent caching of 5xx errors responses
 def cache_response_filter(response: Response) -> bool:
+    """
+    Prevent caching of 5xx errors responses
+    """
     if not isinstance(response, tuple):
         return True
 
     if len(response) < 3:  # pragma: no cover
-        return True
+        return True  # type: ignore[unreachable]
 
     return response[1] < 500
 
 
-# This is used to manipulate the function name to append a string depending
-# by the Bearer token. This way all cache entries for authenticated endpoints
-# will always user-dependent.
 def make_cache_function_name(name: str) -> str:
-
+    """
+    This is used to manipulate the function name to append a string depending
+    by the Bearer token. This way all cache entries for authenticated endpoints
+    will always user-dependent.
+    """
     # Non authenticated endpoints do not validate the token.
     # Function name is not expanded by any token that could be provided (are ignored)
     if not request.environ.get(TOKEN_VALIDATED_KEY):
@@ -302,19 +300,24 @@ def make_cache_function_name(name: str) -> str:
     return new_name
 
 
-# Used to cache endpoint with @decorators.cache(timeout=60)
 def cache(*args: Any, **kwargs: Any) -> Any:
+    """
+    Used to cache endpoint with @decorators.cache(timeout=60)
+    """
     if "response_filter" not in kwargs:
         kwargs["response_filter"] = cache_response_filter
     if "make_name" not in kwargs:
         kwargs["make_name"] = make_cache_function_name
+
+    if not hasattr(mem, "cache"):
+        print_and_exit("Cannot load @decorators.cache, is Redis connector available?")
+
     return mem.cache.memoize(*args, **kwargs)
 
 
 def database_transaction(func: EndpointFunction) -> EndpointFunction:
     @wraps(func)
     def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-
         neo4j_enabled = Connector.check_availability("neo4j")
         sqlalchemy_enabled = Connector.check_availability("sqlalchemy")
         if neo4j_enabled:
@@ -328,7 +331,6 @@ def database_transaction(func: EndpointFunction) -> EndpointFunction:
             alchemy_db = sqlalchemy.get_instance()
 
         try:
-
             if neo4j_enabled:
                 neo4j_db.begin()
 
@@ -348,7 +350,6 @@ def database_transaction(func: EndpointFunction) -> EndpointFunction:
         except Exception as e:
             log.debug("Rolling backend database transaction")
             try:
-
                 if neo4j_enabled:
                     neo4j_db.rollback()
 
@@ -384,7 +385,7 @@ class Pagination(PartialSchema):
     input_filter = fields.Str(required=False, load_default=None)
 
     @post_load
-    def verify_parameters(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+    def verify_parameters(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         if "get_total" in data:
             data["page"] = None
             data["size"] = None
@@ -402,7 +403,6 @@ def get_pagination(func: EndpointFunction) -> EndpointFunction:
     # https://github.com/jmcarp/flask-apispec/issues/189
     @use_kwargs(Pagination, location="query")
     def get_wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-
         return func(self, *args, **kwargs)
 
     @wraps(func)
@@ -410,7 +410,6 @@ def get_pagination(func: EndpointFunction) -> EndpointFunction:
     # https://github.com/jmcarp/flask-apispec/issues/189
     @use_kwargs(Pagination)
     def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-
         return func(self, *args, **kwargs)
 
     if func.__name__ == "get":
@@ -431,7 +430,6 @@ def init_chunk_upload(func: EndpointFunction) -> EndpointFunction:
     # https://github.com/jmcarp/flask-apispec/issues/189
     @use_kwargs(ChunkUpload)
     def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-
         return func(self, *args, **kwargs)
 
     return cast(EndpointFunction, wrapper)
@@ -453,7 +451,6 @@ def catch_exceptions(**kwargs: Any) -> Callable[[EndpointFunction], EndpointFunc
                 out = func(self, *args, **kwargs)
             # Catch the exception requested by the user
             except RestApiException as e:
-
                 if e.is_warning:
                     log.warning(e)
                 else:
@@ -486,9 +483,8 @@ def catch_exceptions(**kwargs: Any) -> Callable[[EndpointFunction], EndpointFunc
                 return self.response(
                     "Unexpected Server Error", code=500, force_json=True
                 )
-            except Exception as e:
-
-                if SENTRY_URL is not None:  # pragma: no cover
+            except Exception as e:  # pragma: no cover
+                if SENTRY_URL is not None:
                     capture_exception(e)
 
                 excname = e.__class__.__name__
@@ -503,7 +499,7 @@ def catch_exceptions(**kwargs: Any) -> Callable[[EndpointFunction], EndpointFunc
                 )
                 log.exception(message)
 
-                if excname in ["SystemError"]:  # pragma: no cover
+                if excname in ["SystemError"]:
                     return self.response(
                         "Unexpected Server Error", code=500, force_json=True
                     )

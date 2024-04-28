@@ -10,11 +10,8 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 from restapi.connectors import Connector, ExceptionsList
 from restapi.env import Env
 
-# from restapi.utilities.logs import log
-
 
 class RedisExt(Connector):
-
     DB = 0
     CELERY_BACKEND_DB = 1
     CACHE_DB = 2
@@ -29,9 +26,7 @@ class RedisExt(Connector):
         return None
 
     def connect(self, **kwargs: str) -> "RedisExt":
-
-        variables = self.variables.copy()
-        variables.update(kwargs)
+        variables = self.variables | kwargs
 
         # ssl=True, ssl_ca_certs=certifi.where()
         # turning off hostname verification (not recommended):
@@ -63,9 +58,14 @@ instance = RedisExt()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
+    retries: int = 1,
+    retry_wait: int = 0,
     **kwargs: str,
 ) -> "RedisExt":
-
     return instance.get_instance(
-        verification=verification, expiration=expiration, **kwargs
+        verification=verification,
+        expiration=expiration,
+        retries=retries,
+        retry_wait=retry_wait,
+        **kwargs,
     )

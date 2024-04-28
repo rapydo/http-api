@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, cast
+from typing import Any, Optional, cast
 
 import yaml
 
@@ -10,7 +10,7 @@ PROJECTS_DEFAULTS_FILE = Path("projects_defaults.yaml")
 PROJECT_CONF_FILENAME = Path("project_configuration.yaml")
 
 
-ConfigurationType = Dict[str, Any]
+ConfigurationType = dict[str, Any]
 
 
 def read_configuration(
@@ -18,7 +18,7 @@ def read_configuration(
     base_project_path: Path,
     projects_path: Path,
     submodules_path: Path,
-) -> Tuple[ConfigurationType, Optional[str], Optional[Path]]:
+) -> tuple[ConfigurationType, Optional[str], Optional[Path]]:
     """
     Read default configuration
     """
@@ -67,9 +67,7 @@ def read_configuration(
 
 
 def mix(base: ConfigurationType, custom: ConfigurationType) -> ConfigurationType:
-
     for key, elements in custom.items():
-
         if key not in base:
             base[key] = custom[key]
             continue
@@ -92,7 +90,6 @@ def mix(base: ConfigurationType, custom: ConfigurationType) -> ConfigurationType
 
 
 def load_yaml_file(filepath: Path) -> ConfigurationType:
-
     if not filepath.exists():
         raise AttributeError(f"YAML file does not exist: {filepath}")
 
@@ -110,4 +107,4 @@ def load_yaml_file(filepath: Path) -> ConfigurationType:
             # import codecs
             # error, _ = codecs.getdecoder("unicode_escape")(str(error))
 
-            raise AttributeError(f"Failed to read file {filepath}: {e}")
+            raise AttributeError(f"Failed to read file {filepath}: {e}") from e

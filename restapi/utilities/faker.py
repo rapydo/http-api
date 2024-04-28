@@ -56,7 +56,6 @@ class PasswordProvider(BaseProvider):
         digits: bool = False,
         symbols: bool = False,
     ) -> str:
-
         if strong:
             if length < 16:
                 length = 16
@@ -123,7 +122,6 @@ class PasswordProvider(BaseProvider):
 
 
 def get_faker() -> Faker:
-
     loc = secrets.choice(list(FAKER_LOCALES.keys()))
     log.warning(f"Today I'm {FAKER_LOCALES.get(loc)}")
     faker = Faker(loc)

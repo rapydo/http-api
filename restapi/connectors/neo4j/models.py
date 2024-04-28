@@ -1,5 +1,4 @@
-""" Models for graph database """
-from typing import Type
+""" Models for neo4j database """
 
 from neomodel import (
     AliasProperty,
@@ -26,13 +25,26 @@ from restapi.connectors.neo4j.types import IdentifiedNode, TimestampedNode
 from restapi.utilities.meta import Meta
 
 # mypy: ignore-errors
-UserCustomClass: Type[IdentifiedNode] = (
+UserCustomClass: type[IdentifiedNode] = (
     Meta.get_class("models.neo4j", "UserCustom") or IdentifiedNode
 )
 # mypy: ignore-errors
-GroupCustomClass: Type[IdentifiedNode] = (
+GroupCustomClass: type[IdentifiedNode] = (
     Meta.get_class("models.neo4j", "GroupCustom") or IdentifiedNode
 )
+
+GroupModelPath = "restapi.connectors.neo4j.models.Group"
+LoginModelPath = "restapi.connectors.neo4j.models.Login"
+RoleModelPath = "restapi.connectors.neo4j.models.Role"
+TokenModelPath = "restapi.connectors.neo4j.models.Token"
+UserModelPath = "restapi.connectors.neo4j.models.User"
+
+
+class Group(GroupCustomClass):
+    shortname = StringProperty(required=True, unique_index=True)
+    fullname = StringProperty(required=True, unique_index=False)
+
+    members = RelationshipFrom(UserModelPath, "BELONGS_TO", cardinality=ZeroOrMore)
 
 
 class User(UserCustomClass):
@@ -49,17 +61,10 @@ class User(UserCustomClass):
     privacy_accepted = BooleanProperty(default=True)
     expiration = DateTimeProperty()
 
-    tokens = RelationshipTo("Token", "HAS_TOKEN", cardinality=ZeroOrMore)
-    roles = RelationshipTo("Role", "HAS_ROLE", cardinality=ZeroOrMore)
-    belongs_to = RelationshipTo("Group", "BELONGS_TO")
-    logins = RelationshipTo("Login", "HAS_LOGIN", cardinality=ZeroOrMore)
-
-
-class Group(GroupCustomClass):
-    shortname = StringProperty(required=True, unique_index=True)
-    fullname = StringProperty(required=True, unique_index=False)
-
-    members = RelationshipFrom("User", "BELONGS_TO", cardinality=ZeroOrMore)
+    tokens = RelationshipTo(TokenModelPath, "HAS_TOKEN", cardinality=ZeroOrMore)
+    roles = RelationshipTo(RoleModelPath, "HAS_ROLE", cardinality=ZeroOrMore)
+    belongs_to = RelationshipTo(GroupModelPath, "BELONGS_TO", cardinality=ZeroOrOne)
+    logins = RelationshipTo(LoginModelPath, "HAS_LOGIN", cardinality=ZeroOrMore)
 
 
 class Token(StructuredNode):
@@ -71,13 +76,13 @@ class Token(StructuredNode):
     last_access = DateTimeProperty()
     IP = StringProperty()
     location = StringProperty()
-    emitted_for = RelationshipFrom("User", "HAS_TOKEN", cardinality=ZeroOrOne)
+    emitted_for = RelationshipFrom(UserModelPath, "HAS_TOKEN", cardinality=ZeroOrOne)
 
 
 class Role(StructuredNode):
     name = StringProperty(required=True, unique_index=True)
     description = StringProperty(default="No description")
-    privileged = RelationshipFrom(User, "HAS_ROLE", cardinality=OneOrMore)
+    privileged = RelationshipFrom(UserModelPath, "HAS_ROLE", cardinality=OneOrMore)
 
 
 class Login(StructuredNode):
@@ -85,7 +90,7 @@ class Login(StructuredNode):
     username = StringProperty()
     IP = StringProperty()
     location = StringProperty()
-    user = RelationshipFrom("User", "HAS_LOGIN", cardinality=ZeroOrOne)
+    user = RelationshipFrom(UserModelPath, "HAS_LOGIN", cardinality=ZeroOrOne)
     failed = BooleanProperty(default=False)
     flushed = BooleanProperty(default=False)
 
@@ -107,14 +112,14 @@ if TESTING:
         p_alias = AliasProperty()
 
         test1 = RelationshipFrom(
-            "restapi.connectors.neo4j.models.User",
+            UserModelPath,
             "TEST",
             cardinality=ZeroOrMore,
             model=RelationTest,
         )
 
         test2 = RelationshipFrom(
-            "restapi.connectors.neo4j.models.User",
+            UserModelPath,
             "TEST2",
             cardinality=ZeroOrMore,
             model=RelationTest,

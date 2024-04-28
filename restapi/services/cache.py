@@ -12,7 +12,6 @@ from restapi.utilities.globals import mem
 class Cache:
     @staticmethod
     def get_instance(app: Flask) -> FlaskCache:
-
         if not Connector.check_availability("redis"):
             raise ServiceUnavailable("Can't enable the cache without Redis")
 
@@ -20,7 +19,6 @@ class Cache:
         # Exactly as reported here:
         # https://github.com/sh4nks/flask-caching/issues/191
         if not hasattr(mem, "cache"):
-
             redis = Env.load_variables_group(prefix="redis")
             mem.cache = FlaskCache(
                 config={

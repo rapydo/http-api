@@ -57,10 +57,7 @@ class FTPExt(Connector):
         return (socket.gaierror,)
 
     def connect(self, **kwargs: str) -> "FTPExt":
-
-        variables = self.variables.copy()
-
-        variables.update(kwargs)
+        variables = self.variables | kwargs
 
         if (host := variables.get("host")) is None:  # pragma: no cover
             raise ServiceUnavailable("Missing hostname")
@@ -140,9 +137,14 @@ instance = FTPExt()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
+    retries: int = 1,
+    retry_wait: int = 0,
     **kwargs: str,
 ) -> "FTPExt":
-
     return instance.get_instance(
-        verification=verification, expiration=expiration, **kwargs
+        verification=verification,
+        expiration=expiration,
+        retries=retries,
+        retry_wait=retry_wait,
+        **kwargs,
     )

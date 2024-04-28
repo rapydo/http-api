@@ -1,6 +1,6 @@
 import time
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Optional
 
 import pyotp
 import pytest
@@ -49,7 +49,6 @@ def verify_token_is_not_valid(
 )
 class TestApp(BaseTests):
     def test_password_management(self, faker: Faker) -> None:
-
         # Ensure name and surname longer than 3
         name = self.get_first_name(faker)
         surname = self.get_last_name(faker)
@@ -215,13 +214,10 @@ class TestApp(BaseTests):
             auth.get_password_hash(None)
 
         assert auth.verify_password(pwd1, hash_1)
-        with pytest.raises(TypeError):
-            # Hashing a None password
-            auth.verify_password(None, hash_1)  # type: ignore
 
-        assert not auth.verify_password(pwd1, None)  # type: ignore
-
-        assert not auth.verify_password(None, None)  # type: ignore
+        assert not auth.is_bcrypt_hashed("test")
+        test_hash = auth.get_password_hash(pwd1)
+        assert auth.is_bcrypt_hashed(test_hash)
 
     @staticmethod
     @pytest.mark.skipif(
@@ -229,7 +225,6 @@ class TestApp(BaseTests):
         reason="This test needs 2FA to be available",
     )
     def test_totp_management() -> None:
-
         auth = Connector.get_authentication_instance()
 
         with pytest.raises(Unauthorized, match=r"Verification code is missing"):
@@ -277,7 +272,6 @@ class TestApp(BaseTests):
 
     @staticmethod
     def test_login_management(faker: Faker) -> None:
-
         auth = Connector.get_authentication_instance()
 
         if BaseAuthentication.default_user:
@@ -306,7 +300,6 @@ class TestApp(BaseTests):
         assert len(logins) == 0
 
     def test_tokens_management(self, client: FlaskClient, faker: Faker) -> None:
-
         auth = Connector.get_authentication_instance()
 
         # Just to verify that the function works
@@ -395,7 +388,7 @@ class TestApp(BaseTests):
         assert auth.verify_token_validity(jti, user)
 
         # Verify token against a wrong user
-
+        group = auth.get_group(name=DEFAULT_GROUP_NAME)
         another_user = auth.create_user(
             {
                 "email": faker.ascii_email(),
@@ -406,6 +399,7 @@ class TestApp(BaseTests):
             },
             # It will be expanded with the default role
             roles=[],
+            group=group,
         )
         auth.save_user(another_user)
 
@@ -413,7 +407,6 @@ class TestApp(BaseTests):
 
     @staticmethod
     def test_users_groups_roles(faker: Faker) -> None:
-
         auth = Connector.get_authentication_instance()
 
         user = auth.get_user(username=BaseAuthentication.default_user)
@@ -469,10 +462,14 @@ class TestApp(BaseTests):
         assert not auth.delete_user(None)
         assert not auth.delete_group(None)
 
+        # Delete default user, default group and all users belonging to it
+        members = auth.get_group_members(group)
+        for u in members:
+            assert auth.delete_user(u)
         assert auth.delete_user(user)
         assert auth.delete_group(group)
 
-        # Verify that user/group are now deleted
+        # Verify that both user and group are now deleted
         assert auth.get_user(username=BaseAuthentication.default_user) is None
         assert auth.get_group(name="Default") is None
 
@@ -518,7 +515,7 @@ class TestApp(BaseTests):
         group = auth.get_group(name="Default")
         assert group.fullname == "Changed"
 
-        roles: List[RoleObj] = auth.get_roles()
+        roles: list[RoleObj] = auth.get_roles()
         assert isinstance(roles, list)
         assert len(roles) > 0
 
@@ -599,7 +596,6 @@ class TestApp(BaseTests):
 
     @staticmethod
     def test_authentication_abstract_methods(faker: Faker) -> None:
-
         # Super trick!
         # https://clamytoe.github.io/articles/2020/Mar/12/testing-abcs-with-abstract-methods-with-pytest
         abstractmethods = BaseAuthentication.__abstractmethods__
@@ -651,7 +647,8 @@ class TestApp(BaseTests):
         assert auth.create_role(name=faker.pystr(), description=faker.pystr()) is None
         assert auth.save_role(role=role) is None
 
-        assert auth.create_user(userdata={}, roles=[faker.pystr()]) is None
+        group = auth.get_group(name=DEFAULT_GROUP_NAME)
+        assert auth.create_user(userdata={}, roles=[faker.pystr()], group=group) is None
 
         assert auth.link_roles(user=user, roles=[faker.pystr()]) is None
         assert auth.create_group(groupdata={}) is None

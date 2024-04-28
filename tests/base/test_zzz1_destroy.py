@@ -3,6 +3,7 @@ This test is intended to be executed as second-last, just before the re-init tes
 (this is why it is prefixed as zzz1)
 Beware: if env TEST_DESTROY_MODE == 1 this test will destroy your database, be careful
 """
+
 import os
 
 import pytest
@@ -20,13 +21,12 @@ from restapi.services.authentication import BaseAuthentication
     reason="This test needs authentication and TEST_DESTROY_MODE to be enabled",
 )
 def test_destroy() -> None:
-
     auth = Connector.get_authentication_instance()
 
     user = auth.get_user(username=BaseAuthentication.default_user)
     assert user is not None
 
-    create_app(mode=ServerModes.DESTROY)
+    create_app(name="Flask Tests", mode=ServerModes.DESTROY, options={})
 
     if Connector.check_availability("sqlalchemy"):
         with pytest.raises(ServiceUnavailable):

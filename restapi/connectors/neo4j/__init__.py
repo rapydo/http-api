@@ -6,7 +6,7 @@ import re
 import socket
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
+from typing import Any, Callable, Optional, TypeVar, cast
 
 import pytz
 from neo4j.exceptions import (
@@ -57,7 +57,6 @@ F = TypeVar("F", bound=Callable[..., Any])
 def catch_db_exceptions(func: F) -> F:
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-
         try:
             return func(*args, **kwargs)
         except DatabaseDuplicatedEntry as e:
@@ -68,7 +67,6 @@ def catch_db_exceptions(func: F) -> F:
         except CypherSyntaxError as e:
             raise (e)
         except UniqueProperty as e:
-
             t = "already exists with label"
             m = re.search(
                 rf"Node\([0-9]+\) {t} `(.+)` and property `(.+)` = '(.+)'", str(e)
@@ -79,13 +77,12 @@ def catch_db_exceptions(func: F) -> F:
                 prop = m.group(2)
                 val = m.group(3)
                 error = f"A {node.title()} already exists with {prop}: {val}"
-                raise DatabaseDuplicatedEntry(error)
+                raise DatabaseDuplicatedEntry(error) from e
 
             # Can't be tested, should never happen except in case of new neo4j version
             log.error("Unrecognized error message: {}", e)  # pragma: no cover
-            raise DatabaseDuplicatedEntry("Duplicated entry")  # pragma: no cover
+            raise DatabaseDuplicatedEntry("Duplicated entry") from e  # pragma: no cover
         except RequiredProperty as e:
-
             # message = property 'xyz' on objects of class XYZ
 
             message = str(e)
@@ -95,7 +92,7 @@ def catch_db_exceptions(func: F) -> F:
                 model = m.group(2)
                 message = f"Missing property {missing_property} required by {model}"
 
-            raise DatabaseMissingRequiredProperty(message)
+            raise DatabaseMissingRequiredProperty(message) from e
         except DeflateError as e:
             log.warning(e)
             return None
@@ -116,7 +113,6 @@ def catch_db_exceptions(func: F) -> F:
 
 
 class NeoModel(Connector):
-
     # This is used to return Models in a type-safe way
     # Return type becomes "Any" due to an unfollowed import
     def __getattr__(self, name: str) -> StructuredNode:  # type: ignore
@@ -126,7 +122,6 @@ class NeoModel(Connector):
 
     @staticmethod
     def get_connection_exception() -> ExceptionsList:
-
         return (
             neobolt_ServiceUnavailable,
             neobolt_AddressError,
@@ -140,9 +135,7 @@ class NeoModel(Connector):
         )  # type: ignore
 
     def connect(self, **kwargs: str) -> "NeoModel":
-
-        variables = self.variables.copy()
-        variables.update(kwargs)
+        variables = self.variables | kwargs
 
         USER = variables.get("user", "neo4j")
         PWD = variables.get("password")
@@ -170,6 +163,7 @@ class NeoModel(Connector):
         StructuredNode.save = catch_db_exceptions(StructuredNode.save)
         NodeSet.get = catch_db_exceptions(NodeSet.get)
 
+        self.load_models()
         self.db = db
         return self
 
@@ -177,19 +171,17 @@ class NeoModel(Connector):
         self.disconnected = True
 
     def is_connected(self) -> bool:
-
         if self.disconnected or not self.db or not self.db.driver:
             return False
 
         try:
             self.db.driver.verify_connectivity()
             return True
-        except (ServiceUnavailable, TransientError) as e:
+        except (ServiceUnavailable, TransientError) as e:  # pragma: no cover
             log.error(e)
             return False
 
     def initialize(self) -> None:
-
         if self.app:
             with self.app.app_context():
                 try:
@@ -218,7 +210,6 @@ class NeoModel(Connector):
                     install_labels(model, quiet=False)
 
     def destroy(self) -> None:
-
         graph = self.get_instance()
 
         if self.app:
@@ -238,8 +229,7 @@ class NeoModel(Connector):
 
     @staticmethod
     # Argument 1 to "update_properties" becomes "Any" due to an unfollowed import
-    def update_properties(instance: StructuredNode, properties: Dict[str, Any]) -> None:  # type: ignore
-
+    def update_properties(instance: StructuredNode, properties: dict[str, Any]) -> None:  # type: ignore  # noqa
         for field, value in properties.items():
             instance.__dict__[field] = value
 
@@ -253,7 +243,7 @@ class NeoModel(Connector):
         except CypherSyntaxError as e:
             log.warning(query)
             log.error(f"Failed to execute Cypher Query\n{e}")
-            raise CypherSyntaxError("Failed to execute Cypher Query")
+            raise CypherSyntaxError("Failed to execute Cypher Query") from e
         return results
 
     @staticmethod
@@ -267,7 +257,6 @@ class NeoModel(Connector):
     def fuzzy_tokenize(term: str) -> str:
         tokens = re.findall(r'[^"\s]\S*|".+?"', term)
         for index, t in enumerate(tokens):
-
             # Do not apply fuzzy search to quoted strings
             if '"' in t:
                 continue
@@ -292,7 +281,6 @@ class Authentication(BaseAuthentication):
     def get_user(
         self, username: Optional[str] = None, user_id: Optional[str] = None
     ) -> Optional[User]:
-
         if username:
             return self.db.User.nodes.get_or_none(email=username)
 
@@ -302,8 +290,8 @@ class Authentication(BaseAuthentication):
         # reached if both username and user_id are None
         return None
 
-    def get_users(self) -> List[User]:
-        return cast(List[User], self.db.User.nodes.all())
+    def get_users(self) -> list[User]:
+        return cast(list[User], self.db.User.nodes.all())
 
     def save_user(self, user: User) -> bool:
         if not user:
@@ -330,13 +318,13 @@ class Authentication(BaseAuthentication):
 
         return None
 
-    def get_groups(self) -> List[Group]:
-        return cast(List[Group], self.db.Group.nodes.all())
+    def get_groups(self) -> list[Group]:
+        return cast(list[Group], self.db.Group.nodes.all())
 
     def get_user_group(self, user: User) -> Group:
         return user.belongs_to.single()
 
-    def get_group_members(self, group: Group) -> List[User]:
+    def get_group_members(self, group: Group) -> list[User]:
         return list(group.members)
 
     def save_group(self, group: Group) -> bool:
@@ -353,7 +341,7 @@ class Authentication(BaseAuthentication):
         group.delete()
         return True
 
-    def get_roles(self) -> List[RoleObj]:
+    def get_roles(self) -> list[RoleObj]:
         roles = []
         for role in self.db.Role.nodes.all():
             if role:
@@ -361,8 +349,7 @@ class Authentication(BaseAuthentication):
 
         return roles
 
-    def get_roles_from_user(self, user: Optional[User]) -> List[str]:
-
+    def get_roles_from_user(self, user: Optional[User]) -> list[str]:
         # No user for non authenticated endpoints -> return no role
         if user is None:
             return []
@@ -380,8 +367,9 @@ class Authentication(BaseAuthentication):
         return False
 
     # Also used by POST user
-    def create_user(self, userdata: Dict[str, Any], roles: List[str]) -> User:
-
+    def create_user(
+        self, userdata: dict[str, Any], roles: list[str], group: Group
+    ) -> User:
         userdata.setdefault("authmethod", "credentials")
 
         if "password" in userdata:
@@ -392,6 +380,7 @@ class Authentication(BaseAuthentication):
         user = self.db.User(**userdata)
         user.save()
 
+        self.add_user_to_group(user, group)
         self.link_roles(user, roles)
 
         self.custom_user_properties_post(user, userdata, extra_userdata, self.db)
@@ -399,8 +388,7 @@ class Authentication(BaseAuthentication):
         return user
 
     # Also used by PUT user
-    def link_roles(self, user: User, roles: List[str]) -> None:
-
+    def link_roles(self, user: User, roles: list[str]) -> None:
         if not roles:
             roles = [self.default_role]
 
@@ -411,17 +399,16 @@ class Authentication(BaseAuthentication):
             log.debug("Adding role {}", role)
             try:
                 role_obj = self.db.Role.nodes.get(name=role)
-            except self.db.Role.DoesNotExist:  # pragma: no cover
-                raise Exception(f"Graph role {role} does not exist")
+            except self.db.Role.DoesNotExist as e:  # pragma: no cover
+                raise Exception(f"Graph role {role} does not exist") from e
             user.roles.connect(role_obj)
 
-    def create_group(self, groupdata: Dict[str, Any]) -> Group:
+    def create_group(self, groupdata: dict[str, Any]) -> Group:
         group = self.db.Group(**groupdata).save()
 
         return group
 
     def add_user_to_group(self, user: User, group: Group) -> None:
-
         if user and group:
             prev_group = user.belongs_to.single()
 
@@ -433,7 +420,6 @@ class Authentication(BaseAuthentication):
     def save_token(
         self, user: User, token: str, payload: Payload, token_type: Optional[str] = None
     ) -> None:
-
         ip_address = self.get_remote_ip()
 
         if token_type is None:
@@ -458,7 +444,6 @@ class Authentication(BaseAuthentication):
         token_node.emitted_for.connect(user)
 
     def verify_token_validity(self, jti: str, user: User) -> bool:
-
         try:
             token_node = self.db.Token.nodes.get(jti=jti)
         except self.db.Token.DoesNotExist:
@@ -499,9 +484,8 @@ class Authentication(BaseAuthentication):
         user: Optional[User] = None,
         token_jti: Optional[str] = None,
         get_all: bool = False,
-    ) -> List[Token]:
-
-        tokens_list: List[Token] = []
+    ) -> list[Token]:
+        tokens_list: list[Token] = []
         tokens = None
 
         if get_all:
@@ -544,7 +528,6 @@ class Authentication(BaseAuthentication):
         return True
 
     def save_login(self, username: str, user: Optional[User], failed: bool) -> None:
-
         date = datetime.now(pytz.utc)
         ip_address = self.get_remote_ip()
 
@@ -564,8 +547,7 @@ class Authentication(BaseAuthentication):
 
     def get_logins(
         self, username: Optional[str] = None, only_unflushed: bool = False
-    ) -> List[Login]:
-
+    ) -> list[Login]:
         if not username:
             logins = self.db.Login.nodes.all()
         elif only_unflushed:
@@ -576,7 +558,6 @@ class Authentication(BaseAuthentication):
         return [x for x in logins]
 
     def flush_failed_logins(self, username: str) -> None:
-
         for login in self.db.Login.nodes.filter(username=username, flushed=False):
             login.flushed = True
             login.save()
@@ -588,9 +569,14 @@ instance = NeoModel()
 def get_instance(
     verification: Optional[int] = None,
     expiration: Optional[int] = None,
+    retries: int = 1,
+    retry_wait: int = 0,
     **kwargs: str,
 ) -> "NeoModel":
-
     return instance.get_instance(
-        verification=verification, expiration=expiration, **kwargs
+        verification=verification,
+        expiration=expiration,
+        retries=retries,
+        retry_wait=retry_wait,
+        **kwargs,
     )

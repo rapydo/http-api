@@ -2,7 +2,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 import click
 from flask.cli import FlaskGroup
@@ -11,7 +11,9 @@ from restapi import __package__ as current_package
 from restapi.config import BACKEND_PACKAGE, CUSTOM_PACKAGE, PRODUCTION
 from restapi.connectors import Connector
 from restapi.env import Env
+from restapi.server import ServerModes
 from restapi.utilities import print_and_exit
+from restapi.utilities.globals import mem
 from restapi.utilities.logs import log
 from restapi.utilities.processes import find_process, wait_socket
 
@@ -24,7 +26,6 @@ def cli() -> None:  # pragma: no cover
 
 
 def initializing() -> bool:
-
     return find_process(current_package, keywords=["init"], prefix="/usr/local/bin/")
 
 
@@ -52,14 +53,13 @@ def launch() -> None:  # pragma: no cover
         Env.get("FLASK_PORT", "8080"),
         "--reload",
         "--no-debugger",
-        "--eager-loading",
         "--with-threads",
     ]
 
     # Call to untyped function "FlaskGroup" in typed context
-    fg_cli = FlaskGroup()  # type: ignore
+    fg_cli = FlaskGroup()
     # Call to untyped function "main" in typed context
-    fg_cli.main(prog_name="restapi", args=args)  # type: ignore
+    fg_cli.main(prog_name="restapi", args=args)
     log.warning("Server shutdown")
 
 
@@ -68,6 +68,7 @@ def launch() -> None:  # pragma: no cover
 def verify(service: str) -> None:
     """Verify if a service is connected"""
 
+    mem.boot_completed = False
     if not Connector.check_availability(service):
         print_and_exit("Service {} not detected", service)
 
@@ -129,9 +130,8 @@ def wait() -> None:
 
 
 def get_service_address(
-    variables: Dict[str, str], host_var: str, port_var: str, service: str
-) -> Tuple[str, int]:
-
+    variables: dict[str, str], host_var: str, port_var: str, service: str
+) -> tuple[str, int]:
     host = variables.get(host_var)
     if host is None:
         print_and_exit("Cannot find any variable matching {} for {}", host_var, service)
@@ -151,13 +151,11 @@ def mywait() -> None:
     This check is merely based on a socket connection
     """
     for name, variables in Connector.services.items():
-
         if name == "smtp" or name == "ftp":
             log.info("Service {} is enabled but not tested at startup time", name)
             continue
 
         if name == "celery":
-
             broker = variables.get("broker_service", "N/A")
 
             if broker == "RABBIT":
@@ -204,7 +202,7 @@ def clean() -> None:  # pragma: no cover
 
     log.info("Launching destruction app")
 
-    create_app(name="Removing data", mode=ServerModes.DESTROY)
+    create_app(name="Removing data", mode=ServerModes.DESTROY, options={})
 
     log.info("Destruction completed")
 
@@ -217,7 +215,7 @@ def forced_clean() -> None:  # pragma: no cover
 
     log.info("Launching destruction app")
 
-    create_app(name="Removing data", mode=ServerModes.DESTROY)
+    create_app(name="Removing data", mode=ServerModes.DESTROY, options={})
 
     log.info("Destruction completed")
 
@@ -268,7 +266,6 @@ def tests(
 
     test_folder = Path("tests")
     if file is not None:
-
         filepath = Path(file)
         if test_folder not in filepath.parents:
             filepath = test_folder.joinpath(filepath)
@@ -277,7 +274,6 @@ def tests(
             print_and_exit("File not found: {}", file)
         parameters.append(str(filepath.relative_to(test_folder)))
     elif folder is not None:
-
         folderpath = Path(folder)
         if test_folder not in folderpath.parents:
             folderpath = test_folder.joinpath(folderpath)
@@ -291,7 +287,6 @@ def tests(
     if destroy and not PRODUCTION:
         os.environ["TEST_DESTROY_MODE"] = "1"
     try:
-
         log.info("Running tests... this may take some time")
         log.debug("Executing: {}", parameters)
         from plumbum import local
@@ -310,7 +305,7 @@ def clearcache() -> None:
     from restapi.server import create_app
     from restapi.services.cache import Cache
 
-    create_app(name="Cache clearing")
+    create_app(name="Cache clearing", mode=ServerModes.NORMAL, options={})
 
     Cache.clear()
 

@@ -10,7 +10,6 @@ from restapi.utilities.logs import log
 
 
 class Profile(EndpointResource):
-
     depends_on = ["MAIN_LOGIN_ENABLE", "AUTH_ENABLE"]
     labels = ["profile"]
 
@@ -22,7 +21,6 @@ class Profile(EndpointResource):
         responses={200: "User profile is returned"},
     )
     def get(self, user: User) -> Response:
-
         data = {
             "uuid": user.uuid,
             "email": user.email,
@@ -62,11 +60,10 @@ class Profile(EndpointResource):
         user: User,
         totp_code: Optional[str] = None,
     ) -> Response:
-
         try:
             self.auth.make_login(user.email, password, totp_code)
-        except AuthMissingTOTP:
-            raise Unauthorized("Verification code is missing")
+        except AuthMissingTOTP as e:
+            raise Unauthorized("Verification code is missing") from e
 
         self.auth.change_password(user, password, new_password, password_confirm)
 

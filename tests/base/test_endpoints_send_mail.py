@@ -1,5 +1,4 @@
-import json
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from faker import Faker
@@ -15,7 +14,6 @@ from restapi.tests import API_URI, BaseTests, FlaskClient
 )
 class TestApp(BaseTests):
     def test_sendmail(self, client: FlaskClient, faker: Faker) -> None:
-
         headers, _ = self.do_login(client, None, None)
 
         r = client.get(f"{API_URI}/admin/mail", headers=headers)
@@ -30,7 +28,7 @@ class TestApp(BaseTests):
         r = client.delete(f"{API_URI}/admin/mail", headers=headers)
         assert r.status_code == 405
 
-        data: Dict[str, Any] = {"dry_run": False}
+        data: dict[str, Any] = {"dry_run": False}
         r = client.post(f"{API_URI}/admin/mail", json=data, headers=headers)
         assert r.status_code == 400
 
@@ -131,5 +129,7 @@ class TestApp(BaseTests):
         assert f"Subject: {data['subject']}" in email_headers
         ccs = mail.get("cc", [])
         assert ccs[0] == data["to"]
-        assert ccs[1] == data["cc"].split(",")
-        assert ccs[2] == data["bcc"].split(",")
+        assert ccs[1] == data["cc"].split(",")[0]
+        assert ccs[2] == data["cc"].split(",")[1]
+        assert ccs[3] == data["bcc"].split(",")[0]
+        assert ccs[4] == data["bcc"].split(",")[1]

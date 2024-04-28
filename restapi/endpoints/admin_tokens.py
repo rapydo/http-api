@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from glom import glom
 
@@ -10,8 +10,7 @@ from restapi.services.authentication import Role, Token, User
 from restapi.utilities.logs import log
 
 
-def inject_token(endpoint: EndpointResource, token_id: str) -> Dict[str, Any]:
-
+def inject_token(endpoint: EndpointResource, token_id: str) -> dict[str, Any]:
     tokens = endpoint.auth.get_tokens(token_jti=token_id)
 
     if not tokens:
@@ -49,7 +48,6 @@ class AdminTokens(EndpointResource):
         input_filter: str,
         user: User,
     ) -> Response:
-
         tokens = self.auth.get_tokens(get_all=True)
 
         if input_filter:
@@ -110,7 +108,6 @@ class AdminTokens(EndpointResource):
         },
     )
     def delete(self, token_id: str, token: str, user: User) -> Response:
-
         if not self.auth.invalidate_token(token=token):
             raise BadRequest(f"Failed token invalidation: {token}")  # pragma: no cover
 

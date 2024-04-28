@@ -1,5 +1,6 @@
 import time
 from datetime import timedelta
+from unittest.mock import patch
 
 import celery
 import pytest
@@ -24,7 +25,6 @@ CONNECTOR_AVAILABLE = Connector.check_availability(CONNECTOR)
     CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be not available"
 )
 def test_no_celery() -> None:
-
     with pytest.raises(ServiceUnavailable):
         connector.get_instance()
 
@@ -36,7 +36,6 @@ def test_no_celery() -> None:
     not CONNECTOR_AVAILABLE, reason=f"This test needs {CONNECTOR} to be available"
 )
 def test_celery(app: Flask, faker: Faker) -> None:
-
     log.info("Executing {} tests", CONNECTOR)
 
     obj = connector.get_instance()
@@ -190,7 +189,7 @@ def test_celery(app: Flask, faker: Faker) -> None:
     with connector.get_instance() as obj:
         assert obj is not None
 
-    app = create_app(mode=ServerModes.WORKER)
+    app = create_app(name="Flask Tests", mode=ServerModes.WORKER, options={})
     assert app is not None
 
 
@@ -199,7 +198,6 @@ def test_celery(app: Flask, faker: Faker) -> None:
     reason="This test needs celery-beat to be NOT available",
 )
 def test_no_celerybeat() -> None:
-
     obj = connector.get_instance()
     assert obj is not None
 
@@ -235,7 +233,6 @@ def test_no_celerybeat() -> None:
     reason="This test needs celery-beat to be available",
 )
 def test_celerybeat() -> None:
-
     obj = connector.get_instance()
     assert obj is not None
 
@@ -283,7 +280,6 @@ def test_celerybeat() -> None:
     assert not obj.delete_periodic_task("task2_bis")
 
     if CeleryExt.CELERYBEAT_SCHEDULER == "REDIS":
-
         obj.create_periodic_task(
             name="task3",
             task="task.does.not.exists",

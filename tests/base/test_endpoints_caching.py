@@ -22,7 +22,6 @@ CONNECTOR_AVAILABLE = Connector.check_availability("redis")
 )
 class TestAppNoRedis(BaseTests):
     def test_caching_autocleaning(self, app: Flask) -> None:
-
         with pytest.raises(ServiceUnavailable):
             Cache.get_instance(app)
 
@@ -32,11 +31,7 @@ class TestAppNoRedis(BaseTests):
 )
 class TestAppWithRedis(BaseTests):
     def test_caching_autocleaning(self, client: FlaskClient) -> None:
-
-        if Env.get_bool("AUTH_ENABLE"):
-            headers, _ = self.do_login(client, None, None)
-        else:
-            headers = None
+        headers, _ = self.do_login(client, None, None)
 
         # Syncronize this test to start at the beginning of the next second and
         # prevent the test to overlap a change of second
@@ -88,11 +83,7 @@ class TestAppWithRedis(BaseTests):
         assert self.get_content(r) == counter2
 
     def test_caching_general_clearing(self, client: FlaskClient) -> None:
-
-        if Env.get_bool("AUTH_ENABLE"):
-            headers, _ = self.do_login(client, None, None)
-        else:
-            headers = None
+        headers, _ = self.do_login(client, None, None)
 
         # get method is cached for 200 seconds
 
@@ -147,11 +138,6 @@ class TestAppWithRedis(BaseTests):
         assert self.get_content(r) == counter3
 
     def test_cached_authenticated_endpoint(self, client: FlaskClient) -> None:
-
-        if not Env.get_bool("AUTH_ENABLE"):
-            log.warning("Skipping cache with authentication tests")
-            return
-
         headers1, _ = self.do_login(client, None, None)
 
         r = client.get(f"{API_URI}/tests/cache/auth", headers=headers1)
@@ -223,11 +209,6 @@ class TestAppWithRedis(BaseTests):
             self.delete_user(client, uuid)
 
     def test_cached_semiauthenticated_endpoint(self, client: FlaskClient) -> None:
-
-        if not Env.get_bool("AUTH_ENABLE"):
-            log.warning("Skipping cache with authentication tests")
-            return
-
         r = client.get(f"{API_URI}/tests/cache/optionalauth")
         assert r.status_code == 200
         nonauthenticated1 = self.get_content(r)
@@ -279,11 +260,6 @@ class TestAppWithRedis(BaseTests):
         assert r.status_code == 401
 
     def test_cached_authenticated_param_endpoint(self, client: FlaskClient) -> None:
-
-        if not Env.get_bool("AUTH_ENABLE"):
-            log.warning("Skipping cache with authentication tests")
-            return
-
         headers1, _ = self.do_login(client, None, None)
 
         r = client.get(f"{API_URI}/tests/cache/paramauth", headers=headers1)
@@ -339,11 +315,6 @@ class TestAppWithRedis(BaseTests):
         assert resp5[COUNTER] == 2
 
     def test_cached_semiauthenticated_param_endpoint(self, client: FlaskClient) -> None:
-
-        if not Env.get_bool("AUTH_ENABLE"):
-            log.warning("Skipping cache with authentication tests")
-            return
-
         r = client.get(f"{API_URI}/tests/cache/optionalparamauth")
         assert r.status_code == 200
         nonauthenticated1 = self.get_content(r)

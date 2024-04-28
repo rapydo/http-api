@@ -1,5 +1,7 @@
 ignore:
   - "restapi/__main__.py" # cannot be tested
   - "restapi/__init__.py" # cannot be tested
+  - "restapi/mocks.py" # cannot be tested, only used to build docs
+  - "restapi/alembic_env.py" # cannot be tested, only used as a template
   - "restapi/connectors/celery/worker.py" # cannot be tested
   - "restapi/connectors/celery/beat.py" # cannot be tested

@@ -1,9 +1,11 @@
 """
 Download data from APIs
 """
+
+from collections.abc import Iterator
 from mimetypes import MimeTypes
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Optional
 
 from flask import Response, send_from_directory, stream_with_context
 from werkzeug.utils import secure_filename
@@ -33,7 +35,6 @@ class Downloader:
         subfolder: Path,
         mime: Optional[str] = None,
     ) -> Response:
-
         Uploader.validate_upload_folder(subfolder)
 
         filename = secure_filename(filename)
@@ -69,7 +70,6 @@ class Downloader:
         mime: Optional[str] = None,
         out_filename: Optional[str] = None,
     ) -> Response:
-
         Uploader.validate_upload_folder(subfolder)
 
         filename = secure_filename(filename)
@@ -92,5 +92,5 @@ class Downloader:
             out_filename = filepath.name
 
         response.headers["Content-Disposition"] = f"attachment; filename={out_filename}"
-        response.headers["Content-Length"] = filepath.stat().st_size
+        response.headers["Content-Length"] = str(filepath.stat().st_size)
         return response

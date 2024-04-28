@@ -19,7 +19,6 @@ auth = Connector.get_authentication_instance()
 if Connector.check_availability("smtp"):
 
     class RecoverPassword(EndpointResource):
-
         depends_on = ["MAIN_LOGIN_ENABLE", "ALLOW_PASSWORD_RESET", "AUTH_ENABLE"]
         labels = ["authentication"]
 
@@ -35,7 +34,6 @@ if Connector.check_availability("smtp"):
             },
         )
         def post(self, reset_email: str) -> Response:
-
             reset_email = reset_email.lower()
 
             self.auth.verify_blocked_username(reset_email)
@@ -106,7 +104,6 @@ if Connector.check_availability("smtp"):
             new_password: Optional[str] = None,
             password_confirm: Optional[str] = None,
         ) -> Response:
-
             token = token.replace("%2B", ".")
             token = token.replace("+", ".")
 
@@ -117,17 +114,17 @@ if Connector.check_availability("smtp"):
                 )
 
             # If token is expired
-            except jwt.exceptions.ExpiredSignatureError:
-                raise BadRequest("Invalid reset token: this request is expired")
+            except jwt.exceptions.ExpiredSignatureError as e:
+                raise BadRequest("Invalid reset token: this request is expired") from e
 
             # if token is not active yet
             except jwt.exceptions.ImmatureSignatureError as e:
                 log.info(e)
-                raise BadRequest("Invalid reset token")
+                raise BadRequest("Invalid reset token") from e
             # if token does not exist (or other generic errors)
             except Exception as e:
                 log.info(e)
-                raise BadRequest("Invalid reset token")
+                raise BadRequest("Invalid reset token") from e
 
             if user is None:  # pragma: no cover
                 raise BadRequest("Invalid activation token")
@@ -151,7 +148,6 @@ if Connector.check_availability("smtp"):
                 last_change = user.last_password_change
 
             if last_change is not None:
-
                 # Can't happen because the change password also invalidated the token
                 if last_change > emitted:  # pragma: no cover
                     self.auth.invalidate_token(token)

@@ -6,7 +6,7 @@ import socket
 import time
 from datetime import datetime
 from types import FrameType
-from typing import List, Optional
+from typing import Optional
 
 import psutil
 
@@ -36,10 +36,9 @@ def stop_timeout() -> None:
 
 def find_process(
     process_name: str,
-    keywords: Optional[List[str]] = None,
+    keywords: Optional[list[str]] = None,
     prefix: Optional[str] = None,
 ) -> bool:
-
     if keywords is None:
         keywords = []
 
@@ -49,7 +48,6 @@ def find_process(
     current_pid = os.getpid()
 
     for pid in psutil.pids():
-
         if pid == current_pid or not psutil.pid_exists(pid):
             continue  # pragma: no cover
         process = psutil.Process(pid)
@@ -74,7 +72,6 @@ def find_process(
 def wait_socket(
     host: str, port: int, service_name: str, retries: int = DEFAULT_MAX_RETRIES
 ) -> None:
-
     SLEEP_TIME = 2
     TIMEOUT = 1
 
@@ -83,9 +80,7 @@ def wait_socket(
     counter = 0
     begin = time.time()
     while True:
-
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-
             s.settimeout(TIMEOUT)
 
             try:

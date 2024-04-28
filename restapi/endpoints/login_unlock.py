@@ -3,6 +3,7 @@ This endpoint validates an UNLOCK token to re-enable credentials
 after a block due to too many failed attemps.
 Unlock URL (including token) is sent by email
 """
+
 from jwt.exceptions import ExpiredSignatureError, ImmatureSignatureError
 
 from restapi import decorators
@@ -25,7 +26,6 @@ class LoginUnlock(EndpointResource):
         },
     )
     def post(self, token: str) -> Response:
-
         token = token.replace("%2B", ".")
         token = token.replace("+", ".")
 
@@ -36,18 +36,18 @@ class LoginUnlock(EndpointResource):
             )
 
         # If token is expired
-        except ExpiredSignatureError:
+        except ExpiredSignatureError as e:
             raise BadRequest(
                 "Invalid unlock token: this request is expired",
-            )
+            ) from e
 
         # if token is not active yet
-        except ImmatureSignatureError:
-            raise BadRequest("Invalid unlock token")
+        except ImmatureSignatureError as e:
+            raise BadRequest("Invalid unlock token") from e
 
         # if token does not exist (or other generic errors)
-        except Exception:
-            raise BadRequest("Invalid unlock token")
+        except Exception as e:
+            raise BadRequest("Invalid unlock token") from e
 
         if user is None:  # pragma: no cover
             raise BadRequest("Invalid unlock token")

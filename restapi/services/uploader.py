@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 from flask import request
 from plumbum.cmd import file
@@ -16,10 +16,9 @@ DEFAULT_PERMISSIONS = 0o440
 
 
 class Uploader:
+    allowed_exts: list[str] = []
 
-    allowed_exts: List[str] = []
-
-    def set_allowed_exts(self, exts: List[str]) -> None:
+    def set_allowed_exts(self, exts: list[str]) -> None:
         self.allowed_exts = exts
 
     def allowed_file(self, filename: str) -> bool:
@@ -31,7 +30,6 @@ class Uploader:
 
     @staticmethod
     def validate_upload_folder(path: Path) -> None:
-
         if "\x00" in str(path):
             raise BadRequest("Invalid null byte in subfolder parameter")
 
@@ -48,7 +46,7 @@ class Uploader:
             raise Forbidden("Invalid file path")
 
     @staticmethod
-    def get_file_metadata(abs_file: Path) -> Dict[str, str]:
+    def get_file_metadata(abs_file: Path) -> dict[str, str]:
         try:
             # Check the type
             # Example of output:
@@ -61,9 +59,8 @@ class Uploader:
 
     # this method is used by mistral
     def upload(self, subfolder: Path, force: bool = False) -> Response:
-
         if "file" not in request.files:
-            raise BadRequest("No files specified")
+            raise BadRequest("No files specified")  # pragma: no cover
 
         myfile = request.files["file"]
 
@@ -96,7 +93,9 @@ class Uploader:
             log.debug("Absolute file path should be '{}'", abs_file)
         except Exception as e:  # pragma: no cover
             log.error(e)
-            raise ServiceUnavailable("Permission denied: failed to write the file")
+            raise ServiceUnavailable(
+                "Permission denied: failed to write the file"
+            ) from e
 
         # Check exists - but it is basicaly a test that cannot fail...
         # The has just been uploaded!
@@ -123,7 +122,6 @@ class Uploader:
     def init_chunk_upload(
         self, upload_dir: Path, filename: str, force: bool = True
     ) -> Response:
-
         if not self.allowed_file(filename):
             raise BadRequest("File extension not allowed")
 
@@ -160,8 +158,7 @@ class Uploader:
     @staticmethod
     def parse_content_range(
         range_header: Optional[str],
-    ) -> Tuple[Optional[int], Optional[int], Optional[int]]:
-
+    ) -> tuple[Optional[int], Optional[int], Optional[int]]:
         if range_header is None:
             return None, None, None
 
@@ -206,8 +203,7 @@ class Uploader:
     # Ref. http://stackoverflow.com/a/9533843/2114395
     def chunk_upload(
         self, upload_dir: Path, filename: str, chunk_size: Optional[int] = None
-    ) -> Tuple[bool, Response]:
-
+    ) -> tuple[bool, Response]:
         Uploader.validate_upload_folder(upload_dir)
 
         filename = secure_filename(filename)
@@ -240,8 +236,10 @@ class Uploader:
                         break
                     f.seek(start)
                     f.write(chunk)
-        except PermissionError:
-            raise ServiceUnavailable("Permission denied: failed to write the file")
+        except PermissionError as e:
+            raise ServiceUnavailable(
+                "Permission denied: failed to write the file"
+            ) from e
 
         if completed:
             file_path.chmod(DEFAULT_PERMISSIONS)

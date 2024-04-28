@@ -1,5 +1,5 @@
 import csv
-from typing import Any, Dict, List
+from typing import Any
 
 from restapi.config import IMPORT_PATH
 from restapi.connectors import neo4j
@@ -7,8 +7,7 @@ from restapi.utilities.logs import log
 
 
 class DataDump:
-    def __init__(self, filename: str, fields: List[str]) -> None:
-
+    def __init__(self, filename: str, fields: list[str]) -> None:
         for f in fields:
             if ":" not in f:
                 raise ValueError(
@@ -20,13 +19,13 @@ class DataDump:
         self.filepath = IMPORT_PATH.joinpath(filename)
         # This will be used by neo4j to read the file
         self.filename = filename
-        self.cache: Dict[str, bool] = {}
+        self.cache: dict[str, bool] = {}
         self.fields = fields
         self.counter = 0
 
         with open(self.filepath, "w+") as out_handle:
             tsv_node_writer = csv.writer(out_handle, delimiter="\t")
-            fields_without_types: List[str] = []
+            fields_without_types: list[str] = []
             for f in fields:
                 fields_without_types.append(f.split(":")[0])
             tsv_node_writer.writerow(fields_without_types)
@@ -48,7 +47,6 @@ class DataDump:
         self.filepath.unlink()
 
     def print_line(self, args: Any) -> None:
-
         for a in args:
             if a is None:
                 raise ValueError(f"Found NULL value in line: {args}")
@@ -66,8 +64,8 @@ class DataDump:
         return graph.cypher(cypher)
 
     @staticmethod
-    def get_properties(fields: List[str]) -> str:
-        properties: List[str] = []
+    def get_properties(fields: list[str]) -> str:
+        properties: list[str] = []
 
         for f in fields:
             tokens = f.split(":")
@@ -144,8 +142,7 @@ class DataDump:
 
 
 class NodeDump(DataDump):
-    def __init__(self, label: str, fields: List[str]) -> None:
-
+    def __init__(self, label: str, fields: list[str]) -> None:
         filename = f"{label}.tsv".lower()
         super().__init__(filename, fields)
         self.label = label
@@ -162,7 +159,6 @@ class NodeDump(DataDump):
         self.print_line(args)
 
     def store(self, chunk_size: int = 10000) -> None:
-
         self.close()
 
         log.info("Storing {} ({}) nodes", self.count, self.label)
@@ -184,7 +180,6 @@ CALL {{
 
 
 class RelationDump(DataDump):
-
     NODE1_LABEL = "node1"
     NODE2_LABEL = "node2"
 
@@ -193,10 +188,9 @@ class RelationDump(DataDump):
         label1: str,
         relation: str,
         label2: str,
-        fields: List[str],
+        fields: list[str],
         ignore_indexes: bool = False,
     ) -> None:
-
         filename = f"{label1}_{relation}_{label2}.tsv".lower()
         # This is to prevent duplicates in node keys
         self.key1 = fields[0]
@@ -227,7 +221,6 @@ class RelationDump(DataDump):
         self.print_line(args)
 
     def store(self, chunk_size: int = 10000) -> None:
-
         self.close()
 
         log.info(

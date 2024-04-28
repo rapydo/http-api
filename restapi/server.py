@@ -1,6 +1,7 @@
 """
 The Main server factory. All internal flask components are created here
 """
+
 import logging
 import signal
 import sys
@@ -9,7 +10,7 @@ import warnings
 from enum import Enum
 from threading import Lock
 from types import FrameType
-from typing import Dict, Optional
+from typing import Optional
 
 import werkzeug.exceptions
 from apispec import APISpec
@@ -69,9 +70,7 @@ class ServerModes(int, Enum):
 def teardown_handler(
     signal: int, frame: Optional[FrameType]
 ) -> None:  # pragma: no cover
-
     with lock:
-
         Connector.disconnect_all()
 
     # This is needed to let connectors to complete the disconnection and prevent
@@ -84,12 +83,13 @@ def teardown_handler(
 
 
 def create_app(
-    name: str = __name__,
-    mode: ServerModes = ServerModes.NORMAL,
-    options: Optional[Dict[str, bool]] = None,
+    name: str,
+    mode: ServerModes,
+    options: dict[str, bool],
 ) -> Flask:
     """Create the server istance for Flask application"""
 
+    mem.boot_completed = False
     if PRODUCTION and TESTING and not FORCE_PRODUCTION_TESTS:  # pragma: no cover
         print_and_exit("Unable to execute tests in production")
 
@@ -105,7 +105,6 @@ def create_app(
 
     # CORS
     if not PRODUCTION:
-
         if TESTING:
             cors_origin = "*"
         else:  # pragma: no cover
@@ -132,11 +131,7 @@ def create_app(
 
     # Flask configuration from config file
     flask_app.config.from_object(config)
-    flask_app.json_encoder = ExtendedJSONEncoder
-
-    # Used to force flask to avoid json sorting and ensure that
-    # the output to reflect the order of field in the Marshmallow schema
-    flask_app.config["JSON_SORT_KEYS"] = False
+    flask_app.json = ExtendedJSONEncoder(flask_app)
 
     log.debug("Flask app configured")
 
@@ -156,7 +151,6 @@ def create_app(
         mem.customizer = Customizer()
 
     else:
-
         mem.configuration = endpoints_loader.load_configuration()
         mem.initializer = Meta.get_class("initialization", "Initializer")
         if not mem.initializer:  # pragma: no cover
@@ -180,7 +174,6 @@ def create_app(
 
     # Restful plugin with endpoint mapping (skipped in INIT|DESTROY|WORKER modes)
     if mode == ServerModes.NORMAL:
-
         logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
         # warnings levels:
@@ -225,12 +218,6 @@ def create_app(
             warnings.simplefilter("always", ResourceWarning)
             warnings.simplefilter("default", Neo4jExperimentalWarning)
 
-            # Remove me in a near future, this is due to hypothesis with pytest 7
-            # https://github.com/HypothesisWorks/hypothesis/issues/3222
-            warnings.filterwarnings(
-                "ignore", message="A private pytest class or function was used."
-            )
-
         elif PRODUCTION:  # pragma: no cover
             warnings.simplefilter("ignore", Warning)
             warnings.simplefilter("always", UserWarning)
@@ -270,25 +257,17 @@ def create_app(
         # ignore warning messages on flask socket after teardown
         warnings.filterwarnings("ignore", message="unclosed <socket.socket")
 
-        # from flask_caching 1.10.1 with python 3.10 on core tests...
-        # try to remove this once upgraded flask_caching in a near future
-        warnings.filterwarnings(
-            "ignore",
-            message="_SixMetaPathImporter.find_spec",
-        )
-
         # Raised from sentry_sdk 1.5.11 with python 3.10 events
         warnings.filterwarnings(
             "ignore",
             message="SelectableGroups dict interface is deprecated. Use select.",
         )
 
-        # Raised from apispec 5.2.2 with setuptools 65
+        # Raise from neo4j 5
         warnings.filterwarnings(
             "ignore",
-            message="distutils Version classes are deprecated.",
+            message="Relying on Driver's destructor to close the session is deprecated.",
         )
-
         if Connector.check_availability("redis"):
             mem.cache = Cache.get_instance(flask_app)
 
@@ -347,7 +326,6 @@ def create_app(
         ignore_verbs = {"HEAD", "OPTIONS"}
 
         for rule in flask_app.url_map.iter_rules():
-
             view_function = flask_app.view_functions[rule.endpoint]
             if not hasattr(view_function, "view_class"):
                 continue
@@ -386,7 +364,6 @@ def create_app(
     flask_app.after_request(handle_response)
 
     if SENTRY_URL is not None:  # pragma: no cover
-
         if PRODUCTION:
             sentry_sdk_init(
                 dsn=SENTRY_URL,
@@ -416,4 +393,5 @@ def create_app(
             target=None,
         )
 
+    mem.boot_completed = True
     return flask_app
