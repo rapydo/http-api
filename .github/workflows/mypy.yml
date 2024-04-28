@@ -36,9 +36,6 @@ jobs:
           for lib in \
             flask_apispec \
             flask_cors \
-            neo4j \
-            neobolt \
-            neomodel \
             redbeat \
             plumbum \
             psutil \
