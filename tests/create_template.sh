@@ -71,6 +71,17 @@ elif [[ "$TEMPLATE" == "legacy310" ]]; then
                     -e AUTH_SECOND_FACTOR_AUTHENTICATION=1 \
                     -e AUTH_TOKEN_IP_GRACE_PERIOD=2 \
                     -e BACKEND_PYTHON_VERSION="v3.10"
+elif [[ "$TEMPLATE" == "legacy311" ]]; then
+  rapydo create ${PROJECT_NAME} --add-optionals \
+                    --auth ${AUTH} \
+                    --frontend no \
+                    -e AUTH_FORCE_FIRST_PASSWORD_CHANGE=1 \
+                    -e AUTH_MAX_PASSWORD_VALIDITY=60 \
+                    -e AUTH_DISABLE_UNUSED_CREDENTIALS_AFTER=60 \
+                    -e AUTH_MAX_LOGIN_ATTEMPTS=10 \
+                    -e AUTH_SECOND_FACTOR_AUTHENTICATION=1 \
+                    -e AUTH_TOKEN_IP_GRACE_PERIOD=2 \
+                    -e BACKEND_PYTHON_VERSION="v3.11"
 else
   echo "Unknown template: ${TEMPLATE}";
   exit 1;

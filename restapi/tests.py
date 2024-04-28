@@ -74,7 +74,7 @@ def execute_from_code_dir() -> Generator[None, None, None]:
 class BaseTests:
     faker: Faker = get_faker()
     # This will store credentials to be used to test unused credentials ban
-    # Tuple = (email, password, uuid)
+    # tuple = (email, password, uuid)
     unused_credentials: Optional[tuple[str, str, str]] = None
 
     @classmethod
@@ -474,9 +474,7 @@ class BaseTests:
             assert field_type is not None
 
             if is_array := field_type.endswith("[]"):
-                # py39:
-                # field_type.removesuffix("[]")
-                field_type = field_type[0:-2]
+                field_type = field_type.removesuffix("[]")
 
             if "options" in d:
                 assert isinstance(d["options"], dict)
