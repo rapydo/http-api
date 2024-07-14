@@ -23,8 +23,7 @@ if TESTING and Connector.check_availability("neo4j"):
     CHOICES_tuple = (("A", "A"), ("B", "B"), ("C", "C"))
     CHOICES_dict = {"A": "A", "B": "B", "C": "C"}
 
-    # Base type StructuredNode becomes "Any" due to an unfollowed import
-    class Custom(StructuredNode):  # type: ignore
+    class Custom(StructuredNode):
         custom = StringProperty(required=True, choices=CHOICES_tuple)
         myint = IntegerProperty(required=True)
         myfloat = FloatProperty(required=True)

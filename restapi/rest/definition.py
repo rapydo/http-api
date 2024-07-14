@@ -19,9 +19,7 @@ PERPAGE_KEY = "perpage"
 DEFAULT_PERPAGE = 10
 
 
-# Base type MethodResource becomes "Any" due to an unfollowed import
-# Base type Resource becomes "Any" due to an unfollowed import
-class EndpointResource(MethodResource, MethodView):  # type: ignore
+class EndpointResource(MethodResource, MethodView):
     depends_on: list[str] = []
     labels = ["undefined"]
     private = False
