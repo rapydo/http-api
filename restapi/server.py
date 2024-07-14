@@ -269,6 +269,12 @@ def create_app(
             message="Relying on Driver's destructor to close the session is deprecated.",
         )
 
+        # Raised from flask-apispec 0.11.4 on python 3.12
+        warnings.filterwarnings(
+            "ignore",
+            message="Use timezone-aware objects to represent datetimes in UTC",
+        )
+
         if Connector.check_availability("redis"):
             mem.cache = Cache.get_instance(flask_app)
 
