@@ -34,6 +34,13 @@ if TESTING and Connector.check_availability("neo4j"):
         mydate = DateProperty()
 
     class Output(Schema):
+
+        # Raised from neomodel with python 3.12
+        warnings.filterwarnings(
+            "ignore",
+            message="datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version",  # noqa
+        )
+
         val = fields.Integer()
         created = fields.DateTime()
         modified1 = fields.DateTime()
@@ -73,13 +80,6 @@ if TESTING and Connector.check_availability("neo4j"):
             responses={200: "Tests executed"},
         )
         def get(self, test: str) -> Response:
-
-            # Raised from neomodel with python 3.12
-            warnings.filterwarnings(
-                "ignore",
-                message="datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version",  # noqa
-            )
-
             self.neo4j = neo4j.get_instance()
             try:
                 if test == "1":
