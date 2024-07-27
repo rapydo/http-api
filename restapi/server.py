@@ -275,6 +275,12 @@ def create_app(
             message="Use timezone-aware objects to represent datetimes in UTC",
         )
 
+        # Raised from neomodel with python 3.12
+        warnings.filterwarnings(
+            "ignore",
+            message="datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version",  # noqa
+        )
+
         if Connector.check_availability("redis"):
             mem.cache = Cache.get_instance(flask_app)
 

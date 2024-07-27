@@ -37,7 +37,6 @@ jobs:
             flask_apispec \
             flask_cors \
             neobolt \
-            neomodel \
             redbeat \
             plumbum \
             psutil \
