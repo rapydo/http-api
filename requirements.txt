@@ -22,7 +22,7 @@ celery-redbeat==2.2.0
 amqp==5.2.0
 pyotp==2.9.0
 segno==1.6.1
-PyYAML==6.0.1
+PyYAML==6.0.2
 loguru==0.7.2
 glom==23.5.0
 requests==2.31.0
