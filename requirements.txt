@@ -25,7 +25,7 @@ segno==1.6.1
 PyYAML==6.0.1
 loguru==0.7.2
 glom==23.5.0
-requests==2.31.0
+requests==2.32.2
 psutil==5.9.8
 plumbum==1.8.2
 html2text==2024.2.26
