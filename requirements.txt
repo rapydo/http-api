@@ -38,4 +38,4 @@ bcrypt==4.1.2
 # - uninstall async-timeout
 # - add @decorators.cache
 # - start backend and verify it is loaded with no errors
-async-timeout==4.0.3
+async-timeout==5.0.1
