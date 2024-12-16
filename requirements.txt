@@ -10,7 +10,7 @@ pyOpenSSL==24.1.0
 marshmallow==3.21.1
 webargs==8.4.0
 apispec==6.3.1
-neomodel==5.3.0
+neomodel==5.4.2
 neobolt==1.7.17
 psycopg2-binary==2.9.9
 PyMySQL==1.1.0
