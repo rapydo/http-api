@@ -7,7 +7,7 @@ alembic==1.13.1
 Werkzeug==3.0.2
 PyJWT==2.8.0
 pyOpenSSL==24.1.0
-marshmallow==3.21.1
+marshmallow==3.23.2
 webargs==8.4.0
 apispec==6.3.1
 neomodel==5.3.0
